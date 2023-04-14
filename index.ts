@@ -466,7 +466,7 @@ const Rtc = ({
       let response = await axios.get(`${WEBRTC_ROOM_URI}/peers/room`, {
         params: {
           roomId: chatRoomId,
-          userType: userType,
+          userType: userType.toLowerCase(),
           peerId: peerId,
         },
       });
