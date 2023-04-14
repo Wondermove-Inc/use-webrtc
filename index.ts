@@ -919,7 +919,7 @@ const Rtc = ({
 
   useEffect(() => {
     if (localStream && destination && local) {
-      if (connected) startCall();
+      if (connected && userType === "DEALER") startCall();
     }
   }, [local, destination, localStream]);
 

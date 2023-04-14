@@ -983,7 +983,7 @@ var Rtc = function (_a) {
     }, [remoteStream]);
     (0, react_1.useEffect)(function () {
         if (localStream && destination && local) {
-            if (connected)
+            if (connected && userType === "DEALER")
                 startCall();
         }
     }, [local, destination, localStream]);
