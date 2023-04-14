@@ -531,7 +531,7 @@ var Rtc = function (_a) {
                     return [4 /*yield*/, axios_1.default.get("".concat(WEBRTC_ROOM_URI, "/peers/room"), {
                             params: {
                                 roomId: chatRoomId,
-                                userType: userType,
+                                userType: userType.toLowerCase(),
                                 peerId: peerId,
                             },
                         })];
