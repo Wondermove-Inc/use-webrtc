@@ -788,6 +788,8 @@ const Rtc = ({
         setConnecting(false);
         setPeerErrorMessage(null);
         setNetworkErrored(false);
+        // setDestination()
+        setDestination(conn.peer);
         conn.on("error", (e) => {
           console.log(e);
           // setConnected(false);
@@ -797,7 +799,6 @@ const Rtc = ({
           setConnected(true);
           setConnecting(false);
           console.log("Local peer has opened connection.", conn.peer);
-          setDestination(conn.peer);
           // conn.on('data', (data) => console.log('Received from remote peer', data));
           console.log("Local peer sending data.");
           conn.send("Hello, this is the LOCAL peer!");
