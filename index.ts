@@ -534,6 +534,7 @@ const Rtc = ({
 
   const startCall = useCallback(() => {
     console.log("method startCall() called", local, destination, localStream);
+
     if (!local) throw new Error("localPeer not defined");
     if (!destination) throw new Error("destination not defined");
     if (!localStream) throw new Error("destination not defined");
@@ -925,7 +926,7 @@ const Rtc = ({
 
   // 5. 연결됐으면 call 후 remoteStream을 받아온다.
   useEffect(() => {
-    if (connected) {
+    if (connected && userType === "DEALER") {
       console.log("connected!");
       startCall();
     }

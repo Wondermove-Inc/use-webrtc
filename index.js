@@ -989,7 +989,7 @@ var Rtc = function (_a) {
     }, [local, destination, localStream]);
     // 5. 연결됐으면 call 후 remoteStream을 받아온다.
     (0, react_1.useEffect)(function () {
-        if (connected) {
+        if (connected && userType === "DEALER") {
             console.log("connected!");
             startCall();
         }
