@@ -15,6 +15,10 @@
     "react": "^18.2.0",
     "socket.io-client": "^4.6.1"
   },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
   "devDependencies": {
     "@types/node": "^18.15.11",
     "@types/react": "^18.0.34",

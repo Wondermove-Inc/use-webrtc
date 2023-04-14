@@ -804,6 +804,7 @@ const Rtc = ({
       });
       local.on("call", (mediaConnection) => {
         console.log("local Peer on call ", mediaConnection);
+        if (!destination) setDestination(mediaConnection.peer);
       });
       local.on("close", () => {
         console.log("local Peer closed ");

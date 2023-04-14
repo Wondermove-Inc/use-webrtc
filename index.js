@@ -878,6 +878,8 @@ var Rtc = function (_a) {
             });
             local.on("call", function (mediaConnection) {
                 console.log("local Peer on call ", mediaConnection);
+                if (!destination)
+                    setDestination(mediaConnection.peer);
             });
             local.on("close", function () {
                 console.log("local Peer closed ");
