@@ -885,6 +885,17 @@ var Rtc = function (_a) {
                     if (localStream == null)
                         throw new Error("localstream is not defined");
                     mediaConnection.answer(localStream);
+                    mediaConnection.on("stream", function (stream) {
+                        handleStream(stream);
+                    });
+                    mediaConnection.on("close", function () {
+                        setRemoteStream(null);
+                    });
+                    mediaConnection.on("error", function (e) {
+                        console.log(e);
+                        setRemoteStream(null);
+                        setConnected(false);
+                    });
                 }
             });
             local.on("close", function () {
