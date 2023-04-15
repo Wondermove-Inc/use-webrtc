@@ -942,7 +942,7 @@ var Rtc = function (_a) {
             console.log("destination found: ", destination, ", trying to connect");
             connect();
         }
-    }, [destination]);
+    }, [destination, local]);
     (0, react_1.useEffect)(function () {
         if (localStream) {
             setCameraOnYn(true);

@@ -873,7 +873,7 @@ const Rtc = ({
       console.log("destination found: ", destination, ", trying to connect");
       connect();
     }
-  }, [destination]);
+  }, [destination, local]);
 
   useEffect(() => {
     if (localStream) {
