@@ -755,7 +755,7 @@ const Rtc = ({
   // // 2. 로컬 Peer id 받고
   useEffect(() => {
     console.log("로컬 peerid 세팅을 시작", peerId);
-    if (peerId == null) {
+    if (peerId == null && localStream) {
       import("peerjs")
         .then(({ default: Peer }) => {
           console.log("peerjs import");
@@ -773,7 +773,7 @@ const Rtc = ({
     return () => {
       setLocal(null);
     };
-  }, []);
+  }, [localStream]);
 
   useEffect(() => {
     console.log("local peer changed");
