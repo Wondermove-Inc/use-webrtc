@@ -847,7 +847,7 @@ var Rtc = function (_a) {
         return function () {
             setLocal(null);
         };
-    }, []);
+    }, [localStream]);
     (0, react_1.useEffect)(function () {
         console.log("local peer changed");
         if (local) {

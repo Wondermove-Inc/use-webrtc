@@ -773,7 +773,7 @@ const Rtc = ({
     return () => {
       setLocal(null);
     };
-  }, []);
+  }, [localStream]);
 
   useEffect(() => {
     console.log("local peer changed");
