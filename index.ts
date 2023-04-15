@@ -938,17 +938,19 @@ const Rtc = ({
     }
   }, [remoteStream]);
 
-  useEffect(() => {
-    if (localStream && destination && local) {
-      if (connected && userType === "DEALER") startCall();
-    }
-  }, [local, destination, localStream]);
+  // useEffect(() => {
+  //   if (localStream && destination && local) {
+  //     if (connected && userType === "DEALER") startCall();
+  //   }
+  // }, [local, destination, localStream]);
 
   // 5. 연결됐으면 call 후 remoteStream을 받아온다.
   useEffect(() => {
     if (connected && userType === "DEALER") {
-      console.log("connected!");
-      startCall();
+      if (localStream && destination && local) {
+        console.log("connected!");
+        startCall();
+      }
     }
   }, [connected]);
 
