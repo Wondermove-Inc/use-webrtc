@@ -520,7 +520,7 @@ const Rtc = ({
     } finally {
       setConnecting(false);
     }
-  }, [destination, local]);
+  }, [destination, localStream, local]);
 
   const handleStream = useCallback(
     (stream) => {
@@ -869,11 +869,12 @@ const Rtc = ({
 
   // 4. 상대방 아이디 있으면 연결한다.
   useEffect(() => {
-    if (destination) {
-      console.log("destination found: ", destination, ", trying to connect");
-      connect();
-    }
-  }, [destination, local]);
+    if (!connecting)
+      if (destination && peerId) {
+        console.log("destination found: ", destination, ", trying to connect");
+        connect();
+      }
+  }, [destination, peerId, connecting]);
 
   useEffect(() => {
     if (localStream) {

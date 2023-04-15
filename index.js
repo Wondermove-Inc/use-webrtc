@@ -594,7 +594,7 @@ var Rtc = function (_a) {
         finally {
             setConnecting(false);
         }
-    }, [destination, local]);
+    }, [destination, localStream, local]);
     var handleStream = (0, react_1.useCallback)(function (stream) {
         setStartTime(function (prev) { return prev || (0, moment_1.default)(); });
         console.log("navis calling 2 aaa", stream);
@@ -938,11 +938,12 @@ var Rtc = function (_a) {
     }, [peerId]);
     // 4. 상대방 아이디 있으면 연결한다.
     (0, react_1.useEffect)(function () {
-        if (destination) {
-            console.log("destination found: ", destination, ", trying to connect");
-            connect();
-        }
-    }, [destination, local]);
+        if (!connecting)
+            if (destination && peerId) {
+                console.log("destination found: ", destination, ", trying to connect");
+                connect();
+            }
+    }, [destination, peerId, connecting]);
     (0, react_1.useEffect)(function () {
         if (localStream) {
             setCameraOnYn(true);
