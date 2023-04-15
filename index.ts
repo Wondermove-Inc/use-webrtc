@@ -808,7 +808,7 @@ const Rtc = ({
         console.log("local Peer on call ", mediaConnection);
         if (!destination) setDestination(mediaConnection.peer);
         if (userType === "CUSTOMER") {
-          if (localStream === null)
+          if (localStream == null)
             throw new Error("localstream is not defined");
           mediaConnection.answer(localStream);
         }

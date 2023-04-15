@@ -882,7 +882,7 @@ var Rtc = function (_a) {
                 if (!destination)
                     setDestination(mediaConnection.peer);
                 if (userType === "CUSTOMER") {
-                    if (localStream === null)
+                    if (localStream == null)
                         throw new Error("localstream is not defined");
                     mediaConnection.answer(localStream);
                 }
