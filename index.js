@@ -567,6 +567,8 @@ var Rtc = function (_a) {
         try {
             if (!local)
                 throw new Error("localPeer not defined");
+            if (!localStream)
+                throw new Error("localStream not defined");
             if (!destination)
                 throw new Error("destination not defined");
             var conn = local.connect(destination);
@@ -576,6 +578,7 @@ var Rtc = function (_a) {
                 console.log("received: ".concat(data));
             });
             conn.on("open", function () {
+                console.log("opened");
                 setConnected(true);
                 setConnecting(false);
             });

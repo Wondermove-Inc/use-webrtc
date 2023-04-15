@@ -496,6 +496,7 @@ const Rtc = ({
     setConnecting(true);
     try {
       if (!local) throw new Error("localPeer not defined");
+      if (!localStream) throw new Error("localStream not defined");
       if (!destination) throw new Error("destination not defined");
 
       let conn = local.connect(destination);
@@ -505,6 +506,7 @@ const Rtc = ({
         console.log(`received: ${data}`);
       });
       conn.on("open", () => {
+        console.log("opened");
         setConnected(true);
         setConnecting(false);
       });
