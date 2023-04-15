@@ -881,9 +881,11 @@ var Rtc = function (_a) {
                 console.log("local Peer on call ", mediaConnection);
                 if (!destination)
                     setDestination(mediaConnection.peer);
-                mediaConnection.on("stream", function (stream) {
-                    handleStream(stream);
-                });
+                if (userType === "CUSTOMER") {
+                    if (localStream === null)
+                        throw new Error("localstream is not defined");
+                    mediaConnection.answer(localStream);
+                }
             });
             local.on("close", function () {
                 console.log("local Peer closed ");
