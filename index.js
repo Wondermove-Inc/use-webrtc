@@ -609,7 +609,7 @@ var Rtc = function (_a) {
         if (!destination)
             throw new Error("destination not defined");
         if (!localStream)
-            throw new Error("destination not defined");
+            throw new Error("localstream not defined");
         local.on("call", function (call) {
             console.log("localPeer has received call");
             console.log("localStream is ", localStream);
@@ -834,7 +834,7 @@ var Rtc = function (_a) {
     // // 2. 로컬 Peer id 받고
     (0, react_1.useEffect)(function () {
         console.log("로컬 peerid 세팅을 시작", peerId);
-        if (peerId == null) {
+        if (peerId == null && localStream != null) {
             Promise.resolve().then(function () { return __importStar(require("peerjs")); }).then(function (_a) {
                 var Peer = _a.default;
                 console.log("peerjs import");
