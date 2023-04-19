@@ -618,7 +618,7 @@ const Rtc = ({
 
   const leaveSocket = useCallback(() => {
     console.log("leave");
-    socketInstance?.emit("leave", { roomId: chatRoomId, sender: "DEALER" });
+    socketInstance?.emit("leave", { roomId: chatRoomId, sender: userType });
     setLeftYn(true);
   }, [socketInstance, chatRoomId]);
 
@@ -632,7 +632,7 @@ const Rtc = ({
     return () => {
       console.log("socket off");
       if (socket) {
-        // socket.emit('leave', { roomId: chatRoomId, sender: 'DEALER' });
+        // socket.emit('leave', { roomId: chatRoomId, sender: userType });
         socket.disconnect();
       }
     };
@@ -646,36 +646,36 @@ const Rtc = ({
     const socket = manager.socket(SOCKET_NAMESPACE); // main namespace
 
     socket.on("connect", () => {
-      console.log(`socket join, { roomId: ${_id}, sender: 'DEALER' }`);
-      socket.emit("join", { roomId: _id, sender: "DEALER" });
+      console.log(`socket join, { roomId: ${_id}, sender: '${userType}' }`);
+      socket.emit("join", { roomId: _id, sender: userType });
       console.log(micOnYn, cameraOnYn);
       socket.emit("microphone", {
         roomId: _id,
-        sender: "DEALER",
+        sender: userType,
         onYn: micOnYn,
       });
       socket.emit("camera", {
         roomId: _id,
-        sender: "DEALER",
+        sender: userType,
         onYn: cameraOnYn,
       });
     });
     socket.on("microphone", ({ roomId, sender, onYn }) => {
-      const isMe: boolean = sender === "DEALER";
+      const isMe: boolean = sender === userType;
       if (!isMe) {
         console.log("socket mic listener onYn : ", onYn);
         setCustomerMicOnYn(onYn);
       }
     });
     socket.on("camera", ({ roomId, sender, onYn }) => {
-      const isMe: boolean = sender === "DEALER";
+      const isMe: boolean = sender === userType;
       if (!isMe) {
         console.log("socket camera listener onYn : ", onYn);
         setCustomerCameraOnYn(onYn);
       }
     });
     socket.on("leave", ({ roomId, sender }) => {
-      const isMe: boolean = sender === "DEALER";
+      const isMe: boolean = sender === userType;
       console.log("leave", sender);
       if (!isMe) {
         setCustomerLeftYn(true);
@@ -684,7 +684,7 @@ const Rtc = ({
       }
     });
     socket.on("consultError", ({ consultId, sender }) => {
-      const isMe: boolean = sender === "DEALER";
+      const isMe: boolean = sender === userType;
       if (!isMe) {
         // onRefresh();
         setNetworkErrored(true);
@@ -713,7 +713,7 @@ const Rtc = ({
         console.log("camera on? off? " + cameraOnYn);
         socketInstance.emit("camera", {
           roomId: chatRoomId,
-          sender: "DEALER",
+          sender: userType,
           onYn: cameraOnYn,
         });
       }
@@ -727,7 +727,7 @@ const Rtc = ({
         console.log("mic on? off? " + micOnYn);
         socketInstance.emit("microphone", {
           roomId: chatRoomId,
-          sender: "DEALER",
+          sender: userType,
           onYn: micOnYn,
         });
       }
@@ -1038,7 +1038,7 @@ const Rtc = ({
     if (networkErrored && socketInstance) {
       socketInstance?.emit("consultError", {
         consultId: chatRoomId,
-        sender: "DEALER",
+        sender: userType,
       });
     }
   }, [networkErrored]);

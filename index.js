@@ -688,7 +688,7 @@ var Rtc = function (_a) {
     }, [localStream, remoteStream, local, mediaConnection]);
     var leaveSocket = (0, react_1.useCallback)(function () {
         console.log("leave");
-        socketInstance === null || socketInstance === void 0 ? void 0 : socketInstance.emit("leave", { roomId: chatRoomId, sender: "DEALER" });
+        socketInstance === null || socketInstance === void 0 ? void 0 : socketInstance.emit("leave", { roomId: chatRoomId, sender: userType });
         setLeftYn(true);
     }, [socketInstance, chatRoomId]);
     // ** Hooks
@@ -708,7 +708,7 @@ var Rtc = function (_a) {
         return function () {
             console.log("socket off");
             if (socket) {
-                // socket.emit('leave', { roomId: chatRoomId, sender: 'DEALER' });
+                // socket.emit('leave', { roomId: chatRoomId, sender: userType });
                 socket.disconnect();
             }
         };
@@ -720,23 +720,23 @@ var Rtc = function (_a) {
             manager = new socket_io_client_1.Manager(SOCKET_URI, { transports: ["websocket"] });
             socket = manager.socket(SOCKET_NAMESPACE);
             socket.on("connect", function () {
-                console.log("socket join, { roomId: ".concat(_id, ", sender: 'DEALER' }"));
-                socket.emit("join", { roomId: _id, sender: "DEALER" });
+                console.log("socket join, { roomId: ".concat(_id, ", sender: '").concat(userType, "' }"));
+                socket.emit("join", { roomId: _id, sender: userType });
                 console.log(micOnYn, cameraOnYn);
                 socket.emit("microphone", {
                     roomId: _id,
-                    sender: "DEALER",
+                    sender: userType,
                     onYn: micOnYn,
                 });
                 socket.emit("camera", {
                     roomId: _id,
-                    sender: "DEALER",
+                    sender: userType,
                     onYn: cameraOnYn,
                 });
             });
             socket.on("microphone", function (_a) {
                 var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
-                var isMe = sender === "DEALER";
+                var isMe = sender === userType;
                 if (!isMe) {
                     console.log("socket mic listener onYn : ", onYn);
                     setCustomerMicOnYn(onYn);
@@ -744,7 +744,7 @@ var Rtc = function (_a) {
             });
             socket.on("camera", function (_a) {
                 var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
-                var isMe = sender === "DEALER";
+                var isMe = sender === userType;
                 if (!isMe) {
                     console.log("socket camera listener onYn : ", onYn);
                     setCustomerCameraOnYn(onYn);
@@ -752,7 +752,7 @@ var Rtc = function (_a) {
             });
             socket.on("leave", function (_a) {
                 var roomId = _a.roomId, sender = _a.sender;
-                var isMe = sender === "DEALER";
+                var isMe = sender === userType;
                 console.log("leave", sender);
                 if (!isMe) {
                     setCustomerLeftYn(true);
@@ -763,7 +763,7 @@ var Rtc = function (_a) {
             });
             socket.on("consultError", function (_a) {
                 var consultId = _a.consultId, sender = _a.sender;
-                var isMe = sender === "DEALER";
+                var isMe = sender === userType;
                 if (!isMe) {
                     // onRefresh();
                     setNetworkErrored(true);
@@ -791,7 +791,7 @@ var Rtc = function (_a) {
                 console.log("camera on? off? " + cameraOnYn);
                 socketInstance.emit("camera", {
                     roomId: chatRoomId,
-                    sender: "DEALER",
+                    sender: userType,
                     onYn: cameraOnYn,
                 });
             }
@@ -805,7 +805,7 @@ var Rtc = function (_a) {
                 console.log("mic on? off? " + micOnYn);
                 socketInstance.emit("microphone", {
                     roomId: chatRoomId,
-                    sender: "DEALER",
+                    sender: userType,
                     onYn: micOnYn,
                 });
             }
@@ -1092,7 +1092,7 @@ var Rtc = function (_a) {
         if (networkErrored && socketInstance) {
             socketInstance === null || socketInstance === void 0 ? void 0 : socketInstance.emit("consultError", {
                 consultId: chatRoomId,
-                sender: "DEALER",
+                sender: userType,
             });
         }
     }, [networkErrored]);
