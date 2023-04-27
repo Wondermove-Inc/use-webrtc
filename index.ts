@@ -830,13 +830,15 @@ const Rtc = ({
         console.log("local Peer closed ");
       });
       local.on("disconnected", () => {
-        console.log(
-          "Local peer disconnected. trying to connect using slave server."
-        );
-        console.log("setlocal start");
-        const peer = new Peer(peerSlave);
-        setLocal(peer);
-        console.log("setlocal called");
+        if (process.env.NEXT_PUBLIC_ENV_NODE_ENV !== "development") {
+          console.log(
+            "Local peer disconnected. trying to connect using slave server."
+          );
+          console.log("setlocal start");
+          const peer = new Peer(peerSlave);
+          setLocal(peer);
+          console.log("setlocal called");
+        }
       });
       local.on("error", (e) => {
         console.log("Local peer has got errored ", e);
