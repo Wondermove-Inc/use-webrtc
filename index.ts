@@ -31,6 +31,8 @@ const Rtc = ({
     WEBRTC_PORT,
     WEBRTC_ROOM_URI,
     WEBRTC_PATH,
+    SIGNAL_SOCKET_URI,
+    SIGNAL_SOCKET_NAMESPACE,
   },
 }) => {
   const SERVER_URI: string = WEBRTC_URI;
@@ -52,7 +54,7 @@ const Rtc = ({
   const [finding, setFinding] = useState<boolean>(false);
   const [connected, setConnected] = useState<boolean>(false);
   const [connecting, setConnecting] = useState<boolean>(false);
-  const [local, setLocal] = useState<Peer | null>();
+  const [local, setLocal] = useState<RTCPeerConnection>();
   const [mediaDevices, setMediaDevices] = useState<MediaDevices | null>();
   const [peerErrorMessage, setPeerErrorMessage] = useState<string | null>();
   const [streamCameraErrored, setStreamCameraErrored] = useState<boolean>();
@@ -68,9 +70,14 @@ const Rtc = ({
   const [customerCameraOnYn, setCustomerCameraOnYn] = useState<boolean>(true);
   const [customerLeftYn, setCustomerLeftYn] = useState<boolean>(false);
   const [socketInstance, setSocketInstance] = useState<Socket | null>();
+  const [webRtcSocketInstance, setWebRtcSocketInstance] = useState<Socket>();
+  const [remoteCandidates, setRemoteCandidates] = useState<any>([]);
+
   const [leftYn, setLeftYn] = useState<boolean>(false);
   const [startTime, setStartTime] = useState<Moment>();
   const [timeDiff, setTimeDiff] = useState<number>(0);
+
+  const [remoteTracks, setRemoteTracks] = useState<any>([]);
 
   const userType: UserType = dealerYn ? "DEALER" : "CUSTOMER";
 
@@ -491,36 +498,89 @@ const Rtc = ({
     }
   }, [chatRoomId, userType, peerId]);
 
-  const connect = useCallback(() => {
-    console.log(`Connecting to ${destination}...`);
-    setConnecting(true);
-    try {
-      if (!local) throw new Error("localPeer not defined");
-      if (!localStream) throw new Error("localStream not defined");
-      if (!destination) throw new Error("destination not defined");
+  //! initial offer
+  const sendOffer = useCallback(
+    async (socket) => {
+      const sessionConstraints: RTCAnswerOptions = {
+        mandatory: {
+          OfferToReceiveAudio: true,
+          OfferToReceiveVideo: true,
+        },
+      };
+      let offerDescription;
+      try {
+        if (!local) throw new Error("local is null");
+        offerDescription = await local.createOffer(sessionConstraints);
+        console.log("createoffer ~ offerDescription", offerDescription);
+        await local.setLocalDescription(offerDescription);
 
-      let conn = local.connect(destination);
-      conn.on("data", (data) => {
-        setConnected(true);
-        setConnecting(false);
-        console.log(`received: ${data}`);
-      });
-      conn.on("open", () => {
-        console.log("opened");
-        setConnected(true);
-        setConnecting(false);
-      });
-      conn.on("error", (e) => {
-        console.log("connect error", e);
-        setConnected(false);
-        setConnecting(false);
+        //!Send the offerDescription to customer.
+        socket.emit("offer", { sdp: offerDescription, sender: userType });
+      } catch (error) {
+        console.error("createOffer ~ line 363 ~ error ~ ", error);
+      }
+    },
+    [local]
+  );
+
+  //! run if received answer from customer
+  const setRemoteDescription = useCallback(
+    async (offer) => {
+      try {
+        if (!local) throw new Error("local is not defined");
+        // Use the received answerDescription
+        const answerDescription = new RTCSessionDescription(offer);
+        console.log(
+          "setRemoteDescription ~ answerDescription",
+          answerDescription
+        );
+        await local.setRemoteDescription(answerDescription);
+
+        //!process leftover candidate
+        processCandidates();
+      } catch (error) {
+        console.error("setRemoteDescription ~ line 410 ~ error ~ ", error);
+      }
+    },
+    [local]
+  );
+
+  //! run if received iceCandidate from customer
+  const handleRemoteCandidate = (iceCandidate) => {
+    const newCandidate = new RTCIceCandidate(iceCandidate);
+    if (local === null || local?.remoteDescription === null) {
+      return remoteCandidates.push(newCandidate);
+    }
+    return local?.addIceCandidate(newCandidate);
+  };
+
+  const processCandidates = () => {
+    if (remoteCandidates.length < 1) {
+      return;
+    }
+    if (!local) return;
+    console.log("remoteCandidates!!!!", remoteCandidates);
+    remoteCandidates.map((candidate) => local.addIceCandidate(candidate));
+    setRemoteCandidates([]);
+  };
+  //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
+  const sendAnswer = async (offer) => {
+    try {
+      if (!local || !webRtcSocketInstance) return;
+      const offerDescription = new RTCSessionDescription(offer);
+      await local.setRemoteDescription(offerDescription);
+      const answerDescription = await local.createAnswer();
+      await local.setLocalDescription(answerDescription);
+      webRtcSocketInstance.emit("answer", {
+        sdp: answerDescription,
+        sender: userType,
       });
     } catch (e) {
-      console.log("connect error 2", e);
+      console.error("sendAnswer ~ error ~", e);
     } finally {
-      setConnecting(false);
+      processCandidates();
     }
-  }, [destination, localStream, local]);
+  };
 
   const handleStream = useCallback(
     (stream) => {
@@ -533,54 +593,6 @@ const Rtc = ({
     },
     [localStream]
   );
-
-  const startCall = useCallback(() => {
-    console.log("method startCall() called", local, destination, localStream);
-
-    if (!local) throw new Error("localPeer not defined");
-    if (!destination) throw new Error("destination not defined");
-    if (!localStream) throw new Error("localstream not defined");
-
-    local.on("call", (call) => {
-      console.log("localPeer has received call");
-      console.log("localStream is ", localStream);
-      // Answer the call, providing our mediaStream
-      if (localStream != null) {
-        // console.log('navis calling aaa', localStream);
-        call.answer(localStream);
-        call.on("stream", function (stream) {
-          handleStream(stream);
-        });
-        call.on("close", function () {
-          setRemoteStream(null);
-        });
-        call.on("error", function (e) {
-          console.log(e);
-          setRemoteStream(null);
-          setConnected(false);
-        });
-      }
-    });
-    try {
-      let call = local.call(destination, localStream);
-      call?.on("stream", function (stream) {
-        handleStream(stream);
-      });
-      console.log(call);
-      call.on("error", (e) => {
-        console.log("call connection errored", e);
-      });
-      call.on("close", () => {
-        console.log("call connection closed");
-      });
-      setMediaConnection(call);
-    } catch (e) {
-      setConnected(false);
-      console.log(e);
-    } finally {
-      setConnecting(false);
-    }
-  }, [local, destination, localStream, remoteStream]);
 
   const stop = useCallback(() => {
     console.log("stop", localStream, remoteStream);
@@ -602,7 +614,7 @@ const Rtc = ({
       });
       setLocalStream(null);
     }
-    if (local) local.disconnect();
+    if (local) local.close();
     if (mediaConnection) mediaConnection.close();
     if (remoteStream) {
       // localStream.removeTrack(); // localStream.release();
@@ -694,6 +706,74 @@ const Rtc = ({
     return socket;
   };
 
+  //** Socket Initializer
+  const webRTCSocketInitializer = async (_id) => {
+    // We just call it because we don't need anything else out of it
+    // await fetch('/');
+    const manager = new Manager(SIGNAL_SOCKET_URI, {
+      transports: ["websocket"],
+      secure: true,
+    });
+    const socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
+
+    //* Customer에게 ice candidate 받는 소켓
+    const getCandidate = ({ candidate, sender }) => {
+      const isMe = sender === userType;
+      if (!isMe) {
+        console.log("getCandidate socket received - customer", candidate);
+        handleRemoteCandidate(candidate);
+      }
+    };
+
+    //* Customer에게 answer 받는 소켓
+    const getAnswer = async ({ sdp, sender }) => {
+      const isMe = sender === userType;
+      console.log("answer socket received", sdp);
+      if (!isMe) {
+        await setRemoteDescription(sdp);
+      }
+    };
+    //* Dealer에게 offer 받는 소켓
+    const getOffer = async ({ sdp, sender }) => {
+      const isMe = sender === userType;
+      if (!isMe) {
+        console.log("offer socket received", sdp);
+        await sendAnswer(sdp);
+      }
+    };
+
+    //* room에 있는 socket-id 받는 소켓
+    const allUsers = async (all_users) => {
+      console.log("all_users socket received", all_users);
+      const users = all_users.filter((i) => i.userType !== userType);
+      const len = users.length;
+
+      console.log("all_users length!!!", len);
+
+      //* room에 두명 이상 있을 시 handshake 로직 시작
+      if (userType === "DEALER") {
+        if (len > 0) {
+          await sendOffer(socket);
+        }
+      }
+    };
+    socket.on("getCandidate", getCandidate);
+    socket.on("all_users", allUsers);
+
+    if (userType === "CUSTOMER") {
+      socket.on("getOffer", getOffer);
+    } else {
+      socket.on("getAnswer", getAnswer);
+    }
+
+    socket.emit("join_room", { room: chatRoomId, sender: userType });
+    console.log("joinjoin", chatRoomId);
+
+    setWebRtcSocketInstance(socket);
+
+    return socket;
+  };
+
   // 1. 딜러 입장 시 로컬스트림 세팅
   useEffect(() => {
     console.log("1. 딜러 입장 시 로컬스트림 세팅", localStream);
@@ -754,129 +834,166 @@ const Rtc = ({
     }
   }, [customerMicOnYn]);
 
+  const createPeerConnection = (): RTCPeerConnection => {
+    const peerConstraints = {
+      iceServers: peerMaster.config.iceServers,
+    };
+    const peerConnection = new RTCPeerConnection(peerConstraints);
+
+    return peerConnection;
+  };
+
   // // 2. 로컬 Peer id 받고
   useEffect(() => {
-    console.log("로컬 peerid 세팅을 시작", peerId);
-    if (peerId == null && localStream != null) {
-      import("peerjs")
-        .then(({ default: Peer }) => {
-          console.log("peerjs import");
-          // normal synchronous code
+    console.log("로컬 peerid 세팅을 시작");
+    if (local == null) {
+      const localPeer = createPeerConnection();
+      //* local peer에 localStream 등록
 
-          const localPeer = new Peer(peerMaster);
-          setLocal(localPeer);
-
-          console.log("localPeer", localPeer);
-        })
-        .catch((e) => {
-          console.error(e);
-        });
+      setLocal(localPeer);
+      // join_room emit
     }
     return () => {
-      setLocal(null);
+      setLocal(undefined);
     };
-  }, [localStream]);
+  }, []);
 
   useEffect(() => {
-    console.log("local peer changed");
     if (local) {
-      local.on("open", (localPeerId) => {
-        console.log("Local peer open with ID", localPeerId);
-        setPeerId(localPeerId);
-      });
-      local.on("connection", (conn) => {
-        console.log("Local peer has received connection.");
-        setConnected(true);
-        setConnecting(false);
-        setPeerErrorMessage(null);
-        setNetworkErrored(false);
-        // setDestination()
-        setDestination(conn.peer);
-        conn.on("error", (e) => {
-          console.log(e);
-          // setConnected(false);
-          setConnecting(false);
-        });
-        conn.on("open", () => {
-          setConnected(true);
-          setConnecting(false);
-          console.log("Local peer has opened connection.", conn.peer);
-          // conn.on('data', (data) => console.log('Received from remote peer', data));
-          console.log("Local peer sending data.");
-          conn.send("Hello, this is the LOCAL peer!");
-        });
-      });
-      local.on("call", (mediaConnection) => {
-        console.log("local Peer on call ", mediaConnection);
-        if (!destination) setDestination(mediaConnection.peer);
-        if (userType === "CUSTOMER") {
-          if (localStream == null)
-            throw new Error("localstream is not defined");
-          mediaConnection.answer(localStream);
-          mediaConnection.on("stream", function (stream) {
-            handleStream(stream);
-          });
-          mediaConnection.on("close", function () {
-            setRemoteStream(null);
-          });
-          mediaConnection.on("error", function (e) {
-            console.log(e);
-            setRemoteStream(null);
-            setConnected(false);
-          });
-        }
-      });
-      local.on("close", () => {
-        console.log("local Peer closed ");
-      });
-      local.on("disconnected", () => {
-        if (process.env.NEXT_PUBLIC_ENV_NODE_ENV !== "development") {
-          console.log(
-            "Local peer disconnected. trying to connect using slave server."
-          );
-          console.log("setlocal start");
-          const peer = new Peer(peerSlave);
-          setLocal(peer);
-          console.log("setlocal called");
-        }
-      });
-      local.on("error", (e) => {
-        console.log("Local peer has got errored ", e);
-        if (e["type"] === "network") {
-          // modal 출력
-          setNetworkErrored(true);
-        }
-        setPeerErrorMessage(
-          "An error has occured while connecting. ECODE: " + e["type"]
-        );
+      let socket: Socket;
+      console.log("socket icandoit rtc");
+      (async () => {
+        socket = await webRTCSocketInitializer(null);
+        console.log("join!!");
+        // socket.emit('join_room', { room: chatRoomId });
+      })();
 
-        // console.log(this.state.myId, 'peer.eeror', error.type);
-        // var interval = setTimeout(function () {
-        //   if (localPeer.open === true || localPeer.destroyed === true) {
-        //     clearInterval(interval);
-        //   } else {
-        //     localPeer.reconnect();
-        //   }
-        // }, 5000);
-      });
+      return () => {
+        console.log("socket off");
+        if (socket) {
+          // socket.emit('leave', { roomId: chatRoomId, sender: userType });
+          socket.removeAllListeners();
+          socket.disconnect();
+          setWebRtcSocketInstance(undefined);
+        }
+      };
     }
   }, [local]);
-  // 3. 받아온 peer id를  rtc 서버에 등록하고, 상대방 아이디가 있는지 확인함
-  useEffect(() => {
-    if (peerId) {
-      console.log("peerid: ", peerId, ", finding destination");
-      findDestination();
-    }
-  }, [peerId]);
 
-  // 4. 상대방 아이디 있으면 연결한다.
   useEffect(() => {
-    if (!connecting)
-      if (destination && peerId) {
-        console.log("destination found: ", destination, ", trying to connect");
-        connect();
-      }
-  }, [destination, peerId, connecting]);
+    if (local && localStream) {
+      console.log("localstream", localStream);
+      localStream.getTracks().forEach((track) => {
+        console.log("addTrack", track);
+        local.addTrack(track, localStream);
+      });
+    }
+  }, [localStream, local]);
+
+  useEffect(() => {
+    console.log("local peer changed", webRtcSocketInstance);
+    if (webRtcSocketInstance && localStream && local) {
+      console.log(webRtcSocketInstance, "join");
+
+      local.onconnectionstatechange = (event) => {
+        switch (local.connectionState) {
+          case "closed":
+            console.error("local.connectionState ~ closed ~ line 245 ~ ");
+            setNetworkErrored(true);
+            // if (!isExiting) {
+            //   setErrorText(t('t_live.customer_is_reconnecting'));
+            //   setErrorMessageVisible(true);
+            //   setErrorModalVisible(true);
+            // }
+            break;
+          default:
+            break;
+        }
+      };
+
+      //* ice candidate 발생 이벤트
+      local.onicecandidate = (event) => {
+        if (!event.candidate) {
+          return;
+        }
+        console.log("iceCandidate!!!", event.candidate);
+
+        //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
+        webRtcSocketInstance.emit("candidate", {
+          candidate: event.candidate,
+          sender: userType,
+        });
+      };
+
+      local.onicecandidateerror = (event) => {
+        // console.error('icecandidateerror', event);
+      };
+
+      //* ice connection 상태 이벤트. completed일 경우 peer간 연결 성공
+      local.oniceconnectionstatechange = (event) => {
+        console.log("iceconnectionstatechange", local.iceConnectionState);
+        switch (local.iceConnectionState) {
+          case "connected":
+          case "completed":
+            console.log("iceConnectionStateChange ~ completed");
+            setConnected(true);
+            break;
+          case "disconnected":
+            console.error("local.connectionState ~ closed ~ line 282 ~ ");
+            setNetworkErrored(true);
+          // if (!isExiting) {
+          //   setErrorText(t('t_live.customer_is_reconnecting'));
+          //   setErrorMessageVisible(true);
+          //   setErrorModalVisible(true);
+          // }
+          default:
+            break;
+        }
+      };
+
+      //* remote stream 받는 이벤트. 후처리를 위해 배열에 저장.
+      local.ontrack = (event) => {
+        if (event.streams[0].getTracks().length > 1) {
+          console.log("track!!!!", JSON.stringify(event.streams[0]));
+          setRemoteTracks([...remoteTracks, event.streams[0]]);
+        }
+      };
+    }
+  }, [webRtcSocketInstance, localStream]);
+
+  useEffect(() => {
+    //* ice connection 상태가 completed 일 경우 remoteStream 설정
+    if (connected) {
+      console.log("completed!!");
+      processTracks();
+      setStartTime((prev) => prev || moment());
+    }
+  }, [connected]);
+
+  //* iceconnectionstatechange가 completed일 경우 remoteStream 처리
+  const processTracks = () => {
+    console.log("processing tracks", remoteTracks[0]);
+    const len = remoteTracks.length;
+    setRemoteStream(remoteTracks[len - 1]);
+    setRemoteTracks([]);
+  };
+
+  // // 3. 받아온 peer id를  rtc 서버에 등록하고, 상대방 아이디가 있는지 확인함
+  // useEffect(() => {
+  //   if (peerId) {
+  //     console.log("peerid: ", peerId, ", finding destination");
+  //     findDestination();
+  //   }
+  // }, [peerId]);
+
+  // // 4. 상대방 아이디 있으면 연결한다.
+  // useEffect(() => {
+  //   if (!connecting)
+  //     if (destination && peerId) {
+  //       console.log("destination found: ", destination, ", trying to connect");
+  //       connect();
+  //     }
+  // }, [destination, peerId, connecting]);
 
   useEffect(() => {
     if (localStream) {
@@ -885,6 +1002,7 @@ const Rtc = ({
     } else {
     }
   }, [localStream]);
+
   useEffect(() => {
     if (remoteStream) {
       remoteStream?.addEventListener("inactive", function (e) {
@@ -939,22 +1057,6 @@ const Rtc = ({
     } else {
     }
   }, [remoteStream]);
-
-  // useEffect(() => {
-  //   if (localStream && destination && local) {
-  //     if (connected && userType === "DEALER") startCall();
-  //   }
-  // }, [local, destination, localStream]);
-
-  // 5. 연결됐으면 call 후 remoteStream을 받아온다.
-  useEffect(() => {
-    if (connected && userType === "DEALER") {
-      if (localStream && destination && local) {
-        console.log("connected!");
-        startCall();
-      }
-    }
-  }, [connected]);
 
   useEffect(() => {
     console.log("screensharing", screenSharingYn);

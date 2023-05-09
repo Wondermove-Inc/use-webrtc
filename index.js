@@ -10,29 +10,6 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -69,20 +46,27 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // ** React Imports
 var react_1 = require("react");
-// ** Store & Actions Imports
-var peerjs_1 = __importDefault(require("peerjs"));
 // import { useRouter } from "next/router";
 var axios_1 = __importDefault(require("axios"));
 var socket_io_client_1 = require("socket.io-client");
 var moment_1 = __importDefault(require("moment"));
 var Rtc = function (_a) {
-    var _b = _a.chatRoomId, chatRoomId = _b === void 0 ? "testChatroom" : _b, dealerYn = _a.dealerYn, _c = _a.config, SOCKET_URI = _c.SOCKET_URI, SOCKET_NAMESPACE = _c.SOCKET_NAMESPACE, WEBRTC_URI = _c.WEBRTC_URI, WEBRTC_SLAVE_URI = _c.WEBRTC_SLAVE_URI, WEBRTC_PORT = _c.WEBRTC_PORT, WEBRTC_ROOM_URI = _c.WEBRTC_ROOM_URI, WEBRTC_PATH = _c.WEBRTC_PATH;
+    var _b = _a.chatRoomId, chatRoomId = _b === void 0 ? "testChatroom" : _b, dealerYn = _a.dealerYn, _c = _a.config, SOCKET_URI = _c.SOCKET_URI, SOCKET_NAMESPACE = _c.SOCKET_NAMESPACE, WEBRTC_URI = _c.WEBRTC_URI, WEBRTC_SLAVE_URI = _c.WEBRTC_SLAVE_URI, WEBRTC_PORT = _c.WEBRTC_PORT, WEBRTC_ROOM_URI = _c.WEBRTC_ROOM_URI, WEBRTC_PATH = _c.WEBRTC_PATH, SIGNAL_SOCKET_URI = _c.SIGNAL_SOCKET_URI, SIGNAL_SOCKET_NAMESPACE = _c.SIGNAL_SOCKET_NAMESPACE;
     var SERVER_URI = WEBRTC_URI;
     var SERVER_SLAVE_URI = WEBRTC_SLAVE_URI;
     var SERVER_PORT = parseInt(WEBRTC_PORT);
@@ -111,9 +95,12 @@ var Rtc = function (_a) {
     var _0 = (0, react_1.useState)(true), customerCameraOnYn = _0[0], setCustomerCameraOnYn = _0[1];
     var _1 = (0, react_1.useState)(false), customerLeftYn = _1[0], setCustomerLeftYn = _1[1];
     var _2 = (0, react_1.useState)(), socketInstance = _2[0], setSocketInstance = _2[1];
-    var _3 = (0, react_1.useState)(false), leftYn = _3[0], setLeftYn = _3[1];
-    var _4 = (0, react_1.useState)(), startTime = _4[0], setStartTime = _4[1];
-    var _5 = (0, react_1.useState)(0), timeDiff = _5[0], setTimeDiff = _5[1];
+    var _3 = (0, react_1.useState)(), webRtcSocketInstance = _3[0], setWebRtcSocketInstance = _3[1];
+    var _4 = (0, react_1.useState)([]), remoteCandidates = _4[0], setRemoteCandidates = _4[1];
+    var _5 = (0, react_1.useState)(false), leftYn = _5[0], setLeftYn = _5[1];
+    var _6 = (0, react_1.useState)(), startTime = _6[0], setStartTime = _6[1];
+    var _7 = (0, react_1.useState)(0), timeDiff = _7[0], setTimeDiff = _7[1];
+    var _8 = (0, react_1.useState)([]), remoteTracks = _8[0], setRemoteTracks = _8[1];
     var userType = dealerYn ? "DEALER" : "CUSTOMER";
     var playerRef = (0, react_1.useRef)();
     var remotePlayerRef = (0, react_1.useRef)();
@@ -561,40 +548,119 @@ var Rtc = function (_a) {
             }
         });
     }); }, [chatRoomId, userType, peerId]);
-    var connect = (0, react_1.useCallback)(function () {
-        console.log("Connecting to ".concat(destination, "..."));
-        setConnecting(true);
-        try {
-            if (!local)
-                throw new Error("localPeer not defined");
-            if (!localStream)
-                throw new Error("localStream not defined");
-            if (!destination)
-                throw new Error("destination not defined");
-            var conn = local.connect(destination);
-            conn.on("data", function (data) {
-                setConnected(true);
-                setConnecting(false);
-                console.log("received: ".concat(data));
-            });
-            conn.on("open", function () {
-                console.log("opened");
-                setConnected(true);
-                setConnecting(false);
-            });
-            conn.on("error", function (e) {
-                console.log("connect error", e);
-                setConnected(false);
-                setConnecting(false);
-            });
+    //! initial offer
+    var sendOffer = (0, react_1.useCallback)(function (socket) { return __awaiter(void 0, void 0, void 0, function () {
+        var sessionConstraints, offerDescription, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    sessionConstraints = {
+                        mandatory: {
+                            OfferToReceiveAudio: true,
+                            OfferToReceiveVideo: true,
+                        },
+                    };
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    if (!local)
+                        throw new Error("local is null");
+                    return [4 /*yield*/, local.createOffer(sessionConstraints)];
+                case 2:
+                    offerDescription = _a.sent();
+                    console.log("createoffer ~ offerDescription", offerDescription);
+                    return [4 /*yield*/, local.setLocalDescription(offerDescription)];
+                case 3:
+                    _a.sent();
+                    //!Send the offerDescription to customer.
+                    socket.emit("offer", { sdp: offerDescription, sender: userType });
+                    return [3 /*break*/, 5];
+                case 4:
+                    error_1 = _a.sent();
+                    console.error("createOffer ~ line 363 ~ error ~ ", error_1);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
+            }
+        });
+    }); }, [local]);
+    //! run if received answer from customer
+    var setRemoteDescription = (0, react_1.useCallback)(function (offer) { return __awaiter(void 0, void 0, void 0, function () {
+        var answerDescription, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    if (!local)
+                        throw new Error("local is not defined");
+                    answerDescription = new RTCSessionDescription(offer);
+                    console.log("setRemoteDescription ~ answerDescription", answerDescription);
+                    return [4 /*yield*/, local.setRemoteDescription(answerDescription)];
+                case 1:
+                    _a.sent();
+                    //!process leftover candidate
+                    processCandidates();
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_2 = _a.sent();
+                    console.error("setRemoteDescription ~ line 410 ~ error ~ ", error_2);
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    }); }, [local]);
+    //! run if received iceCandidate from customer
+    var handleRemoteCandidate = function (iceCandidate) {
+        var newCandidate = new RTCIceCandidate(iceCandidate);
+        if (local === null || (local === null || local === void 0 ? void 0 : local.remoteDescription) === null) {
+            return remoteCandidates.push(newCandidate);
         }
-        catch (e) {
-            console.log("connect error 2", e);
+        return local === null || local === void 0 ? void 0 : local.addIceCandidate(newCandidate);
+    };
+    var processCandidates = function () {
+        if (remoteCandidates.length < 1) {
+            return;
         }
-        finally {
-            setConnecting(false);
-        }
-    }, [destination, localStream, local]);
+        if (!local)
+            return;
+        console.log("remoteCandidates!!!!", remoteCandidates);
+        remoteCandidates.map(function (candidate) { return local.addIceCandidate(candidate); });
+        setRemoteCandidates([]);
+    };
+    //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
+    var sendAnswer = function (offer) { return __awaiter(void 0, void 0, void 0, function () {
+        var offerDescription, answerDescription, e_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 4, 5, 6]);
+                    if (!local || !webRtcSocketInstance)
+                        return [2 /*return*/];
+                    offerDescription = new RTCSessionDescription(offer);
+                    return [4 /*yield*/, local.setRemoteDescription(offerDescription)];
+                case 1:
+                    _a.sent();
+                    return [4 /*yield*/, local.createAnswer()];
+                case 2:
+                    answerDescription = _a.sent();
+                    return [4 /*yield*/, local.setLocalDescription(answerDescription)];
+                case 3:
+                    _a.sent();
+                    webRtcSocketInstance.emit("answer", {
+                        sdp: answerDescription,
+                        sender: userType,
+                    });
+                    return [3 /*break*/, 6];
+                case 4:
+                    e_4 = _a.sent();
+                    console.error("sendAnswer ~ error ~", e_4);
+                    return [3 /*break*/, 6];
+                case 5:
+                    processCandidates();
+                    return [7 /*endfinally*/];
+                case 6: return [2 /*return*/];
+            }
+        });
+    }); };
     var handleStream = (0, react_1.useCallback)(function (stream) {
         setStartTime(function (prev) { return prev || (0, moment_1.default)(); });
         console.log("navis calling 2 aaa", stream);
@@ -602,56 +668,6 @@ var Rtc = function (_a) {
         // Here you'd add it to an HTML video/canvas element.
         setRemoteStream(stream);
     }, [localStream]);
-    var startCall = (0, react_1.useCallback)(function () {
-        console.log("method startCall() called", local, destination, localStream);
-        if (!local)
-            throw new Error("localPeer not defined");
-        if (!destination)
-            throw new Error("destination not defined");
-        if (!localStream)
-            throw new Error("localstream not defined");
-        local.on("call", function (call) {
-            console.log("localPeer has received call");
-            console.log("localStream is ", localStream);
-            // Answer the call, providing our mediaStream
-            if (localStream != null) {
-                // console.log('navis calling aaa', localStream);
-                call.answer(localStream);
-                call.on("stream", function (stream) {
-                    handleStream(stream);
-                });
-                call.on("close", function () {
-                    setRemoteStream(null);
-                });
-                call.on("error", function (e) {
-                    console.log(e);
-                    setRemoteStream(null);
-                    setConnected(false);
-                });
-            }
-        });
-        try {
-            var call = local.call(destination, localStream);
-            call === null || call === void 0 ? void 0 : call.on("stream", function (stream) {
-                handleStream(stream);
-            });
-            console.log(call);
-            call.on("error", function (e) {
-                console.log("call connection errored", e);
-            });
-            call.on("close", function () {
-                console.log("call connection closed");
-            });
-            setMediaConnection(call);
-        }
-        catch (e) {
-            setConnected(false);
-            console.log(e);
-        }
-        finally {
-            setConnecting(false);
-        }
-    }, [local, destination, localStream, remoteStream]);
     var stop = (0, react_1.useCallback)(function () {
         console.log("stop", localStream, remoteStream);
         navigator.mediaDevices
@@ -672,7 +688,7 @@ var Rtc = function (_a) {
             setLocalStream(null);
         }
         if (local)
-            local.disconnect();
+            local.close();
         if (mediaConnection)
             mediaConnection.close();
         if (remoteStream) {
@@ -773,6 +789,94 @@ var Rtc = function (_a) {
             return [2 /*return*/, socket];
         });
     }); };
+    //** Socket Initializer
+    var webRTCSocketInitializer = function (_id) { return __awaiter(void 0, void 0, void 0, function () {
+        var manager, socket, getCandidate, getAnswer, getOffer, allUsers;
+        return __generator(this, function (_a) {
+            manager = new socket_io_client_1.Manager(SIGNAL_SOCKET_URI, {
+                transports: ["websocket"],
+                secure: true,
+            });
+            socket = manager.socket(SIGNAL_SOCKET_NAMESPACE);
+            getCandidate = function (_a) {
+                var candidate = _a.candidate, sender = _a.sender;
+                var isMe = sender === userType;
+                if (!isMe) {
+                    console.log("getCandidate socket received - customer", candidate);
+                    handleRemoteCandidate(candidate);
+                }
+            };
+            getAnswer = function (_a) {
+                var sdp = _a.sdp, sender = _a.sender;
+                return __awaiter(void 0, void 0, void 0, function () {
+                    var isMe;
+                    return __generator(this, function (_b) {
+                        switch (_b.label) {
+                            case 0:
+                                isMe = sender === userType;
+                                console.log("answer socket received", sdp);
+                                if (!!isMe) return [3 /*break*/, 2];
+                                return [4 /*yield*/, setRemoteDescription(sdp)];
+                            case 1:
+                                _b.sent();
+                                _b.label = 2;
+                            case 2: return [2 /*return*/];
+                        }
+                    });
+                });
+            };
+            getOffer = function (_a) {
+                var sdp = _a.sdp, sender = _a.sender;
+                return __awaiter(void 0, void 0, void 0, function () {
+                    var isMe;
+                    return __generator(this, function (_b) {
+                        switch (_b.label) {
+                            case 0:
+                                isMe = sender === userType;
+                                if (!!isMe) return [3 /*break*/, 2];
+                                console.log("offer socket received", sdp);
+                                return [4 /*yield*/, sendAnswer(sdp)];
+                            case 1:
+                                _b.sent();
+                                _b.label = 2;
+                            case 2: return [2 /*return*/];
+                        }
+                    });
+                });
+            };
+            allUsers = function (all_users) { return __awaiter(void 0, void 0, void 0, function () {
+                var users, len;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            console.log("all_users socket received", all_users);
+                            users = all_users.filter(function (i) { return i.userType !== userType; });
+                            len = users.length;
+                            console.log("all_users length!!!", len);
+                            if (!(userType === "DEALER")) return [3 /*break*/, 2];
+                            if (!(len > 0)) return [3 /*break*/, 2];
+                            return [4 /*yield*/, sendOffer(socket)];
+                        case 1:
+                            _a.sent();
+                            _a.label = 2;
+                        case 2: return [2 /*return*/];
+                    }
+                });
+            }); };
+            socket.on("getCandidate", getCandidate);
+            socket.on("all_users", allUsers);
+            if (userType === "CUSTOMER") {
+                socket.on("getOffer", getOffer);
+            }
+            else {
+                socket.on("getAnswer", getAnswer);
+            }
+            socket.emit("join_room", { room: chatRoomId, sender: userType });
+            console.log("joinjoin", chatRoomId);
+            setWebRtcSocketInstance(socket);
+            return [2 /*return*/, socket];
+        });
+    }); };
     // 1. 딜러 입장 시 로컬스트림 세팅
     (0, react_1.useEffect)(function () {
         console.log("1. 딜러 입장 시 로컬스트림 세팅", localStream);
@@ -831,119 +935,155 @@ var Rtc = function (_a) {
             }
         }
     }, [customerMicOnYn]);
+    var createPeerConnection = function () {
+        var peerConstraints = {
+            iceServers: peerMaster.config.iceServers,
+        };
+        var peerConnection = new RTCPeerConnection(peerConstraints);
+        return peerConnection;
+    };
     // // 2. 로컬 Peer id 받고
     (0, react_1.useEffect)(function () {
-        console.log("로컬 peerid 세팅을 시작", peerId);
-        if (peerId == null && localStream != null) {
-            Promise.resolve().then(function () { return __importStar(require("peerjs")); }).then(function (_a) {
-                var Peer = _a.default;
-                console.log("peerjs import");
-                // normal synchronous code
-                var localPeer = new Peer(peerMaster);
-                setLocal(localPeer);
-                console.log("localPeer", localPeer);
-            })
-                .catch(function (e) {
-                console.error(e);
-            });
+        console.log("로컬 peerid 세팅을 시작");
+        if (local == null) {
+            var localPeer = createPeerConnection();
+            //* local peer에 localStream 등록
+            setLocal(localPeer);
+            // join_room emit
         }
         return function () {
-            setLocal(null);
+            setLocal(undefined);
         };
-    }, [localStream]);
+    }, []);
     (0, react_1.useEffect)(function () {
-        console.log("local peer changed");
         if (local) {
-            local.on("open", function (localPeerId) {
-                console.log("Local peer open with ID", localPeerId);
-                setPeerId(localPeerId);
-            });
-            local.on("connection", function (conn) {
-                console.log("Local peer has received connection.");
-                setConnected(true);
-                setConnecting(false);
-                setPeerErrorMessage(null);
-                setNetworkErrored(false);
-                // setDestination()
-                setDestination(conn.peer);
-                conn.on("error", function (e) {
-                    console.log(e);
-                    // setConnected(false);
-                    setConnecting(false);
+            var socket_1;
+            console.log("socket icandoit rtc");
+            (function () { return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, webRTCSocketInitializer(null)];
+                        case 1:
+                            socket_1 = _a.sent();
+                            console.log("join!!");
+                            return [2 /*return*/];
+                    }
                 });
-                conn.on("open", function () {
-                    setConnected(true);
-                    setConnecting(false);
-                    console.log("Local peer has opened connection.", conn.peer);
-                    // conn.on('data', (data) => console.log('Received from remote peer', data));
-                    console.log("Local peer sending data.");
-                    conn.send("Hello, this is the LOCAL peer!");
-                });
-            });
-            local.on("call", function (mediaConnection) {
-                console.log("local Peer on call ", mediaConnection);
-                if (!destination)
-                    setDestination(mediaConnection.peer);
-                if (userType === "CUSTOMER") {
-                    if (localStream == null)
-                        throw new Error("localstream is not defined");
-                    mediaConnection.answer(localStream);
-                    mediaConnection.on("stream", function (stream) {
-                        handleStream(stream);
-                    });
-                    mediaConnection.on("close", function () {
-                        setRemoteStream(null);
-                    });
-                    mediaConnection.on("error", function (e) {
-                        console.log(e);
-                        setRemoteStream(null);
-                        setConnected(false);
-                    });
+            }); })();
+            return function () {
+                console.log("socket off");
+                if (socket_1) {
+                    // socket.emit('leave', { roomId: chatRoomId, sender: userType });
+                    socket_1.removeAllListeners();
+                    socket_1.disconnect();
+                    setWebRtcSocketInstance(undefined);
                 }
-            });
-            local.on("close", function () {
-                console.log("local Peer closed ");
-            });
-            local.on("disconnected", function () {
-                console.log("Local peer disconnected. trying to connect using slave server.");
-                console.log("setlocal start");
-                var peer = new peerjs_1.default(peerSlave);
-                setLocal(peer);
-                console.log("setlocal called");
-            });
-            local.on("error", function (e) {
-                console.log("Local peer has got errored ", e);
-                if (e["type"] === "network") {
-                    // modal 출력
-                    setNetworkErrored(true);
-                }
-                setPeerErrorMessage("An error has occured while connecting. ECODE: " + e["type"]);
-                // console.log(this.state.myId, 'peer.eeror', error.type);
-                // var interval = setTimeout(function () {
-                //   if (localPeer.open === true || localPeer.destroyed === true) {
-                //     clearInterval(interval);
-                //   } else {
-                //     localPeer.reconnect();
-                //   }
-                // }, 5000);
-            });
+            };
         }
     }, [local]);
-    // 3. 받아온 peer id를  rtc 서버에 등록하고, 상대방 아이디가 있는지 확인함
     (0, react_1.useEffect)(function () {
-        if (peerId) {
-            console.log("peerid: ", peerId, ", finding destination");
-            findDestination();
+        if (local && localStream) {
+            console.log("localstream", localStream);
+            localStream.getTracks().forEach(function (track) {
+                console.log("addTrack", track);
+                local.addTrack(track, localStream);
+            });
         }
-    }, [peerId]);
-    // 4. 상대방 아이디 있으면 연결한다.
+    }, [localStream, local]);
     (0, react_1.useEffect)(function () {
-        if (!connecting)
-            if (destination && peerId) {
-                console.log("destination found: ", destination, ", trying to connect");
-                connect();
-            }
-    }, [destination, peerId, connecting]);
+        console.log("local peer changed", webRtcSocketInstance);
+        if (webRtcSocketInstance && localStream && local) {
+            console.log(webRtcSocketInstance, "join");
+            local.onconnectionstatechange = function (event) {
+                switch (local.connectionState) {
+                    case "closed":
+                        console.error("local.connectionState ~ closed ~ line 245 ~ ");
+                        setNetworkErrored(true);
+                        // if (!isExiting) {
+                        //   setErrorText(t('t_live.customer_is_reconnecting'));
+                        //   setErrorMessageVisible(true);
+                        //   setErrorModalVisible(true);
+                        // }
+                        break;
+                    default:
+                        break;
+                }
+            };
+            //* ice candidate 발생 이벤트
+            local.onicecandidate = function (event) {
+                if (!event.candidate) {
+                    return;
+                }
+                console.log("iceCandidate!!!", event.candidate);
+                //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
+                webRtcSocketInstance.emit("candidate", {
+                    candidate: event.candidate,
+                    sender: userType,
+                });
+            };
+            local.onicecandidateerror = function (event) {
+                // console.error('icecandidateerror', event);
+            };
+            //* ice connection 상태 이벤트. completed일 경우 peer간 연결 성공
+            local.oniceconnectionstatechange = function (event) {
+                console.log("iceconnectionstatechange", local.iceConnectionState);
+                switch (local.iceConnectionState) {
+                    case "connected":
+                    case "completed":
+                        console.log("iceConnectionStateChange ~ completed");
+                        setConnected(true);
+                        break;
+                    case "disconnected":
+                        console.error("local.connectionState ~ closed ~ line 282 ~ ");
+                        setNetworkErrored(true);
+                    // if (!isExiting) {
+                    //   setErrorText(t('t_live.customer_is_reconnecting'));
+                    //   setErrorMessageVisible(true);
+                    //   setErrorModalVisible(true);
+                    // }
+                    default:
+                        break;
+                }
+            };
+            //* remote stream 받는 이벤트. 후처리를 위해 배열에 저장.
+            local.ontrack = function (event) {
+                if (event.streams[0].getTracks().length > 1) {
+                    console.log("track!!!!", JSON.stringify(event.streams[0]));
+                    setRemoteTracks(__spreadArray(__spreadArray([], remoteTracks, true), [event.streams[0]], false));
+                }
+            };
+        }
+    }, [webRtcSocketInstance, localStream]);
+    (0, react_1.useEffect)(function () {
+        //* ice connection 상태가 completed 일 경우 remoteStream 설정
+        if (connected) {
+            console.log("completed!!");
+            processTracks();
+            setStartTime(function (prev) { return prev || (0, moment_1.default)(); });
+        }
+    }, [connected]);
+    //* iceconnectionstatechange가 completed일 경우 remoteStream 처리
+    var processTracks = function () {
+        console.log("processing tracks", remoteTracks[0]);
+        var len = remoteTracks.length;
+        setRemoteStream(remoteTracks[len - 1]);
+        setRemoteTracks([]);
+    };
+    // // 3. 받아온 peer id를  rtc 서버에 등록하고, 상대방 아이디가 있는지 확인함
+    // useEffect(() => {
+    //   if (peerId) {
+    //     console.log("peerid: ", peerId, ", finding destination");
+    //     findDestination();
+    //   }
+    // }, [peerId]);
+    // // 4. 상대방 아이디 있으면 연결한다.
+    // useEffect(() => {
+    //   if (!connecting)
+    //     if (destination && peerId) {
+    //       console.log("destination found: ", destination, ", trying to connect");
+    //       connect();
+    //     }
+    // }, [destination, peerId, connecting]);
     (0, react_1.useEffect)(function () {
         if (localStream) {
             setCameraOnYn(true);
@@ -1002,20 +1142,6 @@ var Rtc = function (_a) {
         else {
         }
     }, [remoteStream]);
-    // useEffect(() => {
-    //   if (localStream && destination && local) {
-    //     if (connected && userType === "DEALER") startCall();
-    //   }
-    // }, [local, destination, localStream]);
-    // 5. 연결됐으면 call 후 remoteStream을 받아온다.
-    (0, react_1.useEffect)(function () {
-        if (connected && userType === "DEALER") {
-            if (localStream && destination && local) {
-                console.log("connected!");
-                startCall();
-            }
-        }
-    }, [connected]);
     (0, react_1.useEffect)(function () {
         console.log("screensharing", screenSharingYn);
         if (screenSharingYn) {
