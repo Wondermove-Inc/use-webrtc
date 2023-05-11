@@ -564,23 +564,26 @@ const Rtc = ({
     setRemoteCandidates([]);
   };
   //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
-  const sendAnswer = async (offer) => {
-    try {
-      if (!local || !webRtcSocketInstance) return;
-      const offerDescription = new RTCSessionDescription(offer);
-      await local.setRemoteDescription(offerDescription);
-      const answerDescription = await local.createAnswer();
-      await local.setLocalDescription(answerDescription);
-      webRtcSocketInstance.emit("answer", {
-        sdp: answerDescription,
-        sender: userType,
-      });
-    } catch (e) {
-      console.error("sendAnswer ~ error ~", e);
-    } finally {
-      processCandidates();
-    }
-  };
+  const sendAnswer = useCallback(
+    async (offer) => {
+      try {
+        if (!local || !webRtcSocketInstance) return;
+        const offerDescription = new RTCSessionDescription(offer);
+        await local.setRemoteDescription(offerDescription);
+        const answerDescription = await local.createAnswer();
+        await local.setLocalDescription(answerDescription);
+        webRtcSocketInstance.emit("answer", {
+          sdp: answerDescription,
+          sender: userType,
+        });
+      } catch (e) {
+        console.error("sendAnswer ~ error ~", e);
+      } finally {
+        processCandidates();
+      }
+    },
+    [local, webRtcSocketInstance]
+  );
 
   const handleStream = useCallback(
     (stream) => {

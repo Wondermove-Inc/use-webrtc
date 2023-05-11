@@ -627,7 +627,7 @@ var Rtc = function (_a) {
         setRemoteCandidates([]);
     };
     //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
-    var sendAnswer = function (offer) { return __awaiter(void 0, void 0, void 0, function () {
+    var sendAnswer = (0, react_1.useCallback)(function (offer) { return __awaiter(void 0, void 0, void 0, function () {
         var offerDescription, answerDescription, e_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -660,7 +660,7 @@ var Rtc = function (_a) {
                 case 6: return [2 /*return*/];
             }
         });
-    }); };
+    }); }, [local, webRtcSocketInstance]);
     var handleStream = (0, react_1.useCallback)(function (stream) {
         setStartTime(function (prev) { return prev || (0, moment_1.default)(); });
         console.log("navis calling 2 aaa", stream);
