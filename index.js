@@ -633,7 +633,7 @@ var Rtc = function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 4, 5, 6]);
-                    if (!local || !webRtcSocketInstance)
+                    if (!local)
                         return [2 /*return*/];
                     offerDescription = new RTCSessionDescription(offer);
                     return [4 /*yield*/, local.setRemoteDescription(offerDescription)];
@@ -645,7 +645,7 @@ var Rtc = function (_a) {
                     return [4 /*yield*/, local.setLocalDescription(answerDescription)];
                 case 3:
                     _a.sent();
-                    webRtcSocketInstance.emit("answer", {
+                    webRtcSocketInstance === null || webRtcSocketInstance === void 0 ? void 0 : webRtcSocketInstance.emit("answer", {
                         sdp: answerDescription,
                         sender: userType,
                     });

@@ -567,12 +567,12 @@ const Rtc = ({
   const sendAnswer = useCallback(
     async (offer) => {
       try {
-        if (!local || !webRtcSocketInstance) return;
+        if (!local) return;
         const offerDescription = new RTCSessionDescription(offer);
         await local.setRemoteDescription(offerDescription);
         const answerDescription = await local.createAnswer();
         await local.setLocalDescription(answerDescription);
-        webRtcSocketInstance.emit("answer", {
+        webRtcSocketInstance?.emit("answer", {
           sdp: answerDescription,
           sender: userType,
         });
