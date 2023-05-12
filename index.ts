@@ -572,17 +572,31 @@ const Rtc = ({
         await local.setRemoteDescription(offerDescription);
         const answerDescription = await local.createAnswer();
         await local.setLocalDescription(answerDescription);
-        webRtcSocketInstance?.emit("answer", {
-          sdp: answerDescription,
-          sender: userType,
-        });
+        sendAnswerSocket(answerDescription, userType);
       } catch (e) {
         console.error("sendAnswer ~ error ~", e);
       } finally {
         processCandidates();
       }
     },
-    [local, webRtcSocketInstance]
+    [local]
+  );
+  const sendAnswerSocket = useCallback(
+    (answerDescription, userType) => {
+      if (!webRtcSocketInstance)
+        throw new Error("webrtcSocketInstance is null");
+      console.log(
+        "sendAnswerSocket",
+        webRtcSocketInstance,
+        answerDescription,
+        userType
+      );
+      webRtcSocketInstance?.emit("answer", {
+        sdp: answerDescription,
+        sender: userType,
+      });
+    },
+    [webRtcSocketInstance]
   );
   useEffect(() => {
     console.log("webRtcSocketInstance changed", webRtcSocketInstance);

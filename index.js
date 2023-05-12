@@ -645,10 +645,7 @@ var Rtc = function (_a) {
                     return [4 /*yield*/, local.setLocalDescription(answerDescription)];
                 case 3:
                     _a.sent();
-                    webRtcSocketInstance === null || webRtcSocketInstance === void 0 ? void 0 : webRtcSocketInstance.emit("answer", {
-                        sdp: answerDescription,
-                        sender: userType,
-                    });
+                    sendAnswerSocket(answerDescription, userType);
                     return [3 /*break*/, 6];
                 case 4:
                     e_4 = _a.sent();
@@ -660,7 +657,16 @@ var Rtc = function (_a) {
                 case 6: return [2 /*return*/];
             }
         });
-    }); }, [local, webRtcSocketInstance]);
+    }); }, [local]);
+    var sendAnswerSocket = (0, react_1.useCallback)(function (answerDescription, userType) {
+        if (!webRtcSocketInstance)
+            throw new Error("webrtcSocketInstance is null");
+        console.log("sendAnswerSocket", webRtcSocketInstance, answerDescription, userType);
+        webRtcSocketInstance === null || webRtcSocketInstance === void 0 ? void 0 : webRtcSocketInstance.emit("answer", {
+            sdp: answerDescription,
+            sender: userType,
+        });
+    }, [webRtcSocketInstance]);
     (0, react_1.useEffect)(function () {
         console.log("webRtcSocketInstance changed", webRtcSocketInstance);
     }, [webRtcSocketInstance]);
