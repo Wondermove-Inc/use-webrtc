@@ -104,6 +104,7 @@ var Rtc = function (_a) {
     var userType = dealerYn ? "DEALER" : "CUSTOMER";
     var playerRef = (0, react_1.useRef)();
     var remotePlayerRef = (0, react_1.useRef)();
+    var webRtcSocketRef = (0, react_1.useRef)();
     var peerMaster = {
         host: SERVER_URI,
         path: WEBRTC_PATH,
@@ -626,6 +627,19 @@ var Rtc = function (_a) {
         remoteCandidates.map(function (candidate) { return local.addIceCandidate(candidate); });
         setRemoteCandidates([]);
     };
+    var sendAnswerSocket = (0, react_1.useCallback)(function (answerDescription, userType) {
+        var _a;
+        console.log("sendAnswerSocket", webRtcSocketRef, answerDescription, userType);
+        if (!webRtcSocketRef.current)
+            throw new Error("webrtcSocketInstance is null");
+        (_a = webRtcSocketRef.current) === null || _a === void 0 ? void 0 : _a.emit("answer", {
+            sdp: answerDescription,
+            sender: userType,
+        });
+    }, [webRtcSocketRef]);
+    (0, react_1.useEffect)(function () {
+        console.log("webRtcSocketInstance changed", webRtcSocketRef);
+    }, [webRtcSocketRef]);
     //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
     var sendAnswer = (0, react_1.useCallback)(function (offer) { return __awaiter(void 0, void 0, void 0, function () {
         var offerDescription, answerDescription, e_4;
@@ -658,18 +672,6 @@ var Rtc = function (_a) {
             }
         });
     }); }, [local]);
-    var sendAnswerSocket = (0, react_1.useCallback)(function (answerDescription, userType) {
-        if (!webRtcSocketInstance)
-            throw new Error("webrtcSocketInstance is null");
-        console.log("sendAnswerSocket", webRtcSocketInstance, answerDescription, userType);
-        webRtcSocketInstance === null || webRtcSocketInstance === void 0 ? void 0 : webRtcSocketInstance.emit("answer", {
-            sdp: answerDescription,
-            sender: userType,
-        });
-    }, [webRtcSocketInstance]);
-    (0, react_1.useEffect)(function () {
-        console.log("webRtcSocketInstance changed", webRtcSocketInstance);
-    }, [webRtcSocketInstance]);
     var handleStream = (0, react_1.useCallback)(function (stream) {
         setStartTime(function (prev) { return prev || (0, moment_1.default)(); });
         console.log("navis calling 2 aaa", stream);
@@ -969,11 +971,14 @@ var Rtc = function (_a) {
             var socket_1;
             console.log("socket icandoit rtc");
             (function () { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, webRTCSocketInitializer(null)];
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            _a = webRtcSocketRef;
+                            return [4 /*yield*/, webRTCSocketInitializer(null)];
                         case 1:
-                            socket_1 = _a.sent();
+                            _a.current = socket_1 = _b.sent();
                             console.log("join!!");
                             return [2 /*return*/];
                     }
@@ -986,7 +991,9 @@ var Rtc = function (_a) {
                     socket_1.removeAllListeners();
                     socket_1.disconnect();
                     setWebRtcSocketInstance(undefined);
+                    webRtcSocketRef.current = undefined;
                 }
+                // if (webRtcSocketInstance) {
             };
         }
     }, [local]);
@@ -1045,6 +1052,7 @@ var Rtc = function (_a) {
                     case "disconnected":
                         console.error("local.connectionState ~ closed ~ line 282 ~ ");
                         setNetworkErrored(true);
+                        break;
                     // if (!isExiting) {
                     //   setErrorText(t('t_live.customer_is_reconnecting'));
                     //   setErrorMessageVisible(true);

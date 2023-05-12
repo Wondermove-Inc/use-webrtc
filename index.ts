@@ -83,6 +83,7 @@ const Rtc = ({
 
   const playerRef = useRef<HTMLVideoElement>();
   const remotePlayerRef = useRef<HTMLVideoElement>();
+  const webRtcSocketRef = useRef<Socket>();
 
   const peerMaster = {
     host: SERVER_URI,
@@ -572,7 +573,10 @@ const Rtc = ({
         await local.setRemoteDescription(offerDescription);
         const answerDescription = await local.createAnswer();
         await local.setLocalDescription(answerDescription);
-        sendAnswerSocket(answerDescription, userType);
+        webRtcSocketRef.current?.emit("answer", {
+          sdp: answerDescription,
+          sender: userType,
+        });
       } catch (e) {
         console.error("sendAnswer ~ error ~", e);
       } finally {
@@ -581,26 +585,6 @@ const Rtc = ({
     },
     [local]
   );
-  const sendAnswerSocket = useCallback(
-    (answerDescription, userType) => {
-      if (!webRtcSocketInstance)
-        throw new Error("webrtcSocketInstance is null");
-      console.log(
-        "sendAnswerSocket",
-        webRtcSocketInstance,
-        answerDescription,
-        userType
-      );
-      webRtcSocketInstance?.emit("answer", {
-        sdp: answerDescription,
-        sender: userType,
-      });
-    },
-    [webRtcSocketInstance]
-  );
-  useEffect(() => {
-    console.log("webRtcSocketInstance changed", webRtcSocketInstance);
-  }, [webRtcSocketInstance]);
 
   const handleStream = useCallback(
     (stream) => {
@@ -883,7 +867,7 @@ const Rtc = ({
       let socket: Socket;
       console.log("socket icandoit rtc");
       (async () => {
-        socket = await webRTCSocketInitializer(null);
+        webRtcSocketRef.current = socket = await webRTCSocketInitializer(null);
         console.log("join!!");
         // socket.emit('join_room', { room: chatRoomId });
       })();
@@ -895,7 +879,9 @@ const Rtc = ({
           socket.removeAllListeners();
           socket.disconnect();
           setWebRtcSocketInstance(undefined);
+          webRtcSocketRef.current = undefined;
         }
+        // if (webRtcSocketInstance) {
       };
     }
   }, [local]);
@@ -961,6 +947,7 @@ const Rtc = ({
           case "disconnected":
             console.error("local.connectionState ~ closed ~ line 282 ~ ");
             setNetworkErrored(true);
+            break;
           // if (!isExiting) {
           //   setErrorText(t('t_live.customer_is_reconnecting'));
           //   setErrorMessageVisible(true);
