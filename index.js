@@ -661,6 +661,9 @@ var Rtc = function (_a) {
             }
         });
     }); }, [local, webRtcSocketInstance]);
+    (0, react_1.useEffect)(function () {
+        console.log("webRtcSocketInstance changed", webRtcSocketInstance);
+    }, [webRtcSocketInstance]);
     var handleStream = (0, react_1.useCallback)(function (stream) {
         setStartTime(function (prev) { return prev || (0, moment_1.default)(); });
         console.log("navis calling 2 aaa", stream);

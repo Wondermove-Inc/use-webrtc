@@ -584,6 +584,9 @@ const Rtc = ({
     },
     [local, webRtcSocketInstance]
   );
+  useEffect(() => {
+    console.log("webRtcSocketInstance changed", webRtcSocketInstance);
+  }, [webRtcSocketInstance]);
 
   const handleStream = useCallback(
     (stream) => {
