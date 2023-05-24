@@ -396,6 +396,33 @@ const Rtc = ({
    *
    */
   // 함수들 ~
+
+  const replaceTracks = useCallback(
+    (newStream: MediaStream, isScreenShare = false) => {
+      if (!localStream || !local || !playerRef.current) return;
+      const originalVideoTrack = localStream.getVideoTracks()[0];
+      const newVideoTrack = newStream
+        .getVideoTracks()
+        .filter((i) => i.readyState !== "ended")[0];
+      const videoSender = local
+        .getSenders()
+        .filter((i) => i.track?.kind === "video");
+
+      localStream.getVideoTracks().forEach((track) => track.stop());
+
+      newVideoTrack.onended = (e) => {
+        if (isScreenShare) {
+          setScreenSharingYn(false);
+        }
+      };
+      localStream.addTrack(newVideoTrack);
+      videoSender.forEach((sender) => {
+        sender.replaceTrack(newVideoTrack);
+      });
+      playerRef.current.srcObject = newStream;
+    },
+    [localStream, playerRef, local]
+  );
   const setLocalStreamVideo = useCallback(async () => {
     try {
       if (navigator.mediaDevices) {
@@ -403,26 +430,7 @@ const Rtc = ({
           video: true,
           audio: true,
         });
-
-        setLocalStream(s);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, [mediaDevices, cameraOnYn, micOnYn, localStream]);
-  const setMediaStreamVideo = useCallback(async () => {
-    try {
-      if (navigator.mediaDevices) {
-        let s = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: false,
-        });
-        let stream = await navigator.mediaDevices.getUserMedia({
-          video: false,
-          audio: true,
-        });
-        s.addTrack(stream.getAudioTracks()[0]);
-
+        console.log("user camera stream", s);
         s.addEventListener("inactive", function (e) {
           console.log("local inactive");
           // setMicOnYn(false);
@@ -458,11 +466,48 @@ const Rtc = ({
             // setConnectError(true);
           });
         });
+        s.addEventListener("addtrack", function (e) {
+          console.log("localstream:: on add track ", e);
+        });
 
-        setLocalStream(s);
+        if (!localStream) setLocalStream(s);
+        else {
+          console.log("bbb");
+          replaceTracks(s);
+          //   setLocalStream(localStream);
+        }
       }
     } catch (e) {
       console.error(e);
+    }
+  }, [mediaDevices, cameraOnYn, micOnYn, localStream]);
+
+  const setMediaStreamVideo = useCallback(async () => {
+    try {
+      if (navigator.mediaDevices) {
+        let s = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: false,
+        });
+        console.log("screen video", s.getTracks());
+        if (!localStream) {
+          let stream = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: true,
+          });
+          s.addTrack(stream.getAudioTracks()[0]);
+        }
+
+        if (!localStream) setLocalStream(s);
+        else {
+          replaceTracks(s, true);
+
+          //   setLocalStream(localStream);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      setScreenSharingYn(false);
     }
   }, [mediaDevices, cameraOnYn, micOnYn, localStream]);
 
@@ -889,8 +934,14 @@ const Rtc = ({
   useEffect(() => {
     if (local && localStream) {
       console.log("localstream", localStream);
+      localStream.addEventListener("addtrack", (e) => {
+        console.log("addtrack track~~~", e);
+      });
+      localStream.addEventListener("removetrack", (e) => {
+        console.log("removetrack track~~~", e);
+      });
       localStream.getTracks().forEach((track) => {
-        console.log("addTrack", track);
+        console.log("addTrack", track, local);
         local.addTrack(track, localStream);
       });
     }
@@ -913,6 +964,7 @@ const Rtc = ({
             // }
             break;
           default:
+            setNetworkErrored(false);
             break;
         }
       };
@@ -943,6 +995,7 @@ const Rtc = ({
           case "completed":
             console.log("iceConnectionStateChange ~ completed");
             setConnected(true);
+            setNetworkErrored(false);
             break;
           case "disconnected":
             console.error("local.connectionState ~ closed ~ line 282 ~ ");
@@ -1092,7 +1145,8 @@ const Rtc = ({
   }, [remoteStream]);
 
   useEffect(() => {
-    // console.log('localstream : ', localStream);
+    console.log("localstream : ", localStream, localStream?.getVideoTracks());
+
     if (playerRef.current && localStream)
       playerRef.current.srcObject = localStream ? localStream : null;
 
@@ -1106,7 +1160,7 @@ const Rtc = ({
         playerRef.current.srcObject = null;
       }
     };
-  }, [localStream]);
+  }, [localStream, screenSharingYn]);
 
   useEffect(() => {
     // return ()=>{

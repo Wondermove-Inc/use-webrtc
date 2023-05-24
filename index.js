@@ -415,6 +415,29 @@ var Rtc = function (_a) {
      *
      */
     // 함수들 ~
+    var replaceTracks = (0, react_1.useCallback)(function (newStream, isScreenShare) {
+        if (isScreenShare === void 0) { isScreenShare = false; }
+        if (!localStream || !local || !playerRef.current)
+            return;
+        var originalVideoTrack = localStream.getVideoTracks()[0];
+        var newVideoTrack = newStream
+            .getVideoTracks()
+            .filter(function (i) { return i.readyState !== "ended"; })[0];
+        var videoSender = local
+            .getSenders()
+            .filter(function (i) { var _a; return ((_a = i.track) === null || _a === void 0 ? void 0 : _a.kind) === "video"; });
+        localStream.getVideoTracks().forEach(function (track) { return track.stop(); });
+        newVideoTrack.onended = function (e) {
+            if (isScreenShare) {
+                setScreenSharingYn(false);
+            }
+        };
+        localStream.addTrack(newVideoTrack);
+        videoSender.forEach(function (sender) {
+            sender.replaceTrack(newVideoTrack);
+        });
+        playerRef.current.srcObject = newStream;
+    }, [localStream, playerRef, local]);
     var setLocalStreamVideo = (0, react_1.useCallback)(function () { return __awaiter(void 0, void 0, void 0, function () {
         var s, e_1;
         return __generator(this, function (_a) {
@@ -428,37 +451,7 @@ var Rtc = function (_a) {
                         })];
                 case 1:
                     s = _a.sent();
-                    setLocalStream(s);
-                    _a.label = 2;
-                case 2: return [3 /*break*/, 4];
-                case 3:
-                    e_1 = _a.sent();
-                    console.error(e_1);
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
-            }
-        });
-    }); }, [mediaDevices, cameraOnYn, micOnYn, localStream]);
-    var setMediaStreamVideo = (0, react_1.useCallback)(function () { return __awaiter(void 0, void 0, void 0, function () {
-        var s, stream_1, e_2;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 4, , 5]);
-                    if (!navigator.mediaDevices) return [3 /*break*/, 3];
-                    return [4 /*yield*/, navigator.mediaDevices.getDisplayMedia({
-                            video: true,
-                            audio: false,
-                        })];
-                case 1:
-                    s = _a.sent();
-                    return [4 /*yield*/, navigator.mediaDevices.getUserMedia({
-                            video: false,
-                            audio: true,
-                        })];
-                case 2:
-                    stream_1 = _a.sent();
-                    s.addTrack(stream_1.getAudioTracks()[0]);
+                    console.log("user camera stream", s);
                     s.addEventListener("inactive", function (e) {
                         console.log("local inactive");
                         // setMicOnYn(false);
@@ -493,14 +486,64 @@ var Rtc = function (_a) {
                             // setConnectError(true);
                         });
                     });
-                    setLocalStream(s);
+                    s.addEventListener("addtrack", function (e) {
+                        console.log("localstream:: on add track ", e);
+                    });
+                    if (!localStream)
+                        setLocalStream(s);
+                    else {
+                        console.log("bbb");
+                        replaceTracks(s);
+                        //   setLocalStream(localStream);
+                    }
+                    _a.label = 2;
+                case 2: return [3 /*break*/, 4];
+                case 3:
+                    e_1 = _a.sent();
+                    console.error(e_1);
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    }); }, [mediaDevices, cameraOnYn, micOnYn, localStream]);
+    var setMediaStreamVideo = (0, react_1.useCallback)(function () { return __awaiter(void 0, void 0, void 0, function () {
+        var s, stream_1, e_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 5, , 6]);
+                    if (!navigator.mediaDevices) return [3 /*break*/, 4];
+                    return [4 /*yield*/, navigator.mediaDevices.getDisplayMedia({
+                            video: true,
+                            audio: false,
+                        })];
+                case 1:
+                    s = _a.sent();
+                    console.log("screen video", s.getTracks());
+                    if (!!localStream) return [3 /*break*/, 3];
+                    return [4 /*yield*/, navigator.mediaDevices.getUserMedia({
+                            video: false,
+                            audio: true,
+                        })];
+                case 2:
+                    stream_1 = _a.sent();
+                    s.addTrack(stream_1.getAudioTracks()[0]);
                     _a.label = 3;
-                case 3: return [3 /*break*/, 5];
-                case 4:
+                case 3:
+                    if (!localStream)
+                        setLocalStream(s);
+                    else {
+                        replaceTracks(s, true);
+                        //   setLocalStream(localStream);
+                    }
+                    _a.label = 4;
+                case 4: return [3 /*break*/, 6];
+                case 5:
                     e_2 = _a.sent();
                     console.error(e_2);
-                    return [3 /*break*/, 5];
-                case 5: return [2 /*return*/];
+                    setScreenSharingYn(false);
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
             }
         });
     }); }, [mediaDevices, cameraOnYn, micOnYn, localStream]);
@@ -627,42 +670,33 @@ var Rtc = function (_a) {
         remoteCandidates.map(function (candidate) { return local.addIceCandidate(candidate); });
         setRemoteCandidates([]);
     };
-    var sendAnswerSocket = (0, react_1.useCallback)(function (answerDescription, userType) {
-        var _a;
-        console.log("sendAnswerSocket", webRtcSocketRef, answerDescription, userType);
-        if (!webRtcSocketRef.current)
-            throw new Error("webrtcSocketInstance is null");
-        (_a = webRtcSocketRef.current) === null || _a === void 0 ? void 0 : _a.emit("answer", {
-            sdp: answerDescription,
-            sender: userType,
-        });
-    }, [webRtcSocketRef]);
-    (0, react_1.useEffect)(function () {
-        console.log("webRtcSocketInstance changed", webRtcSocketRef);
-    }, [webRtcSocketRef]);
     //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
     var sendAnswer = (0, react_1.useCallback)(function (offer) { return __awaiter(void 0, void 0, void 0, function () {
         var offerDescription, answerDescription, e_4;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
-                    _a.trys.push([0, 4, 5, 6]);
+                    _b.trys.push([0, 4, 5, 6]);
                     if (!local)
                         return [2 /*return*/];
                     offerDescription = new RTCSessionDescription(offer);
                     return [4 /*yield*/, local.setRemoteDescription(offerDescription)];
                 case 1:
-                    _a.sent();
+                    _b.sent();
                     return [4 /*yield*/, local.createAnswer()];
                 case 2:
-                    answerDescription = _a.sent();
+                    answerDescription = _b.sent();
                     return [4 /*yield*/, local.setLocalDescription(answerDescription)];
                 case 3:
-                    _a.sent();
-                    sendAnswerSocket(answerDescription, userType);
+                    _b.sent();
+                    (_a = webRtcSocketRef.current) === null || _a === void 0 ? void 0 : _a.emit("answer", {
+                        sdp: answerDescription,
+                        sender: userType,
+                    });
                     return [3 /*break*/, 6];
                 case 4:
-                    e_4 = _a.sent();
+                    e_4 = _b.sent();
                     console.error("sendAnswer ~ error ~", e_4);
                     return [3 /*break*/, 6];
                 case 5:
@@ -1000,8 +1034,14 @@ var Rtc = function (_a) {
     (0, react_1.useEffect)(function () {
         if (local && localStream) {
             console.log("localstream", localStream);
+            localStream.addEventListener("addtrack", function (e) {
+                console.log("addtrack track~~~", e);
+            });
+            localStream.addEventListener("removetrack", function (e) {
+                console.log("removetrack track~~~", e);
+            });
             localStream.getTracks().forEach(function (track) {
-                console.log("addTrack", track);
+                console.log("addTrack", track, local);
                 local.addTrack(track, localStream);
             });
         }
@@ -1022,6 +1062,7 @@ var Rtc = function (_a) {
                         // }
                         break;
                     default:
+                        setNetworkErrored(false);
                         break;
                 }
             };
@@ -1048,6 +1089,7 @@ var Rtc = function (_a) {
                     case "completed":
                         console.log("iceConnectionStateChange ~ completed");
                         setConnected(true);
+                        setNetworkErrored(false);
                         break;
                     case "disconnected":
                         console.error("local.connectionState ~ closed ~ line 282 ~ ");
@@ -1183,7 +1225,7 @@ var Rtc = function (_a) {
         };
     }, [remoteStream]);
     (0, react_1.useEffect)(function () {
-        // console.log('localstream : ', localStream);
+        console.log("localstream : ", localStream, localStream === null || localStream === void 0 ? void 0 : localStream.getVideoTracks());
         if (playerRef.current && localStream)
             playerRef.current.srcObject = localStream ? localStream : null;
         return function () {
@@ -1195,7 +1237,7 @@ var Rtc = function (_a) {
                 playerRef.current.srcObject = null;
             }
         };
-    }, [localStream]);
+    }, [localStream, screenSharingYn]);
     (0, react_1.useEffect)(function () {
         // return ()=>{
         //   stop();
