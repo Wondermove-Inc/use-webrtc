@@ -875,6 +875,11 @@ var Rtc = function (_a) {
                 setDeviceSwitchSucceeded(true);
                 setDeviceSwitchingYn(false);
             }
+            if (switchStatus === "ALLOW") {
+                if (userType === "CUSTOMER") {
+                    onRefresh();
+                }
+            }
             if (switchStatus === "REJECT") {
                 // 끄기
                 console.log("asdfjlaksdjflsadjf", switchStatus, sender, deviceSwitchRequested);
