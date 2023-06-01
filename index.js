@@ -875,7 +875,7 @@ var Rtc = function (_a) {
                 setDeviceSwitchSucceeded(true);
                 setDeviceSwitchingYn(false);
             }
-            if (switchStatus === "ALLOW") {
+            if (switchStatus === "ALLOW" || switchStatus === "SUCCESS") {
                 if (userType === "CUSTOMER") {
                     onRefresh();
                 }
@@ -955,6 +955,9 @@ var Rtc = function (_a) {
                         switch (_b.label) {
                             case 0:
                                 isMe = sender === userType;
+                                if (local) {
+                                    onRefresh();
+                                }
                                 if (!!isMe) return [3 /*break*/, 2];
                                 console.log("offer socket received", sdp);
                                 return [4 /*yield*/, sendAnswer(sdp)];

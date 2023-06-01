@@ -812,7 +812,7 @@ const Rtc = ({
           setDeviceSwitchSucceeded(true);
           setDeviceSwitchingYn(false);
         }
-        if (switchStatus === "ALLOW") {
+        if (switchStatus === "ALLOW" || switchStatus === "SUCCESS") {
           if (userType === "CUSTOMER") {
             onRefresh();
           }
@@ -886,6 +886,9 @@ const Rtc = ({
     //* Dealer에게 offer 받는 소켓
     const getOffer = async ({ sdp, sender }) => {
       const isMe = sender === userType;
+      if (local) {
+        onRefresh();
+      }
       if (!isMe) {
         console.log("offer socket received", sdp);
         await sendAnswer(sdp);
