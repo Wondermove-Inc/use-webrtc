@@ -1319,7 +1319,11 @@ const Rtc = ({
       }, 1500);
       return;
     } else {
-      findDestination();
+      const localPeer = createPeerConnection();
+      //* local peer에 localStream 등록
+
+      setLocal(localPeer);
+      // findDestination();
     }
   }, [networkOnline]);
 

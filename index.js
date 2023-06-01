@@ -1366,7 +1366,10 @@ var Rtc = function (_a) {
             return;
         }
         else {
-            findDestination();
+            var localPeer = createPeerConnection();
+            //* local peer에 localStream 등록
+            setLocal(localPeer);
+            // findDestination();
         }
     }, [networkOnline]);
     (0, react_1.useEffect)(function () {
