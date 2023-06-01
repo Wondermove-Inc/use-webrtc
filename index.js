@@ -72,35 +72,40 @@ var Rtc = function (_a) {
     var SERVER_PORT = parseInt(WEBRTC_PORT);
     var _d = (0, react_1.useState)(true), cameraOnYn = _d[0], setCameraOnYn = _d[1];
     var _e = (0, react_1.useState)(true), micOnYn = _e[0], setMicOnYn = _e[1];
-    var _f = (0, react_1.useState)(0), cardOpenedIndex = _f[0], setCardOpenedIndex = _f[1];
-    var _g = (0, react_1.useState)(false), screenSharingYn = _g[0], setScreenSharingYn = _g[1];
-    var _h = (0, react_1.useState)(), localStream = _h[0], setLocalStream = _h[1];
-    var _j = (0, react_1.useState)(), remoteStream = _j[0], setRemoteStream = _j[1];
-    var _k = (0, react_1.useState)(), peerId = _k[0], setPeerId = _k[1];
-    var _l = (0, react_1.useState)(), destination = _l[0], setDestination = _l[1];
-    var _m = (0, react_1.useState)(), mediaConnection = _m[0], setMediaConnection = _m[1];
-    var _o = (0, react_1.useState)(false), finding = _o[0], setFinding = _o[1];
-    var _p = (0, react_1.useState)(false), connected = _p[0], setConnected = _p[1];
-    var _q = (0, react_1.useState)(false), connecting = _q[0], setConnecting = _q[1];
-    var _r = (0, react_1.useState)(), local = _r[0], setLocal = _r[1];
-    var _s = (0, react_1.useState)(), mediaDevices = _s[0], setMediaDevices = _s[1];
-    var _t = (0, react_1.useState)(), peerErrorMessage = _t[0], setPeerErrorMessage = _t[1];
-    var _u = (0, react_1.useState)(), streamCameraErrored = _u[0], setStreamCameraErrored = _u[1];
-    var _v = (0, react_1.useState)(), streamMicErrored = _v[0], setStreamMicErrored = _v[1];
-    var _w = (0, react_1.useState)(false), networkErrored = _w[0], setNetworkErrored = _w[1];
-    var _x = (0, react_1.useState)(navigator.onLine), networkOnline = _x[0], setNetworkOnline = _x[1];
+    var _f = (0, react_1.useState)(false), deviceChangeStartYn = _f[0], setDeviceChangeStartYn = _f[1]; //내가 changing 중인지
+    var _g = (0, react_1.useState)(0), cardOpenedIndex = _g[0], setCardOpenedIndex = _g[1];
+    var _h = (0, react_1.useState)(false), screenSharingYn = _h[0], setScreenSharingYn = _h[1];
+    var _j = (0, react_1.useState)(), localStream = _j[0], setLocalStream = _j[1];
+    var _k = (0, react_1.useState)(), remoteStream = _k[0], setRemoteStream = _k[1];
+    var _l = (0, react_1.useState)(), peerId = _l[0], setPeerId = _l[1];
+    var _m = (0, react_1.useState)(), destination = _m[0], setDestination = _m[1];
+    var _o = (0, react_1.useState)(), mediaConnection = _o[0], setMediaConnection = _o[1];
+    var _p = (0, react_1.useState)(false), finding = _p[0], setFinding = _p[1];
+    var _q = (0, react_1.useState)(false), connected = _q[0], setConnected = _q[1];
+    var _r = (0, react_1.useState)(false), connecting = _r[0], setConnecting = _r[1];
+    var _s = (0, react_1.useState)(), local = _s[0], setLocal = _s[1];
+    var _t = (0, react_1.useState)(), mediaDevices = _t[0], setMediaDevices = _t[1];
+    var _u = (0, react_1.useState)(), peerErrorMessage = _u[0], setPeerErrorMessage = _u[1];
+    var _v = (0, react_1.useState)(), streamCameraErrored = _v[0], setStreamCameraErrored = _v[1];
+    var _w = (0, react_1.useState)(), streamMicErrored = _w[0], setStreamMicErrored = _w[1];
+    var _x = (0, react_1.useState)(false), networkErrored = _x[0], setNetworkErrored = _x[1];
+    var _y = (0, react_1.useState)(navigator.onLine), networkOnline = _y[0], setNetworkOnline = _y[1];
+    var _z = (0, react_1.useState)(false), deviceSwitchRequested = _z[0], setDeviceSwitchRequested = _z[1];
+    var _0 = (0, react_1.useState)(false), deviceSwitchSucceeded = _0[0], setDeviceSwitchSucceeded = _0[1];
+    var _1 = (0, react_1.useState)(false), deviceSwitchingYn = _1[0], setDeviceSwitchingYn = _1[1]; // 상대방이 changing 중인지
     // modal errored
-    var _y = (0, react_1.useState)(), peerModalErrorMessage = _y[0], setPeerModalErrorMessage = _y[1];
-    var _z = (0, react_1.useState)(true), customerMicOnYn = _z[0], setCustomerMicOnYn = _z[1];
-    var _0 = (0, react_1.useState)(true), customerCameraOnYn = _0[0], setCustomerCameraOnYn = _0[1];
-    var _1 = (0, react_1.useState)(false), customerLeftYn = _1[0], setCustomerLeftYn = _1[1];
-    var _2 = (0, react_1.useState)(), socketInstance = _2[0], setSocketInstance = _2[1];
-    var _3 = (0, react_1.useState)(), webRtcSocketInstance = _3[0], setWebRtcSocketInstance = _3[1];
-    var _4 = (0, react_1.useState)([]), remoteCandidates = _4[0], setRemoteCandidates = _4[1];
-    var _5 = (0, react_1.useState)(false), leftYn = _5[0], setLeftYn = _5[1];
-    var _6 = (0, react_1.useState)(), startTime = _6[0], setStartTime = _6[1];
-    var _7 = (0, react_1.useState)(0), timeDiff = _7[0], setTimeDiff = _7[1];
-    var _8 = (0, react_1.useState)([]), remoteTracks = _8[0], setRemoteTracks = _8[1];
+    var _2 = (0, react_1.useState)(), peerModalErrorMessage = _2[0], setPeerModalErrorMessage = _2[1];
+    var _3 = (0, react_1.useState)(true), customerMicOnYn = _3[0], setCustomerMicOnYn = _3[1];
+    var _4 = (0, react_1.useState)(true), customerCameraOnYn = _4[0], setCustomerCameraOnYn = _4[1];
+    var _5 = (0, react_1.useState)(false), customerLeftYn = _5[0], setCustomerLeftYn = _5[1];
+    var _6 = (0, react_1.useState)(), socketInstance = _6[0], setSocketInstance = _6[1];
+    var _7 = (0, react_1.useState)(), webRtcSocketInstance = _7[0], setWebRtcSocketInstance = _7[1];
+    var _8 = (0, react_1.useState)([]), remoteCandidates = _8[0], setRemoteCandidates = _8[1];
+    var _9 = (0, react_1.useState)(false), peerJoinYn = _9[0], setPeerJoinYn = _9[1];
+    var _10 = (0, react_1.useState)(false), leftYn = _10[0], setLeftYn = _10[1];
+    var _11 = (0, react_1.useState)(), startTime = _11[0], setStartTime = _11[1];
+    var _12 = (0, react_1.useState)(0), timeDiff = _12[0], setTimeDiff = _12[1];
+    var _13 = (0, react_1.useState)([]), remoteTracks = _13[0], setRemoteTracks = _13[1];
     var userType = dealerYn ? "DEALER" : "CUSTOMER";
     var playerRef = (0, react_1.useRef)();
     var remotePlayerRef = (0, react_1.useRef)();
@@ -641,6 +646,8 @@ var Rtc = function (_a) {
                     return [4 /*yield*/, local.setRemoteDescription(answerDescription)];
                 case 1:
                     _a.sent();
+                    setDeviceSwitchSucceeded(false);
+                    setDeviceSwitchRequested(false);
                     //!process leftover candidate
                     processCandidates();
                     return [3 /*break*/, 3];
@@ -732,10 +739,14 @@ var Rtc = function (_a) {
             });
             setLocalStream(null);
         }
-        if (local)
+        if (local) {
             local.close();
-        if (mediaConnection)
+            setLocal(null);
+        }
+        if (mediaConnection) {
             mediaConnection.close();
+            setMediaConnection(null);
+        }
         if (remoteStream) {
             // localStream.removeTrack(); // localStream.release();
             remoteStream.getTracks().forEach(function (track) {
@@ -746,6 +757,7 @@ var Rtc = function (_a) {
         }
         setPeerId(null);
         setDestination(null);
+        setDeviceSwitchingYn(false);
     }, [localStream, remoteStream, local, mediaConnection]);
     var leaveSocket = (0, react_1.useCallback)(function () {
         console.log("leave");
@@ -794,6 +806,12 @@ var Rtc = function (_a) {
                     sender: userType,
                     onYn: cameraOnYn,
                 });
+                socket.emit("switchDevice", {
+                    roomId: _id,
+                    sender: "DEALER",
+                    deviceType: "WEB",
+                    switchStatus: "SUCCESS",
+                });
             });
             socket.on("microphone", function (_a) {
                 var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
@@ -811,6 +829,13 @@ var Rtc = function (_a) {
                     setCustomerCameraOnYn(onYn);
                 }
             });
+            // socket.on('deviceChanging', ({ roomId, sender, deviceChangingYn }) => {
+            //   const isMe: boolean = sender === userType;
+            //   if (!isMe) {
+            //     console.log('socket deviceChanging listener onYn : ', deviceChangingYn);
+            //     setDeviceSwitchingYn(deviceChangingYn);
+            //   }
+            // });
             socket.on("leave", function (_a) {
                 var roomId = _a.roomId, sender = _a.sender;
                 var isMe = sender === userType;
@@ -830,16 +855,63 @@ var Rtc = function (_a) {
                     setNetworkErrored(true);
                 }
             });
+            socket.on("switchDevice", handleSwitching);
             setSocketInstance(socket);
             return [2 /*return*/, socket];
         });
     }); };
+    var handleSwitching = (0, react_1.useCallback)(function (_a) {
+        var roomId = _a.roomId, sender = _a.sender, deviceType = _a.deviceType, switchStatus = _a.switchStatus;
+        if (sender === "DEALER") {
+            if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
+                setDeviceSwitchRequested(true);
+            }
+            if (switchStatus === "SUCCESS" &&
+                deviceType === "MOBILE" //&&
+            // deviceSwitchingYn
+            ) {
+                // 끄기
+                console.log("asdfjlaksdjflsadjf", switchStatus, sender, deviceSwitchRequested, deviceSwitchingYn);
+                setDeviceSwitchSucceeded(true);
+                setDeviceSwitchingYn(false);
+            }
+            if (switchStatus === "REJECT") {
+                // 끄기
+                console.log("asdfjlaksdjflsadjf", switchStatus, sender, deviceSwitchRequested);
+                setDeviceSwitchingYn(false); //필요한가?
+            }
+        }
+    }, [deviceSwitchRequested, deviceSwitchingYn]);
+    var allowChangeDevice = (0, react_1.useCallback)(function () {
+        if (!socketInstance)
+            return alert("why");
+        console.log(socketInstance);
+        socketInstance === null || socketInstance === void 0 ? void 0 : socketInstance.emit("switchDevice", {
+            roomId: chatRoomId,
+            sender: userType,
+            deviceType: "WEB",
+            switchStatus: "ALLOW",
+        });
+        // allow 후 device switching = true
+        setDeviceSwitchingYn(true);
+        setDeviceSwitchRequested(false);
+    }, [socketInstance]);
+    var rejectChangeDevice = (0, react_1.useCallback)(function () {
+        socketInstance === null || socketInstance === void 0 ? void 0 : socketInstance.emit("switchDevice", {
+            roomId: chatRoomId,
+            sender: userType,
+            deviceType: "WEB",
+            switchStatus: "REJECT",
+        });
+        //reject시 nothing
+        setDeviceSwitchRequested(false);
+    }, [socketInstance]);
     //** Socket Initializer
-    var webRTCSocketInitializer = function (_id) { return __awaiter(void 0, void 0, void 0, function () {
+    var webRTCSocketInitializer = function (_id, firstTime) { return __awaiter(void 0, void 0, void 0, function () {
         var manager, socket, getCandidate, getAnswer, getOffer, allUsers;
         return __generator(this, function (_a) {
             manager = new socket_io_client_1.Manager(SIGNAL_SOCKET_URI, {
-                transports: ["websocket"],
+                transports: ["websocket", "polling"],
                 secure: true,
             });
             socket = manager.socket(SIGNAL_SOCKET_NAMESPACE);
@@ -892,36 +964,44 @@ var Rtc = function (_a) {
             allUsers = function (all_users) { return __awaiter(void 0, void 0, void 0, function () {
                 var users, len;
                 return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            console.log("all_users socket received", all_users);
-                            users = all_users.filter(function (i) { return i.userType !== userType; });
-                            len = users.length;
-                            console.log("all_users length!!!", len);
-                            if (!(userType === "DEALER")) return [3 /*break*/, 2];
-                            if (!(len > 0)) return [3 /*break*/, 2];
-                            return [4 /*yield*/, sendOffer(socket)];
-                        case 1:
-                            _a.sent();
-                            _a.label = 2;
-                        case 2: return [2 /*return*/];
+                    console.log("all_users socket received", all_users);
+                    users = all_users.filter(function (i) { return i.userType !== userType; });
+                    len = users.length;
+                    console.log("all_users length!!!", len);
+                    //* room에 두명 이상 있을 시 handshake 로직 시작
+                    if (userType === "DEALER") {
+                        if (len > 0) {
+                            // customer Join yn - true 로 변경하거나
+                            // set customer Jo
+                            setPeerJoinYn(true);
+                        }
                     }
+                    return [2 /*return*/];
                 });
             }); };
+            socket.on("connect", function () {
+                socket.emit("join_room", { room: chatRoomId, sender: userType });
+            });
             socket.on("getCandidate", getCandidate);
             socket.on("all_users", allUsers);
+            socket.on("disconnect", function (reason) {
+                console.log("socket disconnected by ", reason); // "ping timeout"
+            });
             if (userType === "CUSTOMER") {
                 socket.on("getOffer", getOffer);
             }
             else {
                 socket.on("getAnswer", getAnswer);
             }
-            socket.emit("join_room", { room: chatRoomId, sender: userType });
-            console.log("joinjoin", chatRoomId);
             setWebRtcSocketInstance(socket);
             return [2 /*return*/, socket];
         });
     }); };
+    (0, react_1.useEffect)(function () {
+        if (peerJoinYn) {
+            sendOffer(webRtcSocketRef.current);
+        }
+    }, [peerJoinYn]);
     // 1. 딜러 입장 시 로컬스트림 세팅
     (0, react_1.useEffect)(function () {
         console.log("1. 딜러 입장 시 로컬스트림 세팅", localStream);
@@ -930,7 +1010,8 @@ var Rtc = function (_a) {
         }
         return function () {
             console.log("aa=====");
-            stop();
+            if (!deviceSwitchingYn)
+                stop();
         };
     }, []);
     (0, react_1.useEffect)(function () {
@@ -1010,7 +1091,7 @@ var Rtc = function (_a) {
                     switch (_b.label) {
                         case 0:
                             _a = webRtcSocketRef;
-                            return [4 /*yield*/, webRTCSocketInitializer(null)];
+                            return [4 /*yield*/, webRTCSocketInitializer(null, true)];
                         case 1:
                             _a.current = socket_1 = _b.sent();
                             console.log("join!!");
@@ -1022,8 +1103,9 @@ var Rtc = function (_a) {
                 console.log("socket off");
                 if (socket_1) {
                     // socket.emit('leave', { roomId: chatRoomId, sender: userType });
+                    // socket.removeAllListeners();
+                    // socket.disconnect();
                     socket_1.removeAllListeners();
-                    socket_1.disconnect();
                     setWebRtcSocketInstance(undefined);
                     webRtcSocketRef.current = undefined;
                 }
@@ -1031,6 +1113,11 @@ var Rtc = function (_a) {
             };
         }
     }, [local]);
+    (0, react_1.useEffect)(function () {
+        if (webRtcSocketInstance) {
+            webRtcSocketRef.current = webRtcSocketInstance;
+        }
+    }, [webRtcSocketInstance]);
     (0, react_1.useEffect)(function () {
         if (local && localStream) {
             console.log("localstream", localStream);
@@ -1093,7 +1180,8 @@ var Rtc = function (_a) {
                         break;
                     case "disconnected":
                         console.error("local.connectionState ~ closed ~ line 282 ~ ");
-                        setNetworkErrored(true);
+                        if (!deviceSwitchingYn)
+                            setNetworkErrored(true);
                         break;
                     // if (!isExiting) {
                     //   setErrorText(t('t_live.customer_is_reconnecting'));
@@ -1319,6 +1407,10 @@ var Rtc = function (_a) {
         streamCameraErrored: streamCameraErrored,
         streamMicErrored: streamMicErrored,
         networkErrored: networkErrored,
+        deviceChangeStartYn: deviceChangeStartYn,
+        deviceSwitchingYn: deviceSwitchingYn,
+        deviceSwitchRequested: deviceSwitchRequested,
+        deviceSwitchSucceeded: deviceSwitchSucceeded,
     }); }, [
         connecting,
         connected,
@@ -1332,6 +1424,10 @@ var Rtc = function (_a) {
         streamCameraErrored,
         streamMicErrored,
         networkErrored,
+        deviceChangeStartYn,
+        deviceSwitchingYn,
+        deviceSwitchRequested,
+        deviceSwitchSucceeded,
     ]);
     var stream = (0, react_1.useMemo)(function () {
         return { localStream: localStream, remoteStream: remoteStream };
@@ -1343,11 +1439,17 @@ var Rtc = function (_a) {
         setCameraOnYn: setCameraOnYn,
         setMicOnYn: setMicOnYn,
         setScreenSharingYn: setScreenSharingYn,
+        setDeviceChangeStartYn: setDeviceChangeStartYn,
         onStop: stop,
         onStart: setLocalStreamVideo,
+        onAllowDeviceChange: allowChangeDevice,
+        onRejectDeviceChange: rejectChangeDevice,
         leaveSocket: leaveSocket,
         onRefresh: onRefresh,
         socketInstance: socketInstance,
+        setDeviceSwitchRequested: setDeviceSwitchRequested,
+        setDeviceSwitchSucceeded: setDeviceSwitchSucceeded,
+        setDeviceSwitchingYn: setDeviceSwitchingYn,
         player: {
             playerRef: playerRef,
             remotePlayerRef: remotePlayerRef,

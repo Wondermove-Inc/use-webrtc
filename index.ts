@@ -41,6 +41,8 @@ const Rtc = ({
 
   const [cameraOnYn, setCameraOnYn] = useState<boolean>(true);
   const [micOnYn, setMicOnYn] = useState<boolean>(true);
+  const [deviceChangeStartYn, setDeviceChangeStartYn] =
+    useState<boolean>(false); //내가 changing 중인지
   const [cardOpenedIndex, setCardOpenedIndex] = useState<number>(0);
   const [screenSharingYn, setScreenSharingYn] = useState<boolean>(false);
 
@@ -54,7 +56,7 @@ const Rtc = ({
   const [finding, setFinding] = useState<boolean>(false);
   const [connected, setConnected] = useState<boolean>(false);
   const [connecting, setConnecting] = useState<boolean>(false);
-  const [local, setLocal] = useState<RTCPeerConnection>();
+  const [local, setLocal] = useState<RTCPeerConnection | null>();
   const [mediaDevices, setMediaDevices] = useState<MediaDevices | null>();
   const [peerErrorMessage, setPeerErrorMessage] = useState<string | null>();
   const [streamCameraErrored, setStreamCameraErrored] = useState<boolean>();
@@ -62,6 +64,12 @@ const Rtc = ({
 
   const [networkErrored, setNetworkErrored] = useState<boolean>(false);
   const [networkOnline, setNetworkOnline] = useState<boolean>(navigator.onLine);
+
+  const [deviceSwitchRequested, setDeviceSwitchRequested] =
+    useState<boolean>(false);
+  const [deviceSwitchSucceeded, setDeviceSwitchSucceeded] =
+    useState<boolean>(false);
+  const [deviceSwitchingYn, setDeviceSwitchingYn] = useState<boolean>(false); // 상대방이 changing 중인지
 
   // modal errored
   const [peerModalErrorMessage, setPeerModalErrorMessage] = useState<string>();
@@ -72,6 +80,8 @@ const Rtc = ({
   const [socketInstance, setSocketInstance] = useState<Socket | null>();
   const [webRtcSocketInstance, setWebRtcSocketInstance] = useState<Socket>();
   const [remoteCandidates, setRemoteCandidates] = useState<any>([]);
+
+  const [peerJoinYn, setPeerJoinYn] = useState<boolean>(false);
 
   const [leftYn, setLeftYn] = useState<boolean>(false);
   const [startTime, setStartTime] = useState<Moment>();
@@ -582,6 +592,9 @@ const Rtc = ({
         );
         await local.setRemoteDescription(answerDescription);
 
+        setDeviceSwitchSucceeded(false);
+        setDeviceSwitchRequested(false);
+
         //!process leftover candidate
         processCandidates();
       } catch (error) {
@@ -663,8 +676,14 @@ const Rtc = ({
       });
       setLocalStream(null);
     }
-    if (local) local.close();
-    if (mediaConnection) mediaConnection.close();
+    if (local) {
+      local.close();
+      setLocal(null);
+    }
+    if (mediaConnection) {
+      mediaConnection.close();
+      setMediaConnection(null);
+    }
     if (remoteStream) {
       // localStream.removeTrack(); // localStream.release();
       remoteStream.getTracks().forEach((track) => {
@@ -675,6 +694,7 @@ const Rtc = ({
     }
     setPeerId(null);
     setDestination(null);
+    setDeviceSwitchingYn(false);
   }, [localStream, remoteStream, local, mediaConnection]);
 
   const leaveSocket = useCallback(() => {
@@ -720,6 +740,12 @@ const Rtc = ({
         sender: userType,
         onYn: cameraOnYn,
       });
+      socket.emit("switchDevice", {
+        roomId: _id,
+        sender: "DEALER",
+        deviceType: "WEB",
+        switchStatus: "SUCCESS",
+      });
     });
     socket.on("microphone", ({ roomId, sender, onYn }) => {
       const isMe: boolean = sender === userType;
@@ -735,6 +761,13 @@ const Rtc = ({
         setCustomerCameraOnYn(onYn);
       }
     });
+    // socket.on('deviceChanging', ({ roomId, sender, deviceChangingYn }) => {
+    //   const isMe: boolean = sender === userType;
+    //   if (!isMe) {
+    //     console.log('socket deviceChanging listener onYn : ', deviceChangingYn);
+    //     setDeviceSwitchingYn(deviceChangingYn);
+    //   }
+    // });
     socket.on("leave", ({ roomId, sender }) => {
       const isMe: boolean = sender === userType;
       console.log("leave", sender);
@@ -751,16 +784,79 @@ const Rtc = ({
         setNetworkErrored(true);
       }
     });
+
+    socket.on("switchDevice", handleSwitching);
     setSocketInstance(socket);
     return socket;
   };
 
+  const handleSwitching = useCallback(
+    ({ roomId, sender, deviceType, switchStatus }) => {
+      if (sender === "DEALER") {
+        if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
+          setDeviceSwitchRequested(true);
+        }
+        if (
+          switchStatus === "SUCCESS" &&
+          deviceType === "MOBILE" //&&
+          // deviceSwitchingYn
+        ) {
+          // 끄기
+          console.log(
+            "asdfjlaksdjflsadjf",
+            switchStatus,
+            sender,
+            deviceSwitchRequested,
+            deviceSwitchingYn
+          );
+          setDeviceSwitchSucceeded(true);
+          setDeviceSwitchingYn(false);
+        }
+        if (switchStatus === "REJECT") {
+          // 끄기
+          console.log(
+            "asdfjlaksdjflsadjf",
+            switchStatus,
+            sender,
+            deviceSwitchRequested
+          );
+          setDeviceSwitchingYn(false); //필요한가?
+        }
+      }
+    },
+    [deviceSwitchRequested, deviceSwitchingYn]
+  );
+  const allowChangeDevice = useCallback(() => {
+    if (!socketInstance) return alert("why");
+    console.log(socketInstance);
+    socketInstance?.emit("switchDevice", {
+      roomId: chatRoomId,
+      sender: userType,
+      deviceType: "WEB",
+      switchStatus: "ALLOW",
+    });
+    // allow 후 device switching = true
+    setDeviceSwitchingYn(true);
+    setDeviceSwitchRequested(false);
+  }, [socketInstance]);
+
+  const rejectChangeDevice = useCallback(() => {
+    socketInstance?.emit("switchDevice", {
+      roomId: chatRoomId,
+      sender: userType,
+      deviceType: "WEB",
+      switchStatus: "REJECT",
+    });
+    //reject시 nothing
+    setDeviceSwitchRequested(false);
+  }, [socketInstance]);
+
   //** Socket Initializer
-  const webRTCSocketInitializer = async (_id) => {
+  const webRTCSocketInitializer = async (_id, firstTime) => {
     // We just call it because we don't need anything else out of it
     // await fetch('/');
     const manager = new Manager(SIGNAL_SOCKET_URI, {
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],
       secure: true,
     });
     const socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
@@ -802,26 +898,36 @@ const Rtc = ({
       //* room에 두명 이상 있을 시 handshake 로직 시작
       if (userType === "DEALER") {
         if (len > 0) {
-          await sendOffer(socket);
+          // customer Join yn - true 로 변경하거나
+          // set customer Jo
+          setPeerJoinYn(true);
         }
       }
     };
+    socket.on("connect", () => {
+      socket.emit("join_room", { room: chatRoomId, sender: userType });
+    });
+
     socket.on("getCandidate", getCandidate);
     socket.on("all_users", allUsers);
+    socket.on("disconnect", (reason) => {
+      console.log("socket disconnected by ", reason); // "ping timeout"
+    });
 
     if (userType === "CUSTOMER") {
       socket.on("getOffer", getOffer);
     } else {
       socket.on("getAnswer", getAnswer);
     }
-
-    socket.emit("join_room", { room: chatRoomId, sender: userType });
-    console.log("joinjoin", chatRoomId);
-
     setWebRtcSocketInstance(socket);
 
     return socket;
   };
+  useEffect(() => {
+    if (peerJoinYn) {
+      sendOffer(webRtcSocketRef.current);
+    }
+  }, [peerJoinYn]);
 
   // 1. 딜러 입장 시 로컬스트림 세팅
   useEffect(() => {
@@ -831,7 +937,7 @@ const Rtc = ({
     }
     return () => {
       console.log("aa=====");
-      stop();
+      if (!deviceSwitchingYn) stop();
     };
   }, []);
 
@@ -912,7 +1018,10 @@ const Rtc = ({
       let socket: Socket;
       console.log("socket icandoit rtc");
       (async () => {
-        webRtcSocketRef.current = socket = await webRTCSocketInitializer(null);
+        webRtcSocketRef.current = socket = await webRTCSocketInitializer(
+          null,
+          true
+        );
         console.log("join!!");
         // socket.emit('join_room', { room: chatRoomId });
       })();
@@ -921,8 +1030,9 @@ const Rtc = ({
         console.log("socket off");
         if (socket) {
           // socket.emit('leave', { roomId: chatRoomId, sender: userType });
+          // socket.removeAllListeners();
+          // socket.disconnect();
           socket.removeAllListeners();
-          socket.disconnect();
           setWebRtcSocketInstance(undefined);
           webRtcSocketRef.current = undefined;
         }
@@ -930,6 +1040,12 @@ const Rtc = ({
       };
     }
   }, [local]);
+
+  useEffect(() => {
+    if (webRtcSocketInstance) {
+      webRtcSocketRef.current = webRtcSocketInstance;
+    }
+  }, [webRtcSocketInstance]);
 
   useEffect(() => {
     if (local && localStream) {
@@ -999,7 +1115,7 @@ const Rtc = ({
             break;
           case "disconnected":
             console.error("local.connectionState ~ closed ~ line 282 ~ ");
-            setNetworkErrored(true);
+            if (!deviceSwitchingYn) setNetworkErrored(true);
             break;
           // if (!isExiting) {
           //   setErrorText(t('t_live.customer_is_reconnecting'));
@@ -1251,6 +1367,10 @@ const Rtc = ({
       streamCameraErrored,
       streamMicErrored,
       networkErrored,
+      deviceChangeStartYn,
+      deviceSwitchingYn,
+      deviceSwitchRequested,
+      deviceSwitchSucceeded,
     }),
     [
       connecting,
@@ -1265,6 +1385,10 @@ const Rtc = ({
       streamCameraErrored,
       streamMicErrored,
       networkErrored,
+      deviceChangeStartYn,
+      deviceSwitchingYn,
+      deviceSwitchRequested,
+      deviceSwitchSucceeded,
     ]
   );
   const stream = useMemo(() => {
@@ -1278,11 +1402,17 @@ const Rtc = ({
     setCameraOnYn,
     setMicOnYn,
     setScreenSharingYn,
+    setDeviceChangeStartYn,
     onStop: stop,
     onStart: setLocalStreamVideo,
+    onAllowDeviceChange: allowChangeDevice,
+    onRejectDeviceChange: rejectChangeDevice,
     leaveSocket,
     onRefresh,
     socketInstance,
+    setDeviceSwitchRequested,
+    setDeviceSwitchSucceeded,
+    setDeviceSwitchingYn,
     player: {
       playerRef,
       remotePlayerRef,
