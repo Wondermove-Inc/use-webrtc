@@ -808,7 +808,7 @@ var Rtc = function (_a) {
                 });
                 socket.emit("switchDevice", {
                     roomId: _id,
-                    sender: "DEALER",
+                    sender: userType,
                     deviceType: "WEB",
                     switchStatus: "SUCCESS",
                 });
@@ -875,7 +875,7 @@ var Rtc = function (_a) {
                 setDeviceSwitchSucceeded(true);
                 setDeviceSwitchingYn(false);
             }
-            if (switchStatus === "ALLOW" || switchStatus === "SUCCESS") {
+            if (switchStatus === "ALLOW" && sender === "DEALER") {
                 if (userType === "CUSTOMER") {
                     onRefresh();
                 }
@@ -955,6 +955,7 @@ var Rtc = function (_a) {
                         switch (_b.label) {
                             case 0:
                                 isMe = sender === userType;
+                                console.log("offer socket received", sdp);
                                 if (local) {
                                     onRefresh();
                                 }
@@ -1367,8 +1368,18 @@ var Rtc = function (_a) {
         }
         else {
             var localPeer = createPeerConnection();
+            setConnected(false);
             //* local peer에 localStream 등록
             setLocal(localPeer);
+            if (remoteStream) {
+                // localStream.removeTrack(); // localStream.release();
+                remoteStream.getTracks().forEach(function (track) {
+                    track.stop();
+                    remoteStream.removeTrack(track);
+                });
+                setRemoteStream(null);
+            }
+            setRemoteTracks([]);
             // findDestination();
         }
     }, [networkOnline]);

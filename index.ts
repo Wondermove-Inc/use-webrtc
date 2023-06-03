@@ -742,7 +742,7 @@ const Rtc = ({
       });
       socket.emit("switchDevice", {
         roomId: _id,
-        sender: "DEALER",
+        sender: userType,
         deviceType: "WEB",
         switchStatus: "SUCCESS",
       });
@@ -812,7 +812,7 @@ const Rtc = ({
           setDeviceSwitchSucceeded(true);
           setDeviceSwitchingYn(false);
         }
-        if (switchStatus === "ALLOW" || switchStatus === "SUCCESS") {
+        if (switchStatus === "ALLOW" && sender === "DEALER") {
           if (userType === "CUSTOMER") {
             onRefresh();
           }
@@ -886,6 +886,7 @@ const Rtc = ({
     //* Dealer에게 offer 받는 소켓
     const getOffer = async ({ sdp, sender }) => {
       const isMe = sender === userType;
+      console.log("offer socket received", sdp);
       if (local) {
         onRefresh();
       }
@@ -1320,9 +1321,19 @@ const Rtc = ({
       return;
     } else {
       const localPeer = createPeerConnection();
+      setConnected(false);
       //* local peer에 localStream 등록
 
       setLocal(localPeer);
+      if (remoteStream) {
+        // localStream.removeTrack(); // localStream.release();
+        remoteStream.getTracks().forEach((track) => {
+          track.stop();
+          remoteStream.removeTrack(track);
+        });
+        setRemoteStream(null);
+      }
+      setRemoteTracks([]);
       // findDestination();
     }
   }, [networkOnline]);
