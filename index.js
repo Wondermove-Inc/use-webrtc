@@ -936,8 +936,8 @@ var Rtc = function (_a) {
                         switch (_b.label) {
                             case 0:
                                 isMe = sender === userType;
-                                console.log("answer socket received", sdp);
                                 if (!!isMe) return [3 /*break*/, 2];
+                                console.log("answer socket received", sdp);
                                 return [4 /*yield*/, setRemoteDescription(sdp)];
                             case 1:
                                 _b.sent();
@@ -955,8 +955,8 @@ var Rtc = function (_a) {
                         switch (_b.label) {
                             case 0:
                                 isMe = sender === userType;
-                                console.log("offer socket received", sdp);
-                                if (local) {
+                                console.log("offer socket received", sdp, local);
+                                if (local && local.connectionState === "connected") {
                                     onRefresh();
                                 }
                                 if (!!isMe) return [3 /*break*/, 2];
@@ -1151,6 +1151,7 @@ var Rtc = function (_a) {
     (0, react_1.useEffect)(function () {
         if (local) {
             local.onconnectionstatechange = function (event) {
+                console.log("local.connectionState changed:: ", local.connectionState);
                 switch (local.connectionState) {
                     case "closed":
                         console.error("local.connectionState ~ closed ~ line 245 ~ ");

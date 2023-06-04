@@ -878,16 +878,16 @@ const Rtc = ({
     //* Customer에게 answer 받는 소켓
     const getAnswer = async ({ sdp, sender }) => {
       const isMe = sender === userType;
-      console.log("answer socket received", sdp);
       if (!isMe) {
+        console.log("answer socket received", sdp);
         await setRemoteDescription(sdp);
       }
     };
     //* Dealer에게 offer 받는 소켓
     const getOffer = async ({ sdp, sender }) => {
       const isMe = sender === userType;
-      console.log("offer socket received", sdp);
-      if (local) {
+      console.log("offer socket received", sdp, local);
+      if (local && local.connectionState === "connected") {
         onRefresh();
       }
       if (!isMe) {
@@ -1081,6 +1081,7 @@ const Rtc = ({
   useEffect(() => {
     if (local) {
       local.onconnectionstatechange = (event) => {
+        console.log("local.connectionState changed:: ", local.connectionState);
         switch (local.connectionState) {
           case "closed":
             console.error("local.connectionState ~ closed ~ line 245 ~ ");
