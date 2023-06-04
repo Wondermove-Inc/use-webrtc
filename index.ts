@@ -606,6 +606,7 @@ const Rtc = ({
 
   //! run if received iceCandidate from customer
   const handleRemoteCandidate = (iceCandidate) => {
+    console.log("handle remote candidate", iceCandidate);
     const newCandidate = new RTCIceCandidate(iceCandidate);
     if (local === null || local?.remoteDescription === null) {
       return remoteCandidates.push(newCandidate);
@@ -627,6 +628,7 @@ const Rtc = ({
     async (offer) => {
       try {
         if (!local) return;
+        console.log("answer socket emit", offer);
         const offerDescription = new RTCSessionDescription(offer);
         await local.setRemoteDescription(offerDescription);
         const answerDescription = await local.createAnswer();
@@ -887,7 +889,7 @@ const Rtc = ({
     const getOffer = async ({ sdp, sender }) => {
       const isMe = sender === userType;
       console.log("offer socket received", sdp, local);
-      if (local && local.connectionState === "connected") {
+      if (local && local.connectionState !== "connecting") {
         onRefresh();
       }
       if (!isMe) {
