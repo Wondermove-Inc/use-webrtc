@@ -1146,6 +1146,10 @@ var Rtc = function (_a) {
         console.log("local peer changed", webRtcSocketInstance);
         if (webRtcSocketInstance && localStream && local) {
             console.log(webRtcSocketInstance, "join");
+        }
+    }, [webRtcSocketInstance, localStream]);
+    (0, react_1.useEffect)(function () {
+        if (local) {
             local.onconnectionstatechange = function (event) {
                 switch (local.connectionState) {
                     case "closed":
@@ -1169,7 +1173,7 @@ var Rtc = function (_a) {
                 }
                 console.log("iceCandidate!!!", event.candidate);
                 //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
-                webRtcSocketInstance.emit("candidate", {
+                webRtcSocketInstance === null || webRtcSocketInstance === void 0 ? void 0 : webRtcSocketInstance.emit("candidate", {
                     candidate: event.candidate,
                     sender: userType,
                 });
@@ -1209,7 +1213,8 @@ var Rtc = function (_a) {
                 }
             };
         }
-    }, [webRtcSocketInstance, localStream]);
+        return function () { };
+    }, [local]);
     (0, react_1.useEffect)(function () {
         //* ice connection 상태가 completed 일 경우 remoteStream 설정
         if (connected) {
