@@ -1087,7 +1087,7 @@ const Rtc = ({
         switch (local.connectionState) {
           case "closed":
             console.error("local.connectionState ~ closed ~ line 245 ~ ");
-            if (!deviceSwitchingYn) setNetworkErrored(true);
+            setNetworkErrored(true);
             // if (!isExiting) {
             //   setErrorText(t('t_live.customer_is_reconnecting'));
             //   setErrorMessageVisible(true);
