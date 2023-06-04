@@ -661,6 +661,7 @@ var Rtc = function (_a) {
     }); }, [local]);
     //! run if received iceCandidate from customer
     var handleRemoteCandidate = function (iceCandidate) {
+        console.log("handle remote candidate", iceCandidate);
         var newCandidate = new RTCIceCandidate(iceCandidate);
         if (local === null || (local === null || local === void 0 ? void 0 : local.remoteDescription) === null) {
             return remoteCandidates.push(newCandidate);
@@ -687,6 +688,7 @@ var Rtc = function (_a) {
                     _b.trys.push([0, 4, 5, 6]);
                     if (!local)
                         return [2 /*return*/];
+                    console.log("answer socket emit", offer);
                     offerDescription = new RTCSessionDescription(offer);
                     return [4 /*yield*/, local.setRemoteDescription(offerDescription)];
                 case 1:
@@ -956,7 +958,7 @@ var Rtc = function (_a) {
                             case 0:
                                 isMe = sender === userType;
                                 console.log("offer socket received", sdp, local);
-                                if (local && local.connectionState === "connected") {
+                                if (local && local.connectionState !== "connecting") {
                                     onRefresh();
                                 }
                                 if (!!isMe) return [3 /*break*/, 2];
@@ -1155,7 +1157,8 @@ var Rtc = function (_a) {
                 switch (local.connectionState) {
                     case "closed":
                         console.error("local.connectionState ~ closed ~ line 245 ~ ");
-                        setNetworkErrored(true);
+                        if (!deviceSwitchingYn)
+                            setNetworkErrored(true);
                         // if (!isExiting) {
                         //   setErrorText(t('t_live.customer_is_reconnecting'));
                         //   setErrorMessageVisible(true);
