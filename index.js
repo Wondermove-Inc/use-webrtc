@@ -976,7 +976,7 @@ var Rtc = function (_a) {
                 var users, len;
                 return __generator(this, function (_a) {
                     console.log("all_users socket received", all_users);
-                    users = all_users.filter(function (i) { return i.userType !== userType; });
+                    users = all_users.filter(function (i) { return i.sender !== userType; });
                     len = users.length;
                     console.log("all_users length!!!", len);
                     //* room에 두명 이상 있을 시 handshake 로직 시작

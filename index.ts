@@ -901,7 +901,7 @@ const Rtc = ({
     //* room에 있는 socket-id 받는 소켓
     const allUsers = async (all_users) => {
       console.log("all_users socket received", all_users);
-      const users = all_users.filter((i) => i.userType !== userType);
+      const users = all_users.filter((i) => i.sender !== userType);
       const len = users.length;
 
       console.log("all_users length!!!", len);
