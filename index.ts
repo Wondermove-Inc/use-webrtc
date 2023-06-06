@@ -916,6 +916,7 @@ const Rtc = ({
       }
     };
     socket.on("connect", () => {
+      console.log("webrtc socket connected");
       socket.emit("join_room", { room: chatRoomId, sender: userType });
     });
 
@@ -1029,10 +1030,8 @@ const Rtc = ({
       let socket: Socket;
       console.log("socket icandoit rtc");
       (async () => {
-        webRtcSocketRef.current = socket = await webRTCSocketInitializer(
-          null,
-          true
-        );
+        socket = await webRTCSocketInitializer(null, true);
+        setWebRtcSocketInstance(socket);
         console.log("join!!");
         // socket.emit('join_room', { room: chatRoomId });
       })();

@@ -991,6 +991,7 @@ var Rtc = function (_a) {
                 });
             }); };
             socket.on("connect", function () {
+                console.log("webrtc socket connected");
                 socket.emit("join_room", { room: chatRoomId, sender: userType });
             });
             socket.on("getCandidate", getCandidate);
@@ -1097,14 +1098,12 @@ var Rtc = function (_a) {
             var socket_1;
             console.log("socket icandoit rtc");
             (function () { return __awaiter(void 0, void 0, void 0, function () {
-                var _a;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0:
-                            _a = webRtcSocketRef;
-                            return [4 /*yield*/, webRTCSocketInitializer(null, true)];
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, webRTCSocketInitializer(null, true)];
                         case 1:
-                            _a.current = socket_1 = _b.sent();
+                            socket_1 = _a.sent();
+                            setWebRtcSocketInstance(socket_1);
                             console.log("join!!");
                             return [2 /*return*/];
                     }
