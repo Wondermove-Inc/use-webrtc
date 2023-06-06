@@ -1090,25 +1090,21 @@ var Rtc = function (_a) {
     };
     // // 2. 로컬 Peer id 받고
     (0, react_1.useEffect)(function () {
-        var localPeer;
-        if (local == null) {
-            localPeer = createPeerConnection();
-            //* local peer에 localStream 등록
-            setLocal(localPeer);
-            // join_room emit
-        }
-        return function () {
-            setLocal(undefined);
-        };
-    }, []);
-    // // 2. 로컬 Peer id 받고
-    (0, react_1.useEffect)(function () {
         var socket;
+        var localPeer;
         console.log("socket icandoit rtc");
         (function () { return __awaiter(void 0, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, webRTCSocketInitializer(null, true)];
+                    case 0:
+                        console.log("로컬 peerid 세팅을 시작");
+                        if (local == null) {
+                            localPeer = createPeerConnection();
+                            //* local peer에 localStream 등록
+                            setLocal(localPeer);
+                            // join_room emit
+                        }
+                        return [4 /*yield*/, webRTCSocketInitializer(null, true)];
                     case 1:
                         socket = _a.sent();
                         setWebRtcSocketInstance(socket);
@@ -1118,13 +1114,14 @@ var Rtc = function (_a) {
             });
         }); })();
         return function () {
+            setLocal(undefined);
             if (socket) {
                 console.log("socket off");
                 socket.removeAllListeners();
                 setWebRtcSocketInstance(undefined);
             }
         };
-    }, [local]);
+    }, []);
     (0, react_1.useEffect)(function () {
         if (webRtcSocketInstance) {
             webRtcSocketRef.current = webRtcSocketInstance;
