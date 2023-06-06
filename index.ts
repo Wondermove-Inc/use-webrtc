@@ -859,83 +859,86 @@ const Rtc = ({
   }, [socketInstance]);
 
   //** Socket Initializer
-  const webRTCSocketInitializer = async (_id, firstTime) => {
-    // We just call it because we don't need anything else out of it
-    // await fetch('/');
-    const manager = new Manager(SIGNAL_SOCKET_URI, {
-      transports: ["websocket", "polling"],
-      secure: true,
-    });
-    const socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
+  const webRTCSocketInitializer = useCallback(
+    async (_id, firstTime) => {
+      // We just call it because we don't need anything else out of it
+      // await fetch('/');
+      const manager = new Manager(SIGNAL_SOCKET_URI, {
+        transports: ["websocket", "polling"],
+        secure: true,
+      });
+      const socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
 
-    //* Customer에게 ice candidate 받는 소켓
-    const getCandidate = ({ candidate, sender }) => {
-      const isMe = sender === userType;
-      if (!isMe) {
-        console.log("getCandidate socket received - customer", candidate);
-        handleRemoteCandidate(candidate);
-      }
-    };
-
-    //* Customer에게 answer 받는 소켓
-    const getAnswer = async ({ sdp, sender }) => {
-      const isMe = sender === userType;
-      if (!isMe) {
-        console.log("answer socket received", sdp);
-        await setRemoteDescription(sdp);
-      }
-    };
-    //* Dealer에게 offer 받는 소켓
-    const getOffer = async ({ sdp, sender }) => {
-      const isMe = sender === userType;
-      console.log("offer socket received", sdp, local);
-      if (local && local.connectionState !== "connecting") {
-        onRefresh();
-      }
-      if (!isMe) {
-        console.log("offer socket received", sdp);
-        await sendAnswer(sdp);
-      }
-    };
-
-    //* room에 있는 socket-id 받는 소켓
-    const allUsers = async (all_users) => {
-      console.log("all_users socket received", all_users);
-      const users = all_users.filter((i) => i.sender !== userType);
-      const len = users.length;
-
-      console.log("all_users length!!!", len);
-
-      //* room에 두명 이상 있을 시 handshake 로직 시작
-      if (userType === "DEALER") {
-        if (len > 0) {
-          // customer Join yn - true 로 변경하거나
-          // set customer Jo
-          setPeerJoinYn(true);
+      //* Customer에게 ice candidate 받는 소켓
+      const getCandidate = ({ candidate, sender }) => {
+        const isMe = sender === userType;
+        if (!isMe) {
+          console.log("getCandidate socket received - customer", candidate);
+          handleRemoteCandidate(candidate);
         }
+      };
+
+      //* Customer에게 answer 받는 소켓
+      const getAnswer = async ({ sdp, sender }) => {
+        const isMe = sender === userType;
+        if (!isMe) {
+          console.log("answer socket received", sdp);
+          await setRemoteDescription(sdp);
+        }
+      };
+      //* Dealer에게 offer 받는 소켓
+      const getOffer = async ({ sdp, sender }) => {
+        const isMe = sender === userType;
+        console.log("offer socket received", sdp, local);
+        if (local && local.connectionState !== "connecting") {
+          onRefresh();
+        }
+        if (!isMe) {
+          console.log("offer socket received", sdp);
+          await sendAnswer(sdp);
+        }
+      };
+
+      //* room에 있는 socket-id 받는 소켓
+      const allUsers = async (all_users) => {
+        console.log("all_users socket received", all_users);
+        const users = all_users.filter((i) => i.sender !== userType);
+        const len = users.length;
+
+        console.log("all_users length!!!", len);
+
+        //* room에 두명 이상 있을 시 handshake 로직 시작
+        if (userType === "DEALER") {
+          if (len > 0) {
+            // customer Join yn - true 로 변경하거나
+            // set customer Jo
+            setPeerJoinYn(true);
+          }
+        }
+      };
+      socket.on("connect", () => {
+        console.log("webrtc socket connected");
+        socket.emit("join_room", { room: chatRoomId, sender: userType });
+      });
+
+      socket.on("getCandidate", getCandidate);
+      socket.on("all_users", allUsers);
+      socket.on("disconnect", (reason) => {
+        console.log("socket disconnected by ", reason); // "ping timeout"
+        setWebRtcSocketInstance(undefined);
+      });
+
+      if (userType === "CUSTOMER") {
+        socket.on("getOffer", getOffer);
+      } else {
+        socket.on("getAnswer", getAnswer);
       }
-    };
-    socket.on("connect", () => {
-      console.log("webrtc socket connected");
-      socket.emit("join_room", { room: chatRoomId, sender: userType });
-    });
+      setWebRtcSocketInstance(socket);
 
-    socket.on("getCandidate", getCandidate);
-    socket.on("all_users", allUsers);
-    socket.on("disconnect", (reason) => {
-      console.log("socket disconnected by ", reason); // "ping timeout"
-      setWebRtcSocketInstance(undefined);
-    });
-
-    if (userType === "CUSTOMER") {
-      socket.on("getOffer", getOffer);
-    } else {
-      socket.on("getAnswer", getAnswer);
-    }
-    setWebRtcSocketInstance(socket);
-
-    return socket;
-  };
+      return socket;
+    },
+    [local]
+  );
   useEffect(() => {
     if (peerJoinYn) {
       sendOffer(webRtcSocketRef.current);

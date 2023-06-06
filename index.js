@@ -914,7 +914,7 @@ var Rtc = function (_a) {
         setDeviceSwitchRequested(false);
     }, [socketInstance]);
     //** Socket Initializer
-    var webRTCSocketInitializer = function (_id, firstTime) { return __awaiter(void 0, void 0, void 0, function () {
+    var webRTCSocketInitializer = (0, react_1.useCallback)(function (_id, firstTime) { return __awaiter(void 0, void 0, void 0, function () {
         var manager, socket, getCandidate, getAnswer, getOffer, allUsers;
         return __generator(this, function (_a) {
             manager = new socket_io_client_1.Manager(SIGNAL_SOCKET_URI, {
@@ -1009,7 +1009,7 @@ var Rtc = function (_a) {
             setWebRtcSocketInstance(socket);
             return [2 /*return*/, socket];
         });
-    }); };
+    }); }, [local]);
     (0, react_1.useEffect)(function () {
         if (peerJoinYn) {
             sendOffer(webRtcSocketRef.current);
