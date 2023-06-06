@@ -1216,10 +1216,34 @@ var Rtc = function (_a) {
                     setRemoteTracks(__spreadArray(__spreadArray([], remoteTracks, true), [event.streams[0]], false));
                 }
             };
+            if (webRtcSocketRef.current) {
+                webRtcSocketRef.current.on("connect", function () {
+                    var _a;
+                    console.log("webrtc socket connected");
+                    (_a = webRtcSocketRef.current) === null || _a === void 0 ? void 0 : _a.emit("join_room", {
+                        room: chatRoomId,
+                        sender: userType,
+                    });
+                });
+                webRtcSocketRef.current.on("getCandidate", getCandidate);
+                webRtcSocketRef.current.on("all_users", allUsers);
+                webRtcSocketRef.current.on("disconnect", function (reason) {
+                    console.log("socket disconnected by ", reason); // "ping timeout"
+                    setWebRtcSocketInstance(undefined);
+                });
+                if (userType === "CUSTOMER") {
+                    webRtcSocketRef.current.on("getOffer", getOffer);
+                }
+                else {
+                    webRtcSocketRef.current.on("getAnswer", getAnswer);
+                }
+            }
         }
         return function () {
+            var _a;
             console.log("local peer closed");
             local === null || local === void 0 ? void 0 : local.close();
+            (_a = webRtcSocketRef.current) === null || _a === void 0 ? void 0 : _a.removeAllListeners();
         };
     }, [local]);
     (0, react_1.useEffect)(function () {

@@ -1141,10 +1141,33 @@ const Rtc = ({
           setRemoteTracks([...remoteTracks, event.streams[0]]);
         }
       };
+      if (webRtcSocketRef.current) {
+        webRtcSocketRef.current.on("connect", () => {
+          console.log("webrtc socket connected");
+          webRtcSocketRef.current?.emit("join_room", {
+            room: chatRoomId,
+            sender: userType,
+          });
+        });
+
+        webRtcSocketRef.current.on("getCandidate", getCandidate);
+        webRtcSocketRef.current.on("all_users", allUsers);
+        webRtcSocketRef.current.on("disconnect", (reason) => {
+          console.log("socket disconnected by ", reason); // "ping timeout"
+          setWebRtcSocketInstance(undefined);
+        });
+
+        if (userType === "CUSTOMER") {
+          webRtcSocketRef.current.on("getOffer", getOffer);
+        } else {
+          webRtcSocketRef.current.on("getAnswer", getAnswer);
+        }
+      }
     }
     return () => {
       console.log("local peer closed");
       local?.close();
+      webRtcSocketRef.current?.removeAllListeners();
     };
   }, [local]);
 
