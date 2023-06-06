@@ -791,6 +791,116 @@ const Rtc = ({
     setDeviceSwitchRequested(false);
   }, [socketInstance]);
 
+  //! run if received answer from customer
+  const setRemoteDescription = async (offer) => {
+    try {
+      if (!local) throw new Error("local is not defined");
+      // Use the received answerDescription
+      const answerDescription = new RTCSessionDescription(offer);
+      console.log(
+        "setRemoteDescription ~ answerDescription",
+        answerDescription
+      );
+      await local.setRemoteDescription(answerDescription);
+
+      setDeviceSwitchSucceeded(false);
+      setDeviceSwitchRequested(false);
+
+      //!process leftover candidate
+      processCandidates();
+    } catch (error) {
+      console.error("setRemoteDescription ~ line 410 ~ error ~ ", error);
+    }
+  };
+
+  //! run if received iceCandidate from customer
+  const handleRemoteCandidate = (iceCandidate) => {
+    console.log("handle remote candidate", iceCandidate);
+    const newCandidate = new RTCIceCandidate(iceCandidate);
+    if (local === null || local?.remoteDescription === null) {
+      return remoteCandidates.push(newCandidate);
+    }
+    return local?.addIceCandidate(newCandidate);
+  };
+
+  const processCandidates = () => {
+    if (remoteCandidates.length < 1) {
+      return;
+    }
+    if (!local) return;
+    console.log("remoteCandidates!!!!", remoteCandidates);
+    remoteCandidates.map((candidate) => local.addIceCandidate(candidate));
+    setRemoteCandidates([]);
+  };
+
+  //* Customer에게 ice candidate 받는 소켓
+  const getCandidate = ({ candidate, sender }) => {
+    const isMe = sender === userType;
+    if (!isMe) {
+      console.log("getCandidate socket received - customer", candidate);
+      handleRemoteCandidate(candidate);
+    }
+  };
+
+  //* Customer에게 answer 받는 소켓
+  const getAnswer = async ({ sdp, sender }) => {
+    const isMe = sender === userType;
+    if (!isMe) {
+      console.log("answer socket received", sdp);
+      await setRemoteDescription(sdp);
+    }
+  };
+  //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
+  const sendAnswer = async (offer) => {
+    console.log("webrtc socket send Answer, local, offer", local, offer);
+    try {
+      if (!local) return;
+      console.log("answer socket emit", offer);
+      const offerDescription = new RTCSessionDescription(offer);
+      await local.setRemoteDescription(offerDescription);
+      const answerDescription = await local.createAnswer();
+      await local.setLocalDescription(answerDescription);
+      webRtcSocketRef.current?.emit("answer", {
+        sdp: answerDescription,
+        sender: userType,
+      });
+    } catch (e) {
+      console.error("sendAnswer ~ error ~", e);
+    } finally {
+      processCandidates();
+    }
+  };
+  //* Dealer에게 offer 받는 소켓
+  const getOffer = async ({ sdp, sender }) => {
+    const isMe = sender === userType;
+    console.log("offer socket received", sdp, local);
+    if (local && local.connectionState !== "connecting") {
+      onRefresh();
+    }
+    if (!isMe) {
+      console.log("offer socket received", sdp);
+      await sendAnswer(sdp);
+    }
+  };
+
+  //* room에 있는 socket-id 받는 소켓
+  const allUsers = async (all_users) => {
+    console.log("all_users socket received", all_users);
+    const users = all_users.filter((i) => i.sender !== userType);
+    const len = users.length;
+
+    console.log("all_users length!!!", len);
+
+    //* room에 두명 이상 있을 시 handshake 로직 시작
+    if (userType === "DEALER") {
+      if (len > 0) {
+        // customer Join yn - true 로 변경하거나
+        // set customer Jo
+        setPeerJoinYn(true);
+      }
+    }
+  };
+
   //** Socket Initializer
   const webRTCSocketInitializer = useCallback(
     async (_id, firstTime) => {
@@ -801,115 +911,7 @@ const Rtc = ({
         secure: true,
       });
       const socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
-      //! run if received answer from customer
-      const setRemoteDescription = async (offer) => {
-        try {
-          if (!local) throw new Error("local is not defined");
-          // Use the received answerDescription
-          const answerDescription = new RTCSessionDescription(offer);
-          console.log(
-            "setRemoteDescription ~ answerDescription",
-            answerDescription
-          );
-          await local.setRemoteDescription(answerDescription);
 
-          setDeviceSwitchSucceeded(false);
-          setDeviceSwitchRequested(false);
-
-          //!process leftover candidate
-          processCandidates();
-        } catch (error) {
-          console.error("setRemoteDescription ~ line 410 ~ error ~ ", error);
-        }
-      };
-
-      //! run if received iceCandidate from customer
-      const handleRemoteCandidate = (iceCandidate) => {
-        console.log("handle remote candidate", iceCandidate);
-        const newCandidate = new RTCIceCandidate(iceCandidate);
-        if (local === null || local?.remoteDescription === null) {
-          return remoteCandidates.push(newCandidate);
-        }
-        return local?.addIceCandidate(newCandidate);
-      };
-
-      const processCandidates = () => {
-        if (remoteCandidates.length < 1) {
-          return;
-        }
-        if (!local) return;
-        console.log("remoteCandidates!!!!", remoteCandidates);
-        remoteCandidates.map((candidate) => local.addIceCandidate(candidate));
-        setRemoteCandidates([]);
-      };
-
-      //* Customer에게 ice candidate 받는 소켓
-      const getCandidate = ({ candidate, sender }) => {
-        const isMe = sender === userType;
-        if (!isMe) {
-          console.log("getCandidate socket received - customer", candidate);
-          handleRemoteCandidate(candidate);
-        }
-      };
-
-      //* Customer에게 answer 받는 소켓
-      const getAnswer = async ({ sdp, sender }) => {
-        const isMe = sender === userType;
-        if (!isMe) {
-          console.log("answer socket received", sdp);
-          await setRemoteDescription(sdp);
-        }
-      };
-      //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
-      const sendAnswer = async (offer) => {
-        console.log("webrtc socket send Answer, local, offer", local, offer);
-        try {
-          if (!local) return;
-          console.log("answer socket emit", offer);
-          const offerDescription = new RTCSessionDescription(offer);
-          await local.setRemoteDescription(offerDescription);
-          const answerDescription = await local.createAnswer();
-          await local.setLocalDescription(answerDescription);
-          webRtcSocketRef.current?.emit("answer", {
-            sdp: answerDescription,
-            sender: userType,
-          });
-        } catch (e) {
-          console.error("sendAnswer ~ error ~", e);
-        } finally {
-          processCandidates();
-        }
-      };
-      //* Dealer에게 offer 받는 소켓
-      const getOffer = async ({ sdp, sender }) => {
-        const isMe = sender === userType;
-        console.log("offer socket received", sdp, local);
-        if (local && local.connectionState !== "connecting") {
-          onRefresh();
-        }
-        if (!isMe) {
-          console.log("offer socket received", sdp);
-          await sendAnswer(sdp);
-        }
-      };
-
-      //* room에 있는 socket-id 받는 소켓
-      const allUsers = async (all_users) => {
-        console.log("all_users socket received", all_users);
-        const users = all_users.filter((i) => i.sender !== userType);
-        const len = users.length;
-
-        console.log("all_users length!!!", len);
-
-        //* room에 두명 이상 있을 시 handshake 로직 시작
-        if (userType === "DEALER") {
-          if (len > 0) {
-            // customer Join yn - true 로 변경하거나
-            // set customer Jo
-            setPeerJoinYn(true);
-          }
-        }
-      };
       socket.on("connect", () => {
         console.log("webrtc socket connected");
         socket.emit("join_room", { room: chatRoomId, sender: userType });
@@ -933,6 +935,7 @@ const Rtc = ({
     },
     [local]
   );
+
   useEffect(() => {
     if (peerJoinYn) {
       sendOffer(webRtcSocketRef.current);
@@ -1015,9 +1018,6 @@ const Rtc = ({
     console.log("socket icandoit rtc");
 
     (async () => {
-      socket = await webRTCSocketInitializer(null, true);
-      setWebRtcSocketInstance(socket);
-      console.log("join!!");
       console.log("로컬 peerid 세팅을 시작");
       if (local == null) {
         localPeer = createPeerConnection();
@@ -1025,6 +1025,9 @@ const Rtc = ({
         setLocal(localPeer);
         // join_room emit
       }
+      socket = await webRTCSocketInitializer(null, true);
+      setWebRtcSocketInstance(socket);
+      console.log("join!!");
       // socket.emit('join_room', { room: chatRoomId });
     })();
 

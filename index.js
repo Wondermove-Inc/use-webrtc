@@ -830,166 +830,173 @@ var Rtc = function (_a) {
         //reject시 nothing
         setDeviceSwitchRequested(false);
     }, [socketInstance]);
+    //! run if received answer from customer
+    var setRemoteDescription = function (offer) { return __awaiter(void 0, void 0, void 0, function () {
+        var answerDescription, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    if (!local)
+                        throw new Error("local is not defined");
+                    answerDescription = new RTCSessionDescription(offer);
+                    console.log("setRemoteDescription ~ answerDescription", answerDescription);
+                    return [4 /*yield*/, local.setRemoteDescription(answerDescription)];
+                case 1:
+                    _a.sent();
+                    setDeviceSwitchSucceeded(false);
+                    setDeviceSwitchRequested(false);
+                    //!process leftover candidate
+                    processCandidates();
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_2 = _a.sent();
+                    console.error("setRemoteDescription ~ line 410 ~ error ~ ", error_2);
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    }); };
+    //! run if received iceCandidate from customer
+    var handleRemoteCandidate = function (iceCandidate) {
+        console.log("handle remote candidate", iceCandidate);
+        var newCandidate = new RTCIceCandidate(iceCandidate);
+        if (local === null || (local === null || local === void 0 ? void 0 : local.remoteDescription) === null) {
+            return remoteCandidates.push(newCandidate);
+        }
+        return local === null || local === void 0 ? void 0 : local.addIceCandidate(newCandidate);
+    };
+    var processCandidates = function () {
+        if (remoteCandidates.length < 1) {
+            return;
+        }
+        if (!local)
+            return;
+        console.log("remoteCandidates!!!!", remoteCandidates);
+        remoteCandidates.map(function (candidate) { return local.addIceCandidate(candidate); });
+        setRemoteCandidates([]);
+    };
+    //* Customer에게 ice candidate 받는 소켓
+    var getCandidate = function (_a) {
+        var candidate = _a.candidate, sender = _a.sender;
+        var isMe = sender === userType;
+        if (!isMe) {
+            console.log("getCandidate socket received - customer", candidate);
+            handleRemoteCandidate(candidate);
+        }
+    };
+    //* Customer에게 answer 받는 소켓
+    var getAnswer = function (_a) {
+        var sdp = _a.sdp, sender = _a.sender;
+        return __awaiter(void 0, void 0, void 0, function () {
+            var isMe;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        isMe = sender === userType;
+                        if (!!isMe) return [3 /*break*/, 2];
+                        console.log("answer socket received", sdp);
+                        return [4 /*yield*/, setRemoteDescription(sdp)];
+                    case 1:
+                        _b.sent();
+                        _b.label = 2;
+                    case 2: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
+    var sendAnswer = function (offer) { return __awaiter(void 0, void 0, void 0, function () {
+        var offerDescription, answerDescription, e_4;
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    console.log("webrtc socket send Answer, local, offer", local, offer);
+                    _b.label = 1;
+                case 1:
+                    _b.trys.push([1, 5, 6, 7]);
+                    if (!local)
+                        return [2 /*return*/];
+                    console.log("answer socket emit", offer);
+                    offerDescription = new RTCSessionDescription(offer);
+                    return [4 /*yield*/, local.setRemoteDescription(offerDescription)];
+                case 2:
+                    _b.sent();
+                    return [4 /*yield*/, local.createAnswer()];
+                case 3:
+                    answerDescription = _b.sent();
+                    return [4 /*yield*/, local.setLocalDescription(answerDescription)];
+                case 4:
+                    _b.sent();
+                    (_a = webRtcSocketRef.current) === null || _a === void 0 ? void 0 : _a.emit("answer", {
+                        sdp: answerDescription,
+                        sender: userType,
+                    });
+                    return [3 /*break*/, 7];
+                case 5:
+                    e_4 = _b.sent();
+                    console.error("sendAnswer ~ error ~", e_4);
+                    return [3 /*break*/, 7];
+                case 6:
+                    processCandidates();
+                    return [7 /*endfinally*/];
+                case 7: return [2 /*return*/];
+            }
+        });
+    }); };
+    //* Dealer에게 offer 받는 소켓
+    var getOffer = function (_a) {
+        var sdp = _a.sdp, sender = _a.sender;
+        return __awaiter(void 0, void 0, void 0, function () {
+            var isMe;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        isMe = sender === userType;
+                        console.log("offer socket received", sdp, local);
+                        if (local && local.connectionState !== "connecting") {
+                            onRefresh();
+                        }
+                        if (!!isMe) return [3 /*break*/, 2];
+                        console.log("offer socket received", sdp);
+                        return [4 /*yield*/, sendAnswer(sdp)];
+                    case 1:
+                        _b.sent();
+                        _b.label = 2;
+                    case 2: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    //* room에 있는 socket-id 받는 소켓
+    var allUsers = function (all_users) { return __awaiter(void 0, void 0, void 0, function () {
+        var users, len;
+        return __generator(this, function (_a) {
+            console.log("all_users socket received", all_users);
+            users = all_users.filter(function (i) { return i.sender !== userType; });
+            len = users.length;
+            console.log("all_users length!!!", len);
+            //* room에 두명 이상 있을 시 handshake 로직 시작
+            if (userType === "DEALER") {
+                if (len > 0) {
+                    // customer Join yn - true 로 변경하거나
+                    // set customer Jo
+                    setPeerJoinYn(true);
+                }
+            }
+            return [2 /*return*/];
+        });
+    }); };
     //** Socket Initializer
     var webRTCSocketInitializer = (0, react_1.useCallback)(function (_id, firstTime) { return __awaiter(void 0, void 0, void 0, function () {
-        var manager, socket, setRemoteDescription, handleRemoteCandidate, processCandidates, getCandidate, getAnswer, sendAnswer, getOffer, allUsers;
+        var manager, socket;
         return __generator(this, function (_a) {
             manager = new socket_io_client_1.Manager(SIGNAL_SOCKET_URI, {
                 transports: ["websocket", "polling"],
                 secure: true,
             });
             socket = manager.socket(SIGNAL_SOCKET_NAMESPACE);
-            setRemoteDescription = function (offer) { return __awaiter(void 0, void 0, void 0, function () {
-                var answerDescription, error_2;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            if (!local)
-                                throw new Error("local is not defined");
-                            answerDescription = new RTCSessionDescription(offer);
-                            console.log("setRemoteDescription ~ answerDescription", answerDescription);
-                            return [4 /*yield*/, local.setRemoteDescription(answerDescription)];
-                        case 1:
-                            _a.sent();
-                            setDeviceSwitchSucceeded(false);
-                            setDeviceSwitchRequested(false);
-                            //!process leftover candidate
-                            processCandidates();
-                            return [3 /*break*/, 3];
-                        case 2:
-                            error_2 = _a.sent();
-                            console.error("setRemoteDescription ~ line 410 ~ error ~ ", error_2);
-                            return [3 /*break*/, 3];
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            }); };
-            handleRemoteCandidate = function (iceCandidate) {
-                console.log("handle remote candidate", iceCandidate);
-                var newCandidate = new RTCIceCandidate(iceCandidate);
-                if (local === null || (local === null || local === void 0 ? void 0 : local.remoteDescription) === null) {
-                    return remoteCandidates.push(newCandidate);
-                }
-                return local === null || local === void 0 ? void 0 : local.addIceCandidate(newCandidate);
-            };
-            processCandidates = function () {
-                if (remoteCandidates.length < 1) {
-                    return;
-                }
-                if (!local)
-                    return;
-                console.log("remoteCandidates!!!!", remoteCandidates);
-                remoteCandidates.map(function (candidate) { return local.addIceCandidate(candidate); });
-                setRemoteCandidates([]);
-            };
-            getCandidate = function (_a) {
-                var candidate = _a.candidate, sender = _a.sender;
-                var isMe = sender === userType;
-                if (!isMe) {
-                    console.log("getCandidate socket received - customer", candidate);
-                    handleRemoteCandidate(candidate);
-                }
-            };
-            getAnswer = function (_a) {
-                var sdp = _a.sdp, sender = _a.sender;
-                return __awaiter(void 0, void 0, void 0, function () {
-                    var isMe;
-                    return __generator(this, function (_b) {
-                        switch (_b.label) {
-                            case 0:
-                                isMe = sender === userType;
-                                if (!!isMe) return [3 /*break*/, 2];
-                                console.log("answer socket received", sdp);
-                                return [4 /*yield*/, setRemoteDescription(sdp)];
-                            case 1:
-                                _b.sent();
-                                _b.label = 2;
-                            case 2: return [2 /*return*/];
-                        }
-                    });
-                });
-            };
-            sendAnswer = function (offer) { return __awaiter(void 0, void 0, void 0, function () {
-                var offerDescription, answerDescription, e_4;
-                var _a;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0:
-                            console.log("webrtc socket send Answer, local, offer", local, offer);
-                            _b.label = 1;
-                        case 1:
-                            _b.trys.push([1, 5, 6, 7]);
-                            if (!local)
-                                return [2 /*return*/];
-                            console.log("answer socket emit", offer);
-                            offerDescription = new RTCSessionDescription(offer);
-                            return [4 /*yield*/, local.setRemoteDescription(offerDescription)];
-                        case 2:
-                            _b.sent();
-                            return [4 /*yield*/, local.createAnswer()];
-                        case 3:
-                            answerDescription = _b.sent();
-                            return [4 /*yield*/, local.setLocalDescription(answerDescription)];
-                        case 4:
-                            _b.sent();
-                            (_a = webRtcSocketRef.current) === null || _a === void 0 ? void 0 : _a.emit("answer", {
-                                sdp: answerDescription,
-                                sender: userType,
-                            });
-                            return [3 /*break*/, 7];
-                        case 5:
-                            e_4 = _b.sent();
-                            console.error("sendAnswer ~ error ~", e_4);
-                            return [3 /*break*/, 7];
-                        case 6:
-                            processCandidates();
-                            return [7 /*endfinally*/];
-                        case 7: return [2 /*return*/];
-                    }
-                });
-            }); };
-            getOffer = function (_a) {
-                var sdp = _a.sdp, sender = _a.sender;
-                return __awaiter(void 0, void 0, void 0, function () {
-                    var isMe;
-                    return __generator(this, function (_b) {
-                        switch (_b.label) {
-                            case 0:
-                                isMe = sender === userType;
-                                console.log("offer socket received", sdp, local);
-                                if (local && local.connectionState !== "connecting") {
-                                    onRefresh();
-                                }
-                                if (!!isMe) return [3 /*break*/, 2];
-                                console.log("offer socket received", sdp);
-                                return [4 /*yield*/, sendAnswer(sdp)];
-                            case 1:
-                                _b.sent();
-                                _b.label = 2;
-                            case 2: return [2 /*return*/];
-                        }
-                    });
-                });
-            };
-            allUsers = function (all_users) { return __awaiter(void 0, void 0, void 0, function () {
-                var users, len;
-                return __generator(this, function (_a) {
-                    console.log("all_users socket received", all_users);
-                    users = all_users.filter(function (i) { return i.sender !== userType; });
-                    len = users.length;
-                    console.log("all_users length!!!", len);
-                    //* room에 두명 이상 있을 시 handshake 로직 시작
-                    if (userType === "DEALER") {
-                        if (len > 0) {
-                            // customer Join yn - true 로 변경하거나
-                            // set customer Jo
-                            setPeerJoinYn(true);
-                        }
-                    }
-                    return [2 /*return*/];
-                });
-            }); };
             socket.on("connect", function () {
                 console.log("webrtc socket connected");
                 socket.emit("join_room", { room: chatRoomId, sender: userType });
@@ -1089,11 +1096,7 @@ var Rtc = function (_a) {
         (function () { return __awaiter(void 0, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, webRTCSocketInitializer(null, true)];
-                    case 1:
-                        socket = _a.sent();
-                        setWebRtcSocketInstance(socket);
-                        console.log("join!!");
+                    case 0:
                         console.log("로컬 peerid 세팅을 시작");
                         if (local == null) {
                             localPeer = createPeerConnection();
@@ -1101,6 +1104,11 @@ var Rtc = function (_a) {
                             setLocal(localPeer);
                             // join_room emit
                         }
+                        return [4 /*yield*/, webRTCSocketInitializer(null, true)];
+                    case 1:
+                        socket = _a.sent();
+                        setWebRtcSocketInstance(socket);
+                        console.log("join!!");
                         return [2 /*return*/];
                 }
             });
