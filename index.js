@@ -998,6 +998,7 @@ var Rtc = function (_a) {
             socket.on("all_users", allUsers);
             socket.on("disconnect", function (reason) {
                 console.log("socket disconnected by ", reason); // "ping timeout"
+                setWebRtcSocketInstance(undefined);
             });
             if (userType === "CUSTOMER") {
                 socket.on("getOffer", getOffer);
@@ -1082,51 +1083,44 @@ var Rtc = function (_a) {
     };
     // // 2. 로컬 Peer id 받고
     (0, react_1.useEffect)(function () {
-        console.log("로컬 peerid 세팅을 시작");
-        if (local == null) {
-            var localPeer = createPeerConnection();
-            //* local peer에 localStream 등록
-            setLocal(localPeer);
-            // join_room emit
-        }
+        var socket;
+        var localPeer;
+        console.log("socket icandoit rtc");
+        (function () { return __awaiter(void 0, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, webRTCSocketInitializer(null, true)];
+                    case 1:
+                        socket = _a.sent();
+                        setWebRtcSocketInstance(socket);
+                        console.log("join!!");
+                        console.log("로컬 peerid 세팅을 시작");
+                        if (local == null) {
+                            localPeer = createPeerConnection();
+                            //* local peer에 localStream 등록
+                            setLocal(localPeer);
+                            // join_room emit
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        }); })();
         return function () {
             setLocal(undefined);
+            if (socket) {
+                console.log("socket off");
+                socket.removeAllListeners();
+                setWebRtcSocketInstance(undefined);
+            }
         };
     }, []);
-    (0, react_1.useEffect)(function () {
-        if (local) {
-            var socket_1;
-            console.log("socket icandoit rtc");
-            (function () { return __awaiter(void 0, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, webRTCSocketInitializer(null, true)];
-                        case 1:
-                            socket_1 = _a.sent();
-                            setWebRtcSocketInstance(socket_1);
-                            console.log("join!!");
-                            return [2 /*return*/];
-                    }
-                });
-            }); })();
-            return function () {
-                console.log("socket off");
-                if (socket_1) {
-                    // socket.emit('leave', { roomId: chatRoomId, sender: userType });
-                    // socket.removeAllListeners();
-                    // socket.disconnect();
-                    socket_1.removeAllListeners();
-                    setWebRtcSocketInstance(undefined);
-                    webRtcSocketRef.current = undefined;
-                }
-                // if (webRtcSocketInstance) {
-            };
-        }
-    }, [local]);
     (0, react_1.useEffect)(function () {
         if (webRtcSocketInstance) {
             webRtcSocketRef.current = webRtcSocketInstance;
         }
+        return function () {
+            webRtcSocketRef.current = undefined;
+        };
     }, [webRtcSocketInstance]);
     (0, react_1.useEffect)(function () {
         if (local && localStream) {

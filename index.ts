@@ -924,6 +924,7 @@ const Rtc = ({
     socket.on("all_users", allUsers);
     socket.on("disconnect", (reason) => {
       console.log("socket disconnected by ", reason); // "ping timeout"
+      setWebRtcSocketInstance(undefined);
     });
 
     if (userType === "CUSTOMER") {
@@ -1012,49 +1013,41 @@ const Rtc = ({
 
   // // 2. 로컬 Peer id 받고
   useEffect(() => {
-    console.log("로컬 peerid 세팅을 시작");
-    if (local == null) {
-      const localPeer = createPeerConnection();
-      //* local peer에 localStream 등록
+    let socket: Socket;
+    let localPeer: RTCPeerConnection;
+    console.log("socket icandoit rtc");
 
-      setLocal(localPeer);
-      // join_room emit
-    }
+    (async () => {
+      socket = await webRTCSocketInitializer(null, true);
+      setWebRtcSocketInstance(socket);
+      console.log("join!!");
+      console.log("로컬 peerid 세팅을 시작");
+      if (local == null) {
+        localPeer = createPeerConnection();
+        //* local peer에 localStream 등록
+        setLocal(localPeer);
+        // join_room emit
+      }
+      // socket.emit('join_room', { room: chatRoomId });
+    })();
+
     return () => {
       setLocal(undefined);
+      if (socket) {
+        console.log("socket off");
+        socket.removeAllListeners();
+        setWebRtcSocketInstance(undefined);
+      }
     };
   }, []);
-
-  useEffect(() => {
-    if (local) {
-      let socket: Socket;
-      console.log("socket icandoit rtc");
-      (async () => {
-        socket = await webRTCSocketInitializer(null, true);
-        setWebRtcSocketInstance(socket);
-        console.log("join!!");
-        // socket.emit('join_room', { room: chatRoomId });
-      })();
-
-      return () => {
-        console.log("socket off");
-        if (socket) {
-          // socket.emit('leave', { roomId: chatRoomId, sender: userType });
-          // socket.removeAllListeners();
-          // socket.disconnect();
-          socket.removeAllListeners();
-          setWebRtcSocketInstance(undefined);
-          webRtcSocketRef.current = undefined;
-        }
-        // if (webRtcSocketInstance) {
-      };
-    }
-  }, [local]);
 
   useEffect(() => {
     if (webRtcSocketInstance) {
       webRtcSocketRef.current = webRtcSocketInstance;
     }
+    return () => {
+      webRtcSocketRef.current = undefined;
+    };
   }, [webRtcSocketInstance]);
 
   useEffect(() => {
