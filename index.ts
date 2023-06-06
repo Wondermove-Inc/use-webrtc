@@ -1013,18 +1013,23 @@ const Rtc = ({
 
   // // 2. 로컬 Peer id 받고
   useEffect(() => {
-    let socket: Socket;
     let localPeer: RTCPeerConnection;
-    console.log("socket icandoit rtc");
+    if (local == null) {
+      localPeer = createPeerConnection();
+      //* local peer에 localStream 등록
+      setLocal(localPeer);
+      // join_room emit
+    }
+    return () => {
+      setLocal(undefined);
+    };
+  }, []);
 
+  // // 2. 로컬 Peer id 받고
+  useEffect(() => {
+    let socket: Socket;
+    console.log("socket icandoit rtc");
     (async () => {
-      console.log("로컬 peerid 세팅을 시작");
-      if (local == null) {
-        localPeer = createPeerConnection();
-        //* local peer에 localStream 등록
-        setLocal(localPeer);
-        // join_room emit
-      }
       socket = await webRTCSocketInitializer(null, true);
       setWebRtcSocketInstance(socket);
       console.log("join!!");
@@ -1032,14 +1037,13 @@ const Rtc = ({
     })();
 
     return () => {
-      setLocal(undefined);
       if (socket) {
         console.log("socket off");
         socket.removeAllListeners();
         setWebRtcSocketInstance(undefined);
       }
     };
-  }, []);
+  }, [local]);
 
   useEffect(() => {
     if (webRtcSocketInstance) {
