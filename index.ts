@@ -579,73 +579,6 @@ const Rtc = ({
     [local]
   );
 
-  //! run if received answer from customer
-  const setRemoteDescription = useCallback(
-    async (offer) => {
-      try {
-        if (!local) throw new Error("local is not defined");
-        // Use the received answerDescription
-        const answerDescription = new RTCSessionDescription(offer);
-        console.log(
-          "setRemoteDescription ~ answerDescription",
-          answerDescription
-        );
-        await local.setRemoteDescription(answerDescription);
-
-        setDeviceSwitchSucceeded(false);
-        setDeviceSwitchRequested(false);
-
-        //!process leftover candidate
-        processCandidates();
-      } catch (error) {
-        console.error("setRemoteDescription ~ line 410 ~ error ~ ", error);
-      }
-    },
-    [local]
-  );
-
-  //! run if received iceCandidate from customer
-  const handleRemoteCandidate = (iceCandidate) => {
-    console.log("handle remote candidate", iceCandidate);
-    const newCandidate = new RTCIceCandidate(iceCandidate);
-    if (local === null || local?.remoteDescription === null) {
-      return remoteCandidates.push(newCandidate);
-    }
-    return local?.addIceCandidate(newCandidate);
-  };
-
-  const processCandidates = () => {
-    if (remoteCandidates.length < 1) {
-      return;
-    }
-    if (!local) return;
-    console.log("remoteCandidates!!!!", remoteCandidates);
-    remoteCandidates.map((candidate) => local.addIceCandidate(candidate));
-    setRemoteCandidates([]);
-  };
-  //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
-  const sendAnswer = useCallback(
-    async (offer) => {
-      try {
-        if (!local) return;
-        console.log("answer socket emit", offer);
-        const offerDescription = new RTCSessionDescription(offer);
-        await local.setRemoteDescription(offerDescription);
-        const answerDescription = await local.createAnswer();
-        await local.setLocalDescription(answerDescription);
-        webRtcSocketRef.current?.emit("answer", {
-          sdp: answerDescription,
-          sender: userType,
-        });
-      } catch (e) {
-        console.error("sendAnswer ~ error ~", e);
-      } finally {
-        processCandidates();
-      }
-    },
-    [local]
-  );
-
   const handleStream = useCallback(
     (stream) => {
       setStartTime((prev) => prev || moment());
@@ -868,6 +801,47 @@ const Rtc = ({
         secure: true,
       });
       const socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
+      //! run if received answer from customer
+      const setRemoteDescription = async (offer) => {
+        try {
+          if (!local) throw new Error("local is not defined");
+          // Use the received answerDescription
+          const answerDescription = new RTCSessionDescription(offer);
+          console.log(
+            "setRemoteDescription ~ answerDescription",
+            answerDescription
+          );
+          await local.setRemoteDescription(answerDescription);
+
+          setDeviceSwitchSucceeded(false);
+          setDeviceSwitchRequested(false);
+
+          //!process leftover candidate
+          processCandidates();
+        } catch (error) {
+          console.error("setRemoteDescription ~ line 410 ~ error ~ ", error);
+        }
+      };
+
+      //! run if received iceCandidate from customer
+      const handleRemoteCandidate = (iceCandidate) => {
+        console.log("handle remote candidate", iceCandidate);
+        const newCandidate = new RTCIceCandidate(iceCandidate);
+        if (local === null || local?.remoteDescription === null) {
+          return remoteCandidates.push(newCandidate);
+        }
+        return local?.addIceCandidate(newCandidate);
+      };
+
+      const processCandidates = () => {
+        if (remoteCandidates.length < 1) {
+          return;
+        }
+        if (!local) return;
+        console.log("remoteCandidates!!!!", remoteCandidates);
+        remoteCandidates.map((candidate) => local.addIceCandidate(candidate));
+        setRemoteCandidates([]);
+      };
 
       //* Customer에게 ice candidate 받는 소켓
       const getCandidate = ({ candidate, sender }) => {
@@ -884,6 +858,26 @@ const Rtc = ({
         if (!isMe) {
           console.log("answer socket received", sdp);
           await setRemoteDescription(sdp);
+        }
+      };
+      //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
+      const sendAnswer = async (offer) => {
+        console.log("webrtc socket send Answer, local, offer", local, offer);
+        try {
+          if (!local) return;
+          console.log("answer socket emit", offer);
+          const offerDescription = new RTCSessionDescription(offer);
+          await local.setRemoteDescription(offerDescription);
+          const answerDescription = await local.createAnswer();
+          await local.setLocalDescription(answerDescription);
+          webRtcSocketRef.current?.emit("answer", {
+            sdp: answerDescription,
+            sender: userType,
+          });
+        } catch (e) {
+          console.error("sendAnswer ~ error ~", e);
+        } finally {
+          processCandidates();
         }
       };
       //* Dealer에게 offer 받는 소켓
@@ -1145,7 +1139,10 @@ const Rtc = ({
         }
       };
     }
-    return () => {};
+    return () => {
+      console.log("local peer closed");
+      local?.close();
+    };
   }, [local]);
 
   useEffect(() => {
@@ -1188,6 +1185,11 @@ const Rtc = ({
       setMicOnYn(true);
     } else {
     }
+    return () => {
+      localStream?.getTracks().forEach((track) => {
+        track.stop();
+      });
+    };
   }, [localStream]);
 
   useEffect(() => {
