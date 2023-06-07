@@ -782,27 +782,29 @@ var Rtc = function (_a) {
     var handleSwitching = (0, react_1.useCallback)(function (_a) {
         var roomId = _a.roomId, sender = _a.sender, deviceType = _a.deviceType, switchStatus = _a.switchStatus;
         if (sender === "DEALER") {
-            if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
-                setDeviceSwitchRequested(true);
-            }
-            if (switchStatus === "SUCCESS" &&
-                deviceType === "MOBILE" //&&
-            // deviceSwitchingYn
-            ) {
-                // 끄기
-                console.log("asdfjlaksdjflsadjf", switchStatus, sender, deviceSwitchRequested, deviceSwitchingYn);
-                setDeviceSwitchSucceeded(true);
-                setDeviceSwitchingYn(false);
-            }
-            if (switchStatus === "ALLOW" && sender === "DEALER") {
-                if (userType === "CUSTOMER") {
+            if (userType === "CUSTOMER") {
+                if (switchStatus === "ALLOW") {
                     onRefresh();
                 }
             }
-            if (switchStatus === "REJECT") {
-                // 끄기
-                console.log("asdfjlaksdjflsadjf", switchStatus, sender, deviceSwitchRequested);
-                setDeviceSwitchingYn(false); //필요한가?
+            if (userType === "DEALER") {
+                if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
+                    setDeviceSwitchRequested(true);
+                }
+                if (switchStatus === "SUCCESS" &&
+                    deviceType === "MOBILE" //&&
+                // deviceSwitchingYn
+                ) {
+                    // 끄기
+                    console.log("asdfjlaksdjflsadjf", switchStatus, sender, deviceSwitchRequested, deviceSwitchingYn);
+                    setDeviceSwitchSucceeded(true);
+                    setDeviceSwitchingYn(false);
+                }
+                if (switchStatus === "REJECT") {
+                    // 끄기
+                    console.log("asdfjlaksdjflsadjf", switchStatus, sender, deviceSwitchRequested);
+                    setDeviceSwitchingYn(false); //필요한가?
+                }
             }
         }
     }, [deviceSwitchRequested, deviceSwitchingYn]);
@@ -955,9 +957,6 @@ var Rtc = function (_a) {
                     case 0:
                         isMe = sender === userType;
                         console.log("offer socket received", sdp, local);
-                        if (local && local.connectionState !== "connecting") {
-                            onRefresh();
-                        }
                         if (!!isMe) return [3 /*break*/, 2];
                         console.log("offer socket received", sdp);
                         return [4 /*yield*/, sendAnswer(sdp)];
@@ -1187,7 +1186,7 @@ var Rtc = function (_a) {
             };
             //* ice connection 상태 이벤트. completed일 경우 peer간 연결 성공
             local.oniceconnectionstatechange = function (event) {
-                console.log("iceconnectionstatechange", local.iceConnectionState);
+                console.log("iceconnectionstatechange", local.iceConnectionState, "deviceSwitching? ", deviceSwitchingYn);
                 switch (local.iceConnectionState) {
                     case "connected":
                     case "completed":
@@ -1242,7 +1241,7 @@ var Rtc = function (_a) {
         return function () {
             var _a;
             console.log("local peer closed");
-            local === null || local === void 0 ? void 0 : local.close();
+            // local?.close();
             (_a = webRtcSocketRef.current) === null || _a === void 0 ? void 0 : _a.removeAllListeners();
         };
     }, [local]);
@@ -1408,6 +1407,8 @@ var Rtc = function (_a) {
             return;
         }
         else {
+            console.log("refresh local peer");
+            local === null || local === void 0 ? void 0 : local.close();
             var localPeer = createPeerConnection();
             setConnected(false);
             //* local peer에 localStream 등록
@@ -1423,7 +1424,7 @@ var Rtc = function (_a) {
             setRemoteTracks([]);
             // findDestination();
         }
-    }, [networkOnline]);
+    }, [networkOnline, local]);
     (0, react_1.useEffect)(function () {
         if (networkErrored && socketInstance) {
             socketInstance === null || socketInstance === void 0 ? void 0 : socketInstance.emit("consultError", {

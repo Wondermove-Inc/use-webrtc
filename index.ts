@@ -728,39 +728,42 @@ const Rtc = ({
   const handleSwitching = useCallback(
     ({ roomId, sender, deviceType, switchStatus }) => {
       if (sender === "DEALER") {
-        if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
-          setDeviceSwitchRequested(true);
-        }
-        if (
-          switchStatus === "SUCCESS" &&
-          deviceType === "MOBILE" //&&
-          // deviceSwitchingYn
-        ) {
-          // 끄기
-          console.log(
-            "asdfjlaksdjflsadjf",
-            switchStatus,
-            sender,
-            deviceSwitchRequested,
-            deviceSwitchingYn
-          );
-          setDeviceSwitchSucceeded(true);
-          setDeviceSwitchingYn(false);
-        }
-        if (switchStatus === "ALLOW" && sender === "DEALER") {
-          if (userType === "CUSTOMER") {
+        if (userType === "CUSTOMER") {
+          if (switchStatus === "ALLOW") {
             onRefresh();
           }
         }
-        if (switchStatus === "REJECT") {
-          // 끄기
-          console.log(
-            "asdfjlaksdjflsadjf",
-            switchStatus,
-            sender,
-            deviceSwitchRequested
-          );
-          setDeviceSwitchingYn(false); //필요한가?
+        if (userType === "DEALER") {
+          if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
+            setDeviceSwitchRequested(true);
+          }
+          if (
+            switchStatus === "SUCCESS" &&
+            deviceType === "MOBILE" //&&
+            // deviceSwitchingYn
+          ) {
+            // 끄기
+            console.log(
+              "asdfjlaksdjflsadjf",
+              switchStatus,
+              sender,
+              deviceSwitchRequested,
+              deviceSwitchingYn
+            );
+            setDeviceSwitchSucceeded(true);
+            setDeviceSwitchingYn(false);
+          }
+
+          if (switchStatus === "REJECT") {
+            // 끄기
+            console.log(
+              "asdfjlaksdjflsadjf",
+              switchStatus,
+              sender,
+              deviceSwitchRequested
+            );
+            setDeviceSwitchingYn(false); //필요한가?
+          }
         }
       }
     },
@@ -874,9 +877,9 @@ const Rtc = ({
   const getOffer = async ({ sdp, sender }) => {
     const isMe = sender === userType;
     console.log("offer socket received", sdp, local);
-    if (local && local.connectionState !== "connecting") {
-      onRefresh();
-    }
+    // if (local && local.connectionState !== 'connecting') {
+    //   onRefresh();
+    // }
     if (!isMe) {
       console.log("offer socket received", sdp);
       await sendAnswer(sdp);
@@ -1112,7 +1115,12 @@ const Rtc = ({
 
       //* ice connection 상태 이벤트. completed일 경우 peer간 연결 성공
       local.oniceconnectionstatechange = (event) => {
-        console.log("iceconnectionstatechange", local.iceConnectionState);
+        console.log(
+          "iceconnectionstatechange",
+          local.iceConnectionState,
+          "deviceSwitching? ",
+          deviceSwitchingYn
+        );
         switch (local.iceConnectionState) {
           case "connected":
           case "completed":
@@ -1166,7 +1174,8 @@ const Rtc = ({
     }
     return () => {
       console.log("local peer closed");
-      local?.close();
+      // local?.close();
+
       webRtcSocketRef.current?.removeAllListeners();
     };
   }, [local]);
@@ -1350,6 +1359,8 @@ const Rtc = ({
       }, 1500);
       return;
     } else {
+      console.log("refresh local peer");
+      local?.close();
       const localPeer = createPeerConnection();
       setConnected(false);
       //* local peer에 localStream 등록
@@ -1366,7 +1377,7 @@ const Rtc = ({
       setRemoteTracks([]);
       // findDestination();
     }
-  }, [networkOnline]);
+  }, [networkOnline, local]);
 
   useEffect(() => {
     if (networkErrored && socketInstance) {
