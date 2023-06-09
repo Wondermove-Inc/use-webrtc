@@ -87,13 +87,16 @@ const Rtc = ({
   const [startTime, setStartTime] = useState<Moment>();
   const [timeDiff, setTimeDiff] = useState<number>(0);
 
-  const [remoteTracks, setRemoteTracks] = useState<any>([]);
+  const [negotiationNeeded, setNegotiationNeeded] = useState<boolean>(false);
 
+  /// 다시한번 시작해
   const userType: UserType = dealerYn ? "DEALER" : "CUSTOMER";
 
   const playerRef = useRef<HTMLVideoElement>();
   const remotePlayerRef = useRef<HTMLVideoElement>();
   const webRtcSocketRef = useRef<Socket>();
+  const peerConnectionRef = useRef<RTCPeerConnection>();
+  const localStreamRef = useRef<MediaStream>();
 
   const peerMaster = {
     host: SERVER_URI,
@@ -406,583 +409,497 @@ const Rtc = ({
    *
    */
   // 함수들 ~
+  const socketRef = useRef<Socket>();
 
-  const replaceTracks = useCallback(
-    (newStream: MediaStream, isScreenShare = false) => {
-      if (!localStream || !local || !playerRef.current) return;
-      const originalVideoTrack = localStream.getVideoTracks()[0];
-      const newVideoTrack = newStream
-        .getVideoTracks()
-        .filter((i) => i.readyState !== "ended")[0];
-      const videoSender = local
-        .getSenders()
-        .filter((i) => i.track?.kind === "video");
-
-      localStream.getVideoTracks().forEach((track) => track.stop());
-
-      newVideoTrack.onended = (e) => {
-        if (isScreenShare) {
-          setScreenSharingYn(false);
-        }
-      };
-      localStream.addTrack(newVideoTrack);
-      videoSender.forEach((sender) => {
-        sender.replaceTrack(newVideoTrack);
-      });
-      playerRef.current.srcObject = newStream;
-    },
-    [localStream, playerRef, local]
-  );
-  const setLocalStreamVideo = useCallback(async () => {
-    try {
-      if (navigator.mediaDevices) {
-        let s = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-        console.log("user camera stream", s);
-        s.addEventListener("inactive", function (e) {
-          console.log("local inactive");
-          // setMicOnYn(false);
-          // setCameraOnYn(false);
-        });
-        s.addEventListener("active", function (e) {
-          console.log("local active");
-          setMicOnYn(true);
-          setCameraOnYn(true);
-        });
-        s.getVideoTracks().forEach((i) => {
-          i.addEventListener("mute", function (e) {
-            console.log("local camera muted!");
-            // setCameraOnYn(false);
-            // setConnectError(true);
-          });
-          i.addEventListener("unmute", function (e) {
-            console.log("local camera unmuted!");
-            // setCameraOnYn(true);
-            // setConnectError(true);
-          });
-        });
-
-        s.getAudioTracks().forEach((i) => {
-          i.addEventListener("mute", function (e) {
-            console.log("local mic muted!");
-            setMicOnYn(false);
-            // setConnectError(true);
-          });
-          i.addEventListener("unmute", function (e) {
-            console.log("local mic unmuted!");
-            setMicOnYn(true);
-            // setConnectError(true);
-          });
-        });
-        s.addEventListener("addtrack", function (e) {
-          console.log("localstream:: on add track ", e);
-        });
-
-        if (!localStream) setLocalStream(s);
-        else {
-          console.log("bbb");
-          replaceTracks(s);
-          //   setLocalStream(localStream);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, [mediaDevices, cameraOnYn, micOnYn, localStream]);
-
-  const setMediaStreamVideo = useCallback(async () => {
-    try {
-      if (navigator.mediaDevices) {
-        let s = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: false,
-        });
-        console.log("screen video", s.getTracks());
-        if (!localStream) {
-          let stream = await navigator.mediaDevices.getUserMedia({
-            video: false,
-            audio: true,
-          });
-          s.addTrack(stream.getAudioTracks()[0]);
-        }
-
-        if (!localStream) setLocalStream(s);
-        else {
-          replaceTracks(s, true);
-
-          //   setLocalStream(localStream);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      setScreenSharingYn(false);
-    }
-  }, [mediaDevices, cameraOnYn, micOnYn, localStream]);
-
-  const findDestination = useCallback(async () => {
-    if (chatRoomId == null) return alert("please enter chatroom id");
-    try {
-      setFinding(true);
-      console.log("peerId", peerId);
-      let response = await axios.get(`${WEBRTC_ROOM_URI}/peers/room`, {
-        params: {
-          roomId: chatRoomId,
-          userType: userType.toLowerCase(),
-          peerId: peerId,
-        },
-      });
-      let {
-        data: { room },
-      } = response;
-      console.log("found destination: ", room);
-
-      if (userType === "CUSTOMER") {
-        if (room?.manager) {
-          setDestination(room.manager);
-        }
-      } else {
-        if (room?.customer) {
-          setDestination(room.customer);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setFinding(false);
-    }
-  }, [chatRoomId, userType, peerId]);
-
-  //! initial offer
-  const sendOffer = useCallback(
-    async (socket) => {
-      const sessionConstraints: RTCAnswerOptions = {
-        mandatory: {
-          OfferToReceiveAudio: true,
-          OfferToReceiveVideo: true,
-        },
-      };
-      let offerDescription;
-      try {
-        if (!local) throw new Error("local is null");
-        offerDescription = await local.createOffer(sessionConstraints);
-        console.log("createoffer ~ offerDescription", offerDescription);
-        await local.setLocalDescription(offerDescription);
-
-        //!Send the offerDescription to customer.
-        socket.emit("offer", { sdp: offerDescription, sender: userType });
-      } catch (error) {
-        console.error("createOffer ~ line 363 ~ error ~ ", error);
-      }
-    },
-    [local]
-  );
-
-  const handleStream = useCallback(
-    (stream) => {
-      setStartTime((prev) => prev || moment());
-      console.log("navis calling 2 aaa", stream);
-      // `stream` is the MediaStream of the remote peer.m
-      // Here you'd add it to an HTML video/canvas element.
-
-      setRemoteStream(stream);
-    },
-    [localStream]
-  );
-
-  const stop = useCallback(() => {
-    console.log("stop", localStream, remoteStream);
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then((mediaStream) => {
-        mediaStream.getTracks().forEach((track) => {
-          track.stop();
-          localStream?.removeTrack(track);
-          console.log("track stopped");
-        });
-      });
-
-    if (localStream) {
-      localStream.getTracks().forEach((track) => {
-        // track.stop();
-        track.stop();
-        localStream.removeTrack(track);
-      });
-      setLocalStream(null);
-    }
-    if (local) {
-      local.close();
-      setLocal(null);
-    }
-    if (mediaConnection) {
-      mediaConnection.close();
-      setMediaConnection(null);
-    }
-    if (remoteStream) {
-      // localStream.removeTrack(); // localStream.release();
-      remoteStream.getTracks().forEach((track) => {
-        track.stop();
-        remoteStream.removeTrack(track);
-      });
-      setRemoteStream(null);
-    }
-    setPeerId(null);
-    setDestination(null);
-    setDeviceSwitchingYn(false);
-  }, [localStream, remoteStream, local, mediaConnection]);
-
-  const leaveSocket = useCallback(() => {
-    console.log("leave");
-    socketInstance?.emit("leave", { roomId: chatRoomId, sender: userType });
-    setLeftYn(true);
-  }, [socketInstance, chatRoomId]);
-
-  // ** Hooks
   useEffect(() => {
+    //1)
     let socket: Socket;
-    console.log("socket icandoit");
+    const localStream = new MediaStream();
+
     (async () => {
-      socket = await socketInitializer(chatRoomId);
+      const manager = new Manager(SOCKET_URI, { transports: ["websocket"] });
+      socket = manager.socket(SOCKET_NAMESPACE); // main namespace
+      const _id = chatRoomId;
+
+      socket.on("connect", () => {
+        console.log(`socket join, { roomId: ${_id}, sender: '${userType}' }`);
+        socket.emit("join", { roomId: _id, sender: userType });
+        console.log(micOnYn, cameraOnYn);
+        socket.emit("microphone", {
+          roomId: _id,
+          sender: userType,
+          onYn: micOnYn,
+        });
+        socket.emit("camera", {
+          roomId: _id,
+          sender: userType,
+          onYn: cameraOnYn,
+        });
+        if (userType === "DEALER") {
+          socket.emit("switchDevice", {
+            roomId: _id,
+            sender: userType,
+            deviceType: "WEB",
+            switchStatus: "SUCCESS",
+          });
+        }
+      });
+      socket.on("microphone", ({ roomId, sender, onYn }) => {
+        const isMe: boolean = sender === userType;
+        if (!isMe) {
+          console.log("peer socket mic listener onYn : ", onYn);
+          setCustomerMicOnYn(onYn);
+        }
+      });
+      socket.on("camera", ({ roomId, sender, onYn }) => {
+        const isMe: boolean = sender === userType;
+        if (!isMe) {
+          console.log("socket camera listener onYn : ", onYn);
+          setCustomerCameraOnYn(onYn);
+        }
+      });
+      socket.on("leave", ({ roomId, sender }) => {
+        const isMe: boolean = sender === userType;
+        console.log("leave", sender);
+        if (!isMe) {
+          setCustomerLeftYn(true);
+        } else {
+          setLeftYn(true);
+        }
+      });
+      socket.on("consultError", ({ consultId, sender }) => {
+        const isMe: boolean = sender === userType;
+        if (!isMe) {
+          // onRefresh();
+          setNetworkErrored(true);
+        }
+      });
+      socket.on(
+        "switchDevice",
+        ({ roomId, sender, deviceType, switchStatus }) => {
+          if (sender === "DEALER") {
+            if (userType === "CUSTOMER") {
+              if (switchStatus === "ALLOW") {
+                console.log("deviceSwitching:: allow socket received");
+                onRefresh();
+              }
+            }
+            if (userType === "DEALER") {
+              if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
+                setDeviceSwitchRequested(true);
+              }
+              if (
+                switchStatus === "SUCCESS" &&
+                deviceType === "MOBILE" //&&
+                // deviceSwitchingYn
+              ) {
+                // 끄기
+                console.log(
+                  "deviceSwitching:: success",
+                  switchStatus,
+                  sender,
+                  deviceSwitchRequested,
+                  deviceSwitchingYn
+                );
+                setDeviceSwitchSucceeded(true);
+                setDeviceSwitchingYn(false);
+              }
+
+              if (switchStatus === "REJECT") {
+                // 끄기
+                console.log(
+                  "deviceSwitching:: reject ",
+                  switchStatus,
+                  sender,
+                  deviceSwitchRequested
+                );
+                setDeviceSwitchingYn(false); //필요한가?
+              }
+            }
+          }
+        }
+      );
+      socketRef.current = socket;
+      localStreamRef.current = localStream;
+      console.log("localstream", localStream);
     })();
     return () => {
       console.log("socket off");
       if (socket) {
-        // socket.emit('leave', { roomId: chatRoomId, sender: userType });
         socket.disconnect();
+        socketRef.current = undefined;
       }
+      stop(deviceSwitchingYn);
     };
-  }, [connected]);
+  }, []);
 
-  //** Socket Initializer
-  const socketInitializer = async (_id) => {
-    // We just call it because we don't need anything else out of it
-    // await fetch('/');
-    const manager = new Manager(SOCKET_URI, { transports: ["websocket"] });
-    const socket = manager.socket(SOCKET_NAMESPACE); // main namespace
-
-    socket.on("connect", () => {
-      console.log(`socket join, { roomId: ${_id}, sender: '${userType}' }`);
-      socket.emit("join", { roomId: _id, sender: userType });
-      console.log(micOnYn, cameraOnYn);
-      socket.emit("microphone", {
-        roomId: _id,
-        sender: userType,
-        onYn: micOnYn,
-      });
-      socket.emit("camera", {
-        roomId: _id,
-        sender: userType,
-        onYn: cameraOnYn,
-      });
-      socket.emit("switchDevice", {
-        roomId: _id,
-        sender: userType,
-        deviceType: "WEB",
-        switchStatus: "SUCCESS",
-      });
-    });
-    socket.on("microphone", ({ roomId, sender, onYn }) => {
-      const isMe: boolean = sender === userType;
-      if (!isMe) {
-        console.log("socket mic listener onYn : ", onYn);
-        setCustomerMicOnYn(onYn);
-      }
-    });
-    socket.on("camera", ({ roomId, sender, onYn }) => {
-      const isMe: boolean = sender === userType;
-      if (!isMe) {
-        console.log("socket camera listener onYn : ", onYn);
-        setCustomerCameraOnYn(onYn);
-      }
-    });
-    // socket.on('deviceChanging', ({ roomId, sender, deviceChangingYn }) => {
-    //   const isMe: boolean = sender === userType;
-    //   if (!isMe) {
-    //     console.log('socket deviceChanging listener onYn : ', deviceChangingYn);
-    //     setDeviceSwitchingYn(deviceChangingYn);
-    //   }
-    // });
-    socket.on("leave", ({ roomId, sender }) => {
-      const isMe: boolean = sender === userType;
-      console.log("leave", sender);
-      if (!isMe) {
-        setCustomerLeftYn(true);
-      } else {
-        setLeftYn(true);
-      }
-    });
-    socket.on("consultError", ({ consultId, sender }) => {
-      const isMe: boolean = sender === userType;
-      if (!isMe) {
-        // onRefresh();
-        setNetworkErrored(true);
-      }
-    });
-
-    socket.on("switchDevice", handleSwitching);
-    setSocketInstance(socket);
-    return socket;
-  };
-
-  const handleSwitching = useCallback(
-    ({ roomId, sender, deviceType, switchStatus }) => {
-      if (sender === "DEALER") {
-        if (userType === "CUSTOMER") {
-          if (switchStatus === "ALLOW") {
-            onRefresh();
-          }
-        }
-        if (userType === "DEALER") {
-          if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
-            setDeviceSwitchRequested(true);
-          }
-          if (
-            switchStatus === "SUCCESS" &&
-            deviceType === "MOBILE" //&&
-            // deviceSwitchingYn
-          ) {
-            // 끄기
-            console.log(
-              "asdfjlaksdjflsadjf",
-              switchStatus,
-              sender,
-              deviceSwitchRequested,
-              deviceSwitchingYn
-            );
-            setDeviceSwitchSucceeded(true);
-            setDeviceSwitchingYn(false);
-          }
-
-          if (switchStatus === "REJECT") {
-            // 끄기
-            console.log(
-              "asdfjlaksdjflsadjf",
-              switchStatus,
-              sender,
-              deviceSwitchRequested
-            );
-            setDeviceSwitchingYn(false); //필요한가?
-          }
-        }
-      }
-    },
-    [deviceSwitchRequested, deviceSwitchingYn]
-  );
-  const allowChangeDevice = useCallback(() => {
-    if (!socketInstance) return alert("why");
-    console.log(socketInstance);
-    socketInstance?.emit("switchDevice", {
-      roomId: chatRoomId,
-      sender: userType,
-      deviceType: "WEB",
-      switchStatus: "ALLOW",
-    });
-    // allow 후 device switching = true
-    setDeviceSwitchingYn(true);
-    setDeviceSwitchRequested(false);
-  }, [socketInstance]);
-
-  const rejectChangeDevice = useCallback(() => {
-    socketInstance?.emit("switchDevice", {
-      roomId: chatRoomId,
-      sender: userType,
-      deviceType: "WEB",
-      switchStatus: "REJECT",
-    });
-    //reject시 nothing
-    setDeviceSwitchRequested(false);
-  }, [socketInstance]);
-
-  //! run if received answer from customer
-  const setRemoteDescription = async (offer) => {
-    try {
-      if (!local) throw new Error("local is not defined");
-      // Use the received answerDescription
-      const answerDescription = new RTCSessionDescription(offer);
-      console.log(
-        "setRemoteDescription ~ answerDescription",
-        answerDescription
-      );
-      await local.setRemoteDescription(answerDescription);
-
-      setDeviceSwitchSucceeded(false);
-      setDeviceSwitchRequested(false);
-
-      //!process leftover candidate
-      processCandidates();
-    } catch (error) {
-      console.error("setRemoteDescription ~ line 410 ~ error ~ ", error);
+  useEffect(() => {
+    if (playerRef.current) {
+      console.log("playerref", playerRef.current, localStreamRef.current);
+      playerRef.current.srcObject = localStreamRef.current;
     }
-  };
+  }, [playerRef.current, localStreamRef.current]);
 
-  //! run if received iceCandidate from customer
-  const handleRemoteCandidate = (iceCandidate) => {
-    console.log("handle remote candidate", iceCandidate);
-    const newCandidate = new RTCIceCandidate(iceCandidate);
-    if (local === null || local?.remoteDescription === null) {
-      return remoteCandidates.push(newCandidate);
-    }
-    return local?.addIceCandidate(newCandidate);
-  };
-
-  const processCandidates = () => {
-    if (remoteCandidates.length < 1) {
-      return;
-    }
-    if (!local) return;
-    console.log("remoteCandidates!!!!", remoteCandidates);
-    remoteCandidates.map((candidate) => local.addIceCandidate(candidate));
-    setRemoteCandidates([]);
-  };
-
-  //* Customer에게 ice candidate 받는 소켓
-  const getCandidate = ({ candidate, sender }) => {
-    const isMe = sender === userType;
-    if (!isMe) {
-      console.log("getCandidate socket received - customer", candidate);
-      handleRemoteCandidate(candidate);
-    }
-  };
-
-  //* Customer에게 answer 받는 소켓
-  const getAnswer = async ({ sdp, sender }) => {
-    const isMe = sender === userType;
-    if (!isMe) {
-      console.log("answer socket received", sdp);
-      await setRemoteDescription(sdp);
-    }
-  };
-  //* Dealer에게 offer를 받은 후, answer를 Dealer에게 전송. add 못한 ice candidate 처리.
-  const sendAnswer = async (offer) => {
-    console.log("webrtc socket send Answer, local, offer", local, offer);
-    try {
-      if (!local) return;
-      console.log("answer socket emit", offer);
-      const offerDescription = new RTCSessionDescription(offer);
-      await local.setRemoteDescription(offerDescription);
-      const answerDescription = await local.createAnswer();
-      await local.setLocalDescription(answerDescription);
-      webRtcSocketRef.current?.emit("answer", {
-        sdp: answerDescription,
-        sender: userType,
-      });
-    } catch (e) {
-      console.error("sendAnswer ~ error ~", e);
-    } finally {
-      processCandidates();
-    }
-  };
-  //* Dealer에게 offer 받는 소켓
-  const getOffer = async ({ sdp, sender }) => {
-    const isMe = sender === userType;
-    console.log("offer socket received", sdp, local);
-    // if (local && local.connectionState !== 'connecting') {
-    //   onRefresh();
-    // }
-    if (!isMe) {
-      console.log("offer socket received", sdp);
-      await sendAnswer(sdp);
-    }
-  };
-
-  //* room에 있는 socket-id 받는 소켓
-  const allUsers = async (all_users) => {
-    console.log("all_users socket received", all_users);
-    const users = all_users.filter((i) => i.sender !== userType);
-    const len = users.length;
-
-    console.log("all_users length!!!", len);
-
-    //* room에 두명 이상 있을 시 handshake 로직 시작
-    if (userType === "DEALER") {
-      if (len > 0) {
-        // customer Join yn - true 로 변경하거나
-        // set customer Jo
-        setPeerJoinYn(true);
-      }
-    }
-  };
-
-  //** Socket Initializer
-  const webRTCSocketInitializer = useCallback(
-    async (_id, firstTime) => {
-      // We just call it because we don't need anything else out of it
-      // await fetch('/');
+  useEffect(() => {
+    //1)
+    let socket: Socket;
+    (async () => {
       const manager = new Manager(SIGNAL_SOCKET_URI, {
         transports: ["websocket", "polling"],
         secure: true,
       });
-      const socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
+      socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
+      const _id = chatRoomId;
 
       socket.on("connect", () => {
         console.log("webrtc socket connected");
         socket.emit("join_room", { room: chatRoomId, sender: userType });
       });
 
-      socket.on("getCandidate", getCandidate);
-      socket.on("all_users", allUsers);
+      let candidates = [];
+      socket.on("getCandidate", ({ candidate, sender }) => {
+        const isMe = sender === userType;
+        if (!isMe) {
+          console.log(
+            "getCandidate socket received - customer",
+            candidate,
+            peerConnectionRef.current.connectionState
+          );
+
+          const newCandidate = new RTCIceCandidate(candidate);
+
+          if (peerConnectionRef.current.remoteDescription) {
+            peerConnectionRef.current.addIceCandidate(newCandidate);
+          } else {
+            candidates.push(newCandidate);
+          }
+        }
+      });
+
+      socket.on("all_users", (all_users) => {
+        console.log("all_users socket received", all_users);
+        const users = all_users.filter((i) => i.sender !== userType);
+        const len = users.length;
+
+        console.log("all_users length!!!", len);
+        //* room에 두명 이상 있을 시 handshake 로직 시작
+        if (userType === "DEALER") {
+          if (len > 0) {
+            setPeerJoinYn(true);
+          }
+        }
+      });
       socket.on("disconnect", (reason) => {
-        console.log("socket disconnected by ", reason); // "ping timeout"
-        setWebRtcSocketInstance(undefined);
+        console.log("socket disconnected by", reason); // "ping timeout"
+        // webRtcSocketRef.current = undefined;
+        // socket.connect();
       });
 
       if (userType === "CUSTOMER") {
-        socket.on("getOffer", getOffer);
+        socket.on("getOffer", async ({ sdp, sender }) => {
+          const isMe = sender === userType;
+          console.log("offer socket received", sdp, local);
+          if (!isMe) {
+            console.log(
+              "peerconnection:: connectionstate ",
+              peerConnectionRef.current.connectionState,
+              deviceSwitchingYn
+            );
+            try {
+              const offerDescription = new RTCSessionDescription(sdp);
+              peerConnectionRef.current.setRemoteDescription(offerDescription);
+            } catch (e) {
+              console.log("error:", e, "deviceSwitching:", deviceSwitchingYn);
+              if (deviceSwitchingYn) {
+              }
+            }
+
+            const answerDescription =
+              await peerConnectionRef.current.createAnswer();
+            peerConnectionRef.current.setLocalDescription(answerDescription);
+            console.log("answer!!", peerConnectionRef.current, candidates);
+            socket.emit("answer", {
+              sdp: answerDescription,
+              sender: userType,
+            });
+            if (candidates.length > 0) {
+              candidates.map((i) =>
+                peerConnectionRef.current.addIceCandidate(i)
+              );
+              candidates = [];
+            }
+          }
+        });
       } else {
-        socket.on("getAnswer", getAnswer);
+        socket.on("getAnswer", ({ sdp, sender }) => {
+          console.log(
+            "webrtc socket get Answer, local, offer",
+            peerConnectionRef.current,
+            sdp,
+            sender
+          );
+          try {
+            const isMe = sender === userType;
+            if (!isMe) {
+              console.log(
+                "answer socket get",
+                sdp,
+                peerConnectionRef.current,
+                candidates
+              );
+              const offerDescription = new RTCSessionDescription(sdp);
+              peerConnectionRef.current.setRemoteDescription(offerDescription);
+              if (candidates.length > 0) {
+                candidates.map((i) =>
+                  peerConnectionRef.current.addIceCandidate(i)
+                );
+                candidates = [];
+              }
+            }
+          } catch (e) {
+            console.error("sendAnswer ~ error ~", e);
+          }
+        });
       }
-      setWebRtcSocketInstance(socket);
+      webRtcSocketRef.current = socket;
+    })();
 
-      return socket;
-    },
-    [local]
-  );
-
-  useEffect(() => {
-    if (peerJoinYn) {
-      sendOffer(webRtcSocketRef.current);
-    }
-  }, [peerJoinYn]);
-
-  // 1. 딜러 입장 시 로컬스트림 세팅
-  useEffect(() => {
-    console.log("1. 딜러 입장 시 로컬스트림 세팅", localStream);
-    if (localStream == null) {
-      setLocalStreamVideo();
-    }
     return () => {
-      console.log("aa=====");
-      if (!deviceSwitchingYn) stop();
+      console.log("socket off");
+      if (socket) {
+        socket.disconnect();
+        webRtcSocketRef.current = undefined;
+      }
     };
   }, []);
 
   useEffect(() => {
-    if (localStream && socketInstance) {
-      if (localStream.getVideoTracks()) {
-        localStream.getVideoTracks()[0].enabled = cameraOnYn;
-        console.log("camera on? off? " + cameraOnYn);
-        socketInstance.emit("camera", {
-          roomId: chatRoomId,
-          sender: userType,
-          onYn: cameraOnYn,
-        });
-      }
+    if (webRtcSocketRef.current) {
+      const peerConnection = initPeerConnection();
+      peerConnectionRef.current = peerConnection;
+      return () => {
+        console.log("peerConnection: close");
+        peerConnection.close();
+        peerConnectionRef.current = undefined;
+        setNegotiationNeeded(false);
+        setPeerJoinYn(false);
+      };
     }
+  }, [webRtcSocketRef.current]);
+
+  const initPeerConnection = () => {
+    const peerConstraints = {
+      iceServers: peerMaster.config.iceServers,
+    };
+    const peerConnection = new RTCPeerConnection(peerConstraints);
+    console.log("peerConnection init!");
+    setConnecting(true);
+    setConnected(false);
+
+    peerConnection.addEventListener("track", (e) => {
+      console.log("peerConnection:: on track ", e);
+      setRemoteStream(e.streams[0]);
+    });
+
+    peerConnection.addEventListener("connectionstatechange", (e) => {
+      console.log(
+        "peerConnection:: connectionstatechange",
+        peerConnection.connectionState
+      );
+      switch (peerConnection.connectionState) {
+        case "connected":
+          setConnected(true);
+          setConnecting(false);
+          break;
+        case "closed":
+        case "disconnected":
+        case "failed":
+          setConnected(false);
+          setConnecting(false);
+          break;
+      }
+    });
+    peerConnection.addEventListener("negotiationneeded", (e) => {
+      console.log("peerConnection:: negotiationneeded");
+      setNegotiationNeeded(true);
+    });
+    peerConnection.addEventListener("icecandidateerror", (e) => {
+      // console.log('peerConnection:: icecandidateerror', e);
+    });
+    peerConnection.addEventListener("icecandidate", (e) => {
+      console.log("peerConnection:: icecandidate", e.candidate);
+      if (!e.candidate) {
+        return;
+      }
+      //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
+      webRtcSocketRef.current.emit("candidate", {
+        candidate: e.candidate,
+        sender: userType,
+      });
+    });
+    peerConnection.addEventListener("iceconnectionstatechange", (e) => {
+      console.log(
+        "peerConnection:: iceconnectionstatechange",
+        peerConnection.iceConnectionState
+      );
+    });
+
+    peerConnection.addEventListener("icegatheringstatechange", (e) => {
+      console.log(
+        "peerConnection:: icegatheringstatechange",
+        peerConnection.iceGatheringState
+      );
+      switch (peerConnection.iceGatheringState) {
+        case "complete":
+          setNegotiationNeeded(false);
+          console.log(
+            "peerConnection:: icegatheringstatechange",
+            peerConnection.iceGatheringState,
+            peerConnection.connectionState
+          );
+          if (peerConnection.connectionState === "failed") {
+          }
+          break;
+      }
+    });
+    return peerConnection;
+  };
+
+  useEffect(() => {
+    if (peerConnectionRef.current) {
+      (async () => {
+        if (navigator.mediaDevices) {
+          console.log("set local user media");
+          let s = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+
+          s.getTracks().forEach((track) => {
+            if (track.kind === "video") {
+              track.enabled = cameraOnYn;
+            } else if (track.kind === "audio") {
+              track.enabled = micOnYn;
+            }
+            console.log(track, localStreamRef.current);
+            peerConnectionRef.current.addTrack(track, localStreamRef.current);
+            localStreamRef.current.addTrack(track);
+          });
+          return () => {
+            s.getTracks().forEach((track) => {
+              track.stop();
+            });
+          };
+        } else {
+          // throw new Error('webcam not supported');
+        }
+      })();
+    }
+  }, [peerConnectionRef.current, navigator.mediaDevices]);
+
+  useEffect(() => {
+    if (
+      userType === "DEALER" &&
+      peerConnectionRef.current &&
+      localStreamRef.current &&
+      playerRef.current
+    ) {
+      (async () => {
+        if (navigator.mediaDevices) {
+          console.log("screen sharing yn: ", screenSharingYn);
+          let s;
+          if (screenSharingYn) {
+            s = await navigator.mediaDevices.getDisplayMedia({
+              video: true,
+              audio: false,
+            });
+          } else {
+            s = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+          }
+          const newVideoTrack = s
+            .getVideoTracks()
+            .filter((i) => i.readyState !== "ended")[0];
+
+          newVideoTrack.onended = (e) => {
+            if (screenSharingYn) setScreenSharingYn(false);
+          };
+          const videoSender = peerConnectionRef.current
+            .getSenders()
+            .filter((i) => i.track?.kind === "video");
+
+          videoSender.forEach((sender) => {
+            sender.replaceTrack(newVideoTrack);
+          });
+
+          playerRef.current.srcObject = s;
+        } else {
+          // throw new Error('webcam not supported');
+        }
+      })();
+
+      // return () => {
+      //   s.getVideoTracks().forEach((track) => {
+      //     track.stop();
+      //   });
+      // };
+    }
+  }, [screenSharingYn]);
+
+  useEffect(() => {
+    if (negotiationNeeded && peerJoinYn) {
+      (async () => {
+        if (userType === "DEALER") {
+          const sessionConstraints: RTCAnswerOptions = {
+            mandatory: {
+              OfferToReceiveAudio: true,
+              OfferToReceiveVideo: true,
+            },
+          };
+          const offerDescription = await peerConnectionRef.current.createOffer(
+            sessionConstraints
+          );
+          console.log("createoffer ~ offerDescription", offerDescription);
+          await peerConnectionRef.current.setLocalDescription(offerDescription);
+          webRtcSocketRef.current.emit("offer", {
+            sdp: offerDescription,
+            sender: userType,
+          });
+        }
+      })();
+    }
+  }, [negotiationNeeded, peerJoinYn]);
+
+  useEffect(() => {
+    if (remoteStream && remotePlayerRef.current) {
+      remotePlayerRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream, remotePlayerRef.current]);
+
+  useEffect(() => {
+    localStreamRef.current
+      .getVideoTracks()
+      .forEach((track) => (track.enabled = cameraOnYn));
+
+    socketRef.current.emit("camera", {
+      roomId: chatRoomId,
+      sender: userType,
+      onYn: cameraOnYn,
+    });
   }, [cameraOnYn]);
 
   useEffect(() => {
-    if (localStream && socketInstance) {
-      if (localStream.getAudioTracks()?.length > 0) {
-        localStream.getAudioTracks()[0].enabled = micOnYn;
-        console.log("mic on? off? " + micOnYn);
-        socketInstance.emit("microphone", {
-          roomId: chatRoomId,
-          sender: userType,
-          onYn: micOnYn,
-        });
-      }
-    }
+    localStreamRef.current
+      .getAudioTracks()
+      .forEach((track) => (track.enabled = micOnYn));
+
+    socketRef.current.emit("microphone", {
+      roomId: chatRoomId,
+      sender: userType,
+      onYn: micOnYn,
+    });
   }, [micOnYn]);
 
   // test 용으로 추가
@@ -997,6 +914,7 @@ const Rtc = ({
 
   // test 용으로 추가
   useEffect(() => {
+    console.log(remoteStream);
     if (remoteStream) {
       if (remoteStream.getAudioTracks()?.length > 0) {
         remoteStream.getAudioTracks()[0].enabled = customerMicOnYn;
@@ -1005,395 +923,24 @@ const Rtc = ({
     }
   }, [customerMicOnYn]);
 
-  const createPeerConnection = (): RTCPeerConnection => {
-    const peerConstraints = {
-      iceServers: peerMaster.config.iceServers,
-    };
-    const peerConnection = new RTCPeerConnection(peerConstraints);
-
-    return peerConnection;
-  };
-
-  // // 2. 로컬 Peer id 받고
-  useEffect(() => {
-    let socket: Socket;
-    let localPeer: RTCPeerConnection;
-    console.log("socket icandoit rtc");
-
-    (async () => {
-      console.log("로컬 peerid 세팅을 시작");
-      if (local == null) {
-        localPeer = createPeerConnection();
-        //* local peer에 localStream 등록
-        setLocal(localPeer);
-        // join_room emit
-      }
-      socket = await webRTCSocketInitializer(null, true);
-      setWebRtcSocketInstance(socket);
-      console.log("join!!");
-      // socket.emit('join_room', { room: chatRoomId });
-    })();
-
-    return () => {
-      setLocal(undefined);
-      if (socket) {
-        console.log("socket off");
-        socket.removeAllListeners();
-        setWebRtcSocketInstance(undefined);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (webRtcSocketInstance) {
-      webRtcSocketRef.current = webRtcSocketInstance;
-    }
-    return () => {
-      webRtcSocketRef.current = undefined;
-    };
-  }, [webRtcSocketInstance]);
-
-  useEffect(() => {
-    if (local && localStream) {
-      console.log("localstream", localStream);
-      localStream.addEventListener("addtrack", (e) => {
-        console.log("addtrack track~~~", e);
-      });
-      localStream.addEventListener("removetrack", (e) => {
-        console.log("removetrack track~~~", e);
-      });
-      localStream.getTracks().forEach((track) => {
-        console.log("addTrack", track, local);
-        local.addTrack(track, localStream);
-      });
-    }
-  }, [localStream, local]);
-
-  useEffect(() => {
-    console.log("local peer changed", webRtcSocketInstance);
-    if (webRtcSocketInstance && localStream && local) {
-      console.log(webRtcSocketInstance, "join");
-    }
-  }, [webRtcSocketInstance, localStream]);
-  useEffect(() => {
-    if (local) {
-      local.onconnectionstatechange = (event) => {
-        console.log("local.connectionState changed:: ", local.connectionState);
-        switch (local.connectionState) {
-          case "closed":
-            console.error("local.connectionState ~ closed ~ line 245 ~ ");
-            setNetworkErrored(true);
-            // if (!isExiting) {
-            //   setErrorText(t('t_live.customer_is_reconnecting'));
-            //   setErrorMessageVisible(true);
-            //   setErrorModalVisible(true);
-            // }
-            break;
-          default:
-            setNetworkErrored(false);
-            break;
-        }
-      };
-
-      //* ice candidate 발생 이벤트
-      local.onicecandidate = (event) => {
-        if (!event.candidate) {
-          return;
-        }
-        console.log("iceCandidate!!!", event.candidate);
-
-        //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
-        webRtcSocketInstance?.emit("candidate", {
-          candidate: event.candidate,
-          sender: userType,
-        });
-      };
-
-      local.onicecandidateerror = (event) => {
-        // console.error('icecandidateerror', event);
-      };
-
-      //* ice connection 상태 이벤트. completed일 경우 peer간 연결 성공
-      local.oniceconnectionstatechange = (event) => {
-        console.log(
-          "iceconnectionstatechange",
-          local.iceConnectionState,
-          "deviceSwitching? ",
-          deviceSwitchingYn
-        );
-        switch (local.iceConnectionState) {
-          case "connected":
-          case "completed":
-            console.log("iceConnectionStateChange ~ completed");
-            setConnected(true);
-            setNetworkErrored(false);
-            break;
-          case "disconnected":
-            console.error("local.connectionState ~ closed ~ line 282 ~ ");
-            if (!deviceSwitchingYn) setNetworkErrored(true);
-            break;
-          // if (!isExiting) {
-          //   setErrorText(t('t_live.customer_is_reconnecting'));
-          //   setErrorMessageVisible(true);
-          //   setErrorModalVisible(true);
-          // }
-          default:
-            break;
-        }
-      };
-
-      //* remote stream 받는 이벤트. 후처리를 위해 배열에 저장.
-      local.ontrack = (event) => {
-        if (event.streams[0].getTracks().length > 1) {
-          console.log("track!!!!", JSON.stringify(event.streams[0]));
-          setRemoteTracks([...remoteTracks, event.streams[0]]);
-        }
-      };
-      if (webRtcSocketRef.current) {
-        webRtcSocketRef.current.on("connect", () => {
-          console.log("webrtc socket connected");
-          webRtcSocketRef.current?.emit("join_room", {
-            room: chatRoomId,
-            sender: userType,
-          });
-        });
-
-        webRtcSocketRef.current.on("getCandidate", getCandidate);
-        webRtcSocketRef.current.on("all_users", allUsers);
-        webRtcSocketRef.current.on("disconnect", (reason) => {
-          console.log("socket disconnected by ", reason); // "ping timeout"
-          setWebRtcSocketInstance(undefined);
-        });
-
-        if (userType === "CUSTOMER") {
-          webRtcSocketRef.current.on("getOffer", getOffer);
-        } else {
-          webRtcSocketRef.current.on("getAnswer", getAnswer);
-        }
-      }
-    }
-    return () => {
-      console.log("local peer closed");
-      // local?.close();
-
-      webRtcSocketRef.current?.removeAllListeners();
-    };
-  }, [local]);
-
   useEffect(() => {
     //* ice connection 상태가 completed 일 경우 remoteStream 설정
     if (connected) {
       console.log("completed!!");
-      processTracks();
       setStartTime((prev) => prev || moment());
+
+      socketRef.current.emit("microphone", {
+        roomId: chatRoomId,
+        sender: userType,
+        onYn: micOnYn,
+      });
+      socketRef.current.emit("camera", {
+        roomId: chatRoomId,
+        sender: userType,
+        onYn: cameraOnYn,
+      });
     }
   }, [connected]);
-
-  //* iceconnectionstatechange가 completed일 경우 remoteStream 처리
-  const processTracks = () => {
-    console.log("processing tracks", remoteTracks[0]);
-    const len = remoteTracks.length;
-    setRemoteStream(remoteTracks[len - 1]);
-    setRemoteTracks([]);
-  };
-
-  // // 3. 받아온 peer id를  rtc 서버에 등록하고, 상대방 아이디가 있는지 확인함
-  // useEffect(() => {
-  //   if (peerId) {
-  //     console.log("peerid: ", peerId, ", finding destination");
-  //     findDestination();
-  //   }
-  // }, [peerId]);
-
-  // // 4. 상대방 아이디 있으면 연결한다.
-  // useEffect(() => {
-  //   if (!connecting)
-  //     if (destination && peerId) {
-  //       console.log("destination found: ", destination, ", trying to connect");
-  //       connect();
-  //     }
-  // }, [destination, peerId, connecting]);
-
-  useEffect(() => {
-    if (localStream) {
-      setCameraOnYn(true);
-      setMicOnYn(true);
-    } else {
-    }
-    return () => {
-      localStream?.getTracks().forEach((track) => {
-        track.stop();
-      });
-    };
-  }, [localStream]);
-
-  useEffect(() => {
-    if (remoteStream) {
-      remoteStream?.addEventListener("inactive", function (e) {
-        console.log("remote inactive");
-        setStreamCameraErrored(true);
-        setStreamMicErrored(true);
-        // setCustomerCameraOnYn(false);
-        // setCustomerMicOnYn(false);
-      });
-      remoteStream?.addEventListener("active", function (e) {
-        console.log("remote active");
-        setStreamCameraErrored(false);
-        setStreamMicErrored(false);
-      });
-      if (remoteStream.getVideoTracks().length > 0) {
-        console.log(remoteStream.getVideoTracks());
-        remoteStream
-          ?.getVideoTracks()[0]
-          ?.addEventListener("mute", function (e) {
-            console.log("remote camera muted!");
-            setStreamCameraErrored(true);
-            // setCustomerCameraOnYn(false);
-            // setConnectError(true);
-          });
-        remoteStream
-          ?.getVideoTracks()[0]
-          ?.addEventListener("unmute", function (e) {
-            console.log("remote camera unmuted!");
-            setStreamCameraErrored(false);
-            // setCustomerCameraOnYn(true);
-            // setConnectError(true);
-          });
-      }
-      if (remoteStream.getAudioTracks().length > 0) {
-        remoteStream
-          .getAudioTracks()[0]
-          ?.addEventListener("mute", function (e) {
-            console.log("remote mic muted!");
-            setStreamMicErrored(true);
-            // setCustomerMicOnYn(false);
-            // setConnectError(true);
-          });
-        remoteStream
-          .getAudioTracks()[0]
-          ?.addEventListener("unmute", function (e) {
-            console.log("remote mic unmuted!");
-            setStreamMicErrored(false);
-            // setCustomerMicOnYn(true);
-            // setConnectError(true);
-          });
-      }
-    } else {
-    }
-  }, [remoteStream]);
-
-  useEffect(() => {
-    console.log("screensharing", screenSharingYn);
-    if (screenSharingYn) {
-      setMediaStreamVideo();
-    } else {
-      setLocalStreamVideo();
-    }
-  }, [screenSharingYn]);
-
-  useEffect(() => {
-    // console.log('remoteStream : ', remoteStream);
-    if (remotePlayerRef.current && remoteStream)
-      remotePlayerRef.current.srcObject = remoteStream ? remoteStream : null;
-
-    return () => {
-      if (remotePlayerRef.current) {
-        (remotePlayerRef.current.srcObject as MediaStream)
-          ?.getTracks()
-          .forEach((track) => {
-            track.stop();
-          });
-        remotePlayerRef.current.srcObject = null;
-      }
-    };
-  }, [remoteStream]);
-
-  useEffect(() => {
-    console.log("localstream : ", localStream, localStream?.getVideoTracks());
-
-    if (playerRef.current && localStream)
-      playerRef.current.srcObject = localStream ? localStream : null;
-
-    return () => {
-      if (playerRef.current) {
-        (playerRef.current.srcObject as MediaStream)
-          ?.getTracks()
-          .forEach((track) => {
-            track.stop();
-          });
-        playerRef.current.srcObject = null;
-      }
-    };
-  }, [localStream, screenSharingYn]);
-
-  useEffect(() => {
-    // return ()=>{
-    //   stop();
-    //   playerRef.current?.pause();
-    //   remotePlayerRef.current?.pause();
-    // }
-  });
-
-  useEffect(() => {
-    setNetworkOnline(navigator.onLine);
-  }, [navigator.onLine]);
-
-  useEffect(() => {
-    if (networkOnline) {
-      // onRefresh();
-      // setNetworkErrored(false);
-    } else {
-      // setConnecting(true);
-      // setTimeout(() => {
-      console.log("offline");
-      setNetworkErrored(true);
-      // }, 1500);
-    }
-  }, [networkOnline]);
-
-  const onRefresh = useCallback(() => {
-    setNetworkErrored(false);
-    if (!networkOnline) {
-      setTimeout(() => {
-        setNetworkErrored(true);
-      }, 1500);
-      return;
-    } else {
-      console.log("refresh local peer");
-      local?.close();
-      const localPeer = createPeerConnection();
-      setConnected(false);
-      //* local peer에 localStream 등록
-
-      setLocal(localPeer);
-      if (remoteStream) {
-        // localStream.removeTrack(); // localStream.release();
-        remoteStream.getTracks().forEach((track) => {
-          track.stop();
-          remoteStream.removeTrack(track);
-        });
-        setRemoteStream(null);
-      }
-      setRemoteTracks([]);
-      // findDestination();
-    }
-  }, [networkOnline, local]);
-
-  useEffect(() => {
-    if (networkErrored && socketInstance) {
-      socketInstance?.emit("consultError", {
-        consultId: chatRoomId,
-        sender: userType,
-      });
-    }
-  }, [networkErrored]);
-  // // 얜 뭐지
-  // useEffect(() => {
-  //   setFinding(false);
-  //   setConnected(false);
-  //   setConnecting(false);
-  //   setRemoteStream(null);
-  // }, [destination, peerId]);
 
   useEffect(() => {
     if (startTime) {
@@ -1406,6 +953,80 @@ const Rtc = ({
       };
     }
   }, [startTime]);
+
+  const allowChangeDevice = useCallback(() => {
+    if (!socketRef.current) return alert("why");
+    console.log(socketRef.current);
+    socketRef.current?.emit("switchDevice", {
+      roomId: chatRoomId,
+      sender: userType,
+      deviceType: "WEB",
+      switchStatus: "ALLOW",
+    });
+    // allow 후 device switching = true
+    setDeviceSwitchingYn(true);
+    setDeviceSwitchRequested(false);
+  }, [socketRef.current]);
+
+  const rejectChangeDevice = useCallback(() => {
+    socketRef.current?.emit("switchDevice", {
+      roomId: chatRoomId,
+      sender: userType,
+      deviceType: "WEB",
+      switchStatus: "REJECT",
+    });
+    //reject시 nothing
+    setDeviceSwitchRequested(false);
+  }, [socketRef.current]);
+
+  const onRefresh = () => {
+    console.log("refreshing start");
+    peerConnectionRef.current?.close();
+    peerConnectionRef.current = initPeerConnection();
+    setNetworkErrored(false);
+  };
+  const leaveSocket = useCallback(() => {
+    console.log("leave");
+    socketRef.current?.emit("leave", { roomId: chatRoomId, sender: userType });
+    setLeftYn(true);
+  }, [socketRef.current, chatRoomId]);
+
+  const stop = useCallback(
+    (refreshing = false) => {
+      navigator.mediaDevices
+        .getUserMedia({ audio: true, video: true })
+        .then((mediaStream) => {
+          mediaStream.getTracks().forEach((track) => {
+            track.stop();
+            localStreamRef.current?.removeTrack(track);
+            console.log("local track stopped");
+          });
+        });
+
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => {
+          // track.stop();
+          track.stop();
+          localStreamRef.current.removeTrack(track);
+        });
+      }
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+      }
+      if (remoteStream) {
+        // localStream.removeTrack(); // localStream.release();
+        remoteStream.getTracks().forEach((track) => {
+          track.stop();
+          remoteStream.removeTrack(track);
+        });
+        setRemoteStream(null);
+      }
+      setPeerId(null);
+      setDestination(null);
+      setDeviceSwitchingYn(false);
+    },
+    [localStreamRef.current, peerConnectionRef.current, remoteStream]
+  );
 
   const mediaStatus = useMemo(
     () => ({
@@ -1456,8 +1077,12 @@ const Rtc = ({
     ]
   );
   const stream = useMemo(() => {
-    return { localStream, remoteStream };
-  }, [localStream, remoteStream]);
+    return { localStream: localStreamRef.current, remoteStream };
+  }, [localStreamRef.current, remoteStream]);
+
+  const sockets = useMemo(() => {
+    return socketRef.current;
+  }, [socketRef.current]);
 
   return {
     mediaStatus,
@@ -1468,12 +1093,12 @@ const Rtc = ({
     setScreenSharingYn,
     setDeviceChangeStartYn,
     onStop: stop,
-    onStart: setLocalStreamVideo,
+    onStart: () => {}, // setLocalStreamVideo,
     onAllowDeviceChange: allowChangeDevice,
     onRejectDeviceChange: rejectChangeDevice,
     leaveSocket,
     onRefresh,
-    socketInstance,
+    socketInstance: sockets,
     setDeviceSwitchRequested,
     setDeviceSwitchSucceeded,
     setDeviceSwitchingYn,
