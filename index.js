@@ -424,18 +424,12 @@ var Rtc = function (_a) {
                 socket = manager.socket(SOCKET_NAMESPACE); // main namespace
                 _id = chatRoomId;
                 socket.on("connect", function () {
-                    console.log("socket join, { roomId: ".concat(_id, ", sender: '").concat(userType, "' }"));
-                    socket.emit("join", { roomId: _id, sender: userType });
-                    console.log(micOnYn, cameraOnYn);
-                    socket.emit("microphone", {
+                    console.log("socket join, { roomId: ".concat(_id, ", sender: '").concat(userType, "', camera: ").concat(cameraOnYn, ", mic: ").concat(micOnYn, " }"));
+                    socket.emit("join", {
                         roomId: _id,
                         sender: userType,
-                        onYn: micOnYn,
-                    });
-                    socket.emit("camera", {
-                        roomId: _id,
-                        sender: userType,
-                        onYn: cameraOnYn,
+                        cameraOnYn: cameraOnYn,
+                        microphoneOnYn: micOnYn,
                     });
                     if (userType === "DEALER") {
                         socket.emit("switchDevice", {
@@ -695,6 +689,7 @@ var Rtc = function (_a) {
                 case "failed":
                     setConnected(false);
                     setConnecting(false);
+                    onRefresh();
                     break;
             }
         });
@@ -726,6 +721,7 @@ var Rtc = function (_a) {
                     setNegotiationNeeded(false);
                     console.log("peerConnection:: icegatheringstatechange", peerConnection.iceGatheringState, peerConnection.connectionState);
                     if (peerConnection.connectionState === "failed") {
+                        onRefresh();
                     }
                     break;
             }
@@ -865,6 +861,7 @@ var Rtc = function (_a) {
         localStreamRef.current
             .getVideoTracks()
             .forEach(function (track) { return (track.enabled = cameraOnYn); });
+        console.log("send camera socket", cameraOnYn);
         socketRef.current.emit("camera", {
             roomId: chatRoomId,
             sender: userType,
@@ -912,6 +909,7 @@ var Rtc = function (_a) {
                 sender: userType,
                 onYn: micOnYn,
             });
+            console.log("send connected camera socket", cameraOnYn);
             socketRef.current.emit("camera", {
                 roomId: chatRoomId,
                 sender: userType,

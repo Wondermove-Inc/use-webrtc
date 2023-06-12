@@ -422,19 +422,16 @@ const Rtc = ({
       const _id = chatRoomId;
 
       socket.on("connect", () => {
-        console.log(`socket join, { roomId: ${_id}, sender: '${userType}' }`);
-        socket.emit("join", { roomId: _id, sender: userType });
-        console.log(micOnYn, cameraOnYn);
-        socket.emit("microphone", {
+        console.log(
+          `socket join, { roomId: ${_id}, sender: '${userType}', camera: ${cameraOnYn}, mic: ${micOnYn} }`
+        );
+        socket.emit("join", {
           roomId: _id,
           sender: userType,
-          onYn: micOnYn,
+          cameraOnYn,
+          microphoneOnYn: micOnYn,
         });
-        socket.emit("camera", {
-          roomId: _id,
-          sender: userType,
-          onYn: cameraOnYn,
-        });
+
         if (userType === "DEALER") {
           socket.emit("switchDevice", {
             roomId: _id,
@@ -716,6 +713,7 @@ const Rtc = ({
         case "failed":
           setConnected(false);
           setConnecting(false);
+          onRefresh();
           break;
       }
     });
@@ -758,6 +756,7 @@ const Rtc = ({
             peerConnection.connectionState
           );
           if (peerConnection.connectionState === "failed") {
+            onRefresh();
           }
           break;
       }
@@ -883,6 +882,7 @@ const Rtc = ({
       .getVideoTracks()
       .forEach((track) => (track.enabled = cameraOnYn));
 
+    console.log("send camera socket", cameraOnYn);
     socketRef.current.emit("camera", {
       roomId: chatRoomId,
       sender: userType,
@@ -934,6 +934,7 @@ const Rtc = ({
         sender: userType,
         onYn: micOnYn,
       });
+      console.log("send connected camera socket", cameraOnYn);
       socketRef.current.emit("camera", {
         roomId: chatRoomId,
         sender: userType,
