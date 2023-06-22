@@ -428,8 +428,8 @@ var Rtc = function (_a) {
                     socket.emit("join", {
                         roomId: _id,
                         sender: userType,
-                        cameraOnYn: cameraOnYn,
-                        microphoneOnYn: micOnYn,
+                        // cameraOnYn,
+                        // microphoneOnYn: micOnYn,
                     });
                     if (userType === "DEALER") {
                         socket.emit("switchDevice", {

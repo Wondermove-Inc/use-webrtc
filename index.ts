@@ -428,8 +428,8 @@ const Rtc = ({
         socket.emit("join", {
           roomId: _id,
           sender: userType,
-          cameraOnYn,
-          microphoneOnYn: micOnYn,
+          // cameraOnYn,
+          // microphoneOnYn: micOnYn,
         });
 
         if (userType === "DEALER") {
