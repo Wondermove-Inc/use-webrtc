@@ -23,6 +23,8 @@ type UserType = "DEALER" | "CUSTOMER";
 const Rtc = ({
   chatRoomId = "testChatroom",
   dealerYn,
+  cameraDefaultOnYn = true,
+  micDefaultOnYn = true,
   config: {
     SOCKET_URI,
     SOCKET_NAMESPACE,
@@ -39,8 +41,8 @@ const Rtc = ({
   const SERVER_SLAVE_URI: string = WEBRTC_SLAVE_URI;
   const SERVER_PORT = parseInt(WEBRTC_PORT);
 
-  const [cameraOnYn, setCameraOnYn] = useState<boolean>(true);
-  const [micOnYn, setMicOnYn] = useState<boolean>(true);
+  const [cameraOnYn, setCameraOnYn] = useState<boolean>(cameraDefaultOnYn);
+  const [micOnYn, setMicOnYn] = useState<boolean>(micDefaultOnYn);
   const [deviceChangeStartYn, setDeviceChangeStartYn] =
     useState<boolean>(false); //내가 changing 중인지
   const [cardOpenedIndex, setCardOpenedIndex] = useState<number>(0);
