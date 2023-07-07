@@ -55,46 +55,46 @@ var react_1 = require("react");
 var socket_io_client_1 = require("socket.io-client");
 var moment_1 = __importDefault(require("moment"));
 var Rtc = function (_a) {
-    var _b = _a.chatRoomId, chatRoomId = _b === void 0 ? "testChatroom" : _b, dealerYn = _a.dealerYn, _c = _a.config, SOCKET_URI = _c.SOCKET_URI, SOCKET_NAMESPACE = _c.SOCKET_NAMESPACE, WEBRTC_URI = _c.WEBRTC_URI, WEBRTC_SLAVE_URI = _c.WEBRTC_SLAVE_URI, WEBRTC_PORT = _c.WEBRTC_PORT, WEBRTC_ROOM_URI = _c.WEBRTC_ROOM_URI, WEBRTC_PATH = _c.WEBRTC_PATH, SIGNAL_SOCKET_URI = _c.SIGNAL_SOCKET_URI, SIGNAL_SOCKET_NAMESPACE = _c.SIGNAL_SOCKET_NAMESPACE;
+    var _b = _a.chatRoomId, chatRoomId = _b === void 0 ? "testChatroom" : _b, dealerYn = _a.dealerYn, _c = _a.cameraDefaultOnYn, cameraDefaultOnYn = _c === void 0 ? true : _c, _d = _a.micDefaultOnYn, micDefaultOnYn = _d === void 0 ? true : _d, _e = _a.config, SOCKET_URI = _e.SOCKET_URI, SOCKET_NAMESPACE = _e.SOCKET_NAMESPACE, WEBRTC_URI = _e.WEBRTC_URI, WEBRTC_SLAVE_URI = _e.WEBRTC_SLAVE_URI, WEBRTC_PORT = _e.WEBRTC_PORT, WEBRTC_ROOM_URI = _e.WEBRTC_ROOM_URI, WEBRTC_PATH = _e.WEBRTC_PATH, SIGNAL_SOCKET_URI = _e.SIGNAL_SOCKET_URI, SIGNAL_SOCKET_NAMESPACE = _e.SIGNAL_SOCKET_NAMESPACE;
     var SERVER_URI = WEBRTC_URI;
     var SERVER_SLAVE_URI = WEBRTC_SLAVE_URI;
     var SERVER_PORT = parseInt(WEBRTC_PORT);
-    var _d = (0, react_1.useState)(true), cameraOnYn = _d[0], setCameraOnYn = _d[1];
-    var _e = (0, react_1.useState)(true), micOnYn = _e[0], setMicOnYn = _e[1];
-    var _f = (0, react_1.useState)(false), deviceChangeStartYn = _f[0], setDeviceChangeStartYn = _f[1]; //내가 changing 중인지
-    var _g = (0, react_1.useState)(0), cardOpenedIndex = _g[0], setCardOpenedIndex = _g[1];
-    var _h = (0, react_1.useState)(false), screenSharingYn = _h[0], setScreenSharingYn = _h[1];
-    var _j = (0, react_1.useState)(), localStream = _j[0], setLocalStream = _j[1];
-    var _k = (0, react_1.useState)(), remoteStream = _k[0], setRemoteStream = _k[1];
-    var _l = (0, react_1.useState)(), peerId = _l[0], setPeerId = _l[1];
-    var _m = (0, react_1.useState)(), destination = _m[0], setDestination = _m[1];
-    var _o = (0, react_1.useState)(), mediaConnection = _o[0], setMediaConnection = _o[1];
-    var _p = (0, react_1.useState)(false), finding = _p[0], setFinding = _p[1];
-    var _q = (0, react_1.useState)(false), connected = _q[0], setConnected = _q[1];
-    var _r = (0, react_1.useState)(false), connecting = _r[0], setConnecting = _r[1];
-    var _s = (0, react_1.useState)(), local = _s[0], setLocal = _s[1];
-    var _t = (0, react_1.useState)(), mediaDevices = _t[0], setMediaDevices = _t[1];
-    var _u = (0, react_1.useState)(), peerErrorMessage = _u[0], setPeerErrorMessage = _u[1];
-    var _v = (0, react_1.useState)(), streamCameraErrored = _v[0], setStreamCameraErrored = _v[1];
-    var _w = (0, react_1.useState)(), streamMicErrored = _w[0], setStreamMicErrored = _w[1];
-    var _x = (0, react_1.useState)(false), networkErrored = _x[0], setNetworkErrored = _x[1];
-    var _y = (0, react_1.useState)(navigator.onLine), networkOnline = _y[0], setNetworkOnline = _y[1];
-    var _z = (0, react_1.useState)(false), deviceSwitchRequested = _z[0], setDeviceSwitchRequested = _z[1];
-    var _0 = (0, react_1.useState)(false), deviceSwitchSucceeded = _0[0], setDeviceSwitchSucceeded = _0[1];
-    var _1 = (0, react_1.useState)(false), deviceSwitchingYn = _1[0], setDeviceSwitchingYn = _1[1]; // 상대방이 changing 중인지
+    var _f = (0, react_1.useState)(cameraDefaultOnYn), cameraOnYn = _f[0], setCameraOnYn = _f[1];
+    var _g = (0, react_1.useState)(micDefaultOnYn), micOnYn = _g[0], setMicOnYn = _g[1];
+    var _h = (0, react_1.useState)(false), deviceChangeStartYn = _h[0], setDeviceChangeStartYn = _h[1]; //내가 changing 중인지
+    var _j = (0, react_1.useState)(0), cardOpenedIndex = _j[0], setCardOpenedIndex = _j[1];
+    var _k = (0, react_1.useState)(false), screenSharingYn = _k[0], setScreenSharingYn = _k[1];
+    var _l = (0, react_1.useState)(), localStream = _l[0], setLocalStream = _l[1];
+    var _m = (0, react_1.useState)(), remoteStream = _m[0], setRemoteStream = _m[1];
+    var _o = (0, react_1.useState)(), peerId = _o[0], setPeerId = _o[1];
+    var _p = (0, react_1.useState)(), destination = _p[0], setDestination = _p[1];
+    var _q = (0, react_1.useState)(), mediaConnection = _q[0], setMediaConnection = _q[1];
+    var _r = (0, react_1.useState)(false), finding = _r[0], setFinding = _r[1];
+    var _s = (0, react_1.useState)(false), connected = _s[0], setConnected = _s[1];
+    var _t = (0, react_1.useState)(false), connecting = _t[0], setConnecting = _t[1];
+    var _u = (0, react_1.useState)(), local = _u[0], setLocal = _u[1];
+    var _v = (0, react_1.useState)(), mediaDevices = _v[0], setMediaDevices = _v[1];
+    var _w = (0, react_1.useState)(), peerErrorMessage = _w[0], setPeerErrorMessage = _w[1];
+    var _x = (0, react_1.useState)(), streamCameraErrored = _x[0], setStreamCameraErrored = _x[1];
+    var _y = (0, react_1.useState)(), streamMicErrored = _y[0], setStreamMicErrored = _y[1];
+    var _z = (0, react_1.useState)(false), networkErrored = _z[0], setNetworkErrored = _z[1];
+    var _0 = (0, react_1.useState)(navigator.onLine), networkOnline = _0[0], setNetworkOnline = _0[1];
+    var _1 = (0, react_1.useState)(false), deviceSwitchRequested = _1[0], setDeviceSwitchRequested = _1[1];
+    var _2 = (0, react_1.useState)(false), deviceSwitchSucceeded = _2[0], setDeviceSwitchSucceeded = _2[1];
+    var _3 = (0, react_1.useState)(false), deviceSwitchingYn = _3[0], setDeviceSwitchingYn = _3[1]; // 상대방이 changing 중인지
     // modal errored
-    var _2 = (0, react_1.useState)(), peerModalErrorMessage = _2[0], setPeerModalErrorMessage = _2[1];
-    var _3 = (0, react_1.useState)(true), customerMicOnYn = _3[0], setCustomerMicOnYn = _3[1];
-    var _4 = (0, react_1.useState)(true), customerCameraOnYn = _4[0], setCustomerCameraOnYn = _4[1];
-    var _5 = (0, react_1.useState)(false), customerLeftYn = _5[0], setCustomerLeftYn = _5[1];
-    var _6 = (0, react_1.useState)(), socketInstance = _6[0], setSocketInstance = _6[1];
-    var _7 = (0, react_1.useState)(), webRtcSocketInstance = _7[0], setWebRtcSocketInstance = _7[1];
-    var _8 = (0, react_1.useState)([]), remoteCandidates = _8[0], setRemoteCandidates = _8[1];
-    var _9 = (0, react_1.useState)(false), peerJoinYn = _9[0], setPeerJoinYn = _9[1];
-    var _10 = (0, react_1.useState)(false), leftYn = _10[0], setLeftYn = _10[1];
-    var _11 = (0, react_1.useState)(), startTime = _11[0], setStartTime = _11[1];
-    var _12 = (0, react_1.useState)(0), timeDiff = _12[0], setTimeDiff = _12[1];
-    var _13 = (0, react_1.useState)(false), negotiationNeeded = _13[0], setNegotiationNeeded = _13[1];
+    var _4 = (0, react_1.useState)(), peerModalErrorMessage = _4[0], setPeerModalErrorMessage = _4[1];
+    var _5 = (0, react_1.useState)(true), customerMicOnYn = _5[0], setCustomerMicOnYn = _5[1];
+    var _6 = (0, react_1.useState)(true), customerCameraOnYn = _6[0], setCustomerCameraOnYn = _6[1];
+    var _7 = (0, react_1.useState)(false), customerLeftYn = _7[0], setCustomerLeftYn = _7[1];
+    var _8 = (0, react_1.useState)(), socketInstance = _8[0], setSocketInstance = _8[1];
+    var _9 = (0, react_1.useState)(), webRtcSocketInstance = _9[0], setWebRtcSocketInstance = _9[1];
+    var _10 = (0, react_1.useState)([]), remoteCandidates = _10[0], setRemoteCandidates = _10[1];
+    var _11 = (0, react_1.useState)(false), peerJoinYn = _11[0], setPeerJoinYn = _11[1];
+    var _12 = (0, react_1.useState)(false), leftYn = _12[0], setLeftYn = _12[1];
+    var _13 = (0, react_1.useState)(), startTime = _13[0], setStartTime = _13[1];
+    var _14 = (0, react_1.useState)(0), timeDiff = _14[0], setTimeDiff = _14[1];
+    var _15 = (0, react_1.useState)(false), negotiationNeeded = _15[0], setNegotiationNeeded = _15[1];
     /// 다시한번 시작해
     var userType = dealerYn ? "DEALER" : "CUSTOMER";
     var playerRef = (0, react_1.useRef)();
@@ -586,6 +586,8 @@ var Rtc = function (_a) {
                                         console.log("offer socket received", sdp, local);
                                         if (!!isMe) return [3 /*break*/, 2];
                                         console.log("peerconnection:: connectionstate ", peerConnectionRef.current.connectionState, deviceSwitchingYn);
+                                        if (peerConnectionRef.current.signalingState == "closed")
+                                            return [2 /*return*/];
                                         try {
                                             offerDescription = new RTCSessionDescription(sdp);
                                             peerConnectionRef.current.setRemoteDescription(offerDescription);
@@ -621,6 +623,8 @@ var Rtc = function (_a) {
                     socket.on("getAnswer", function (_a) {
                         var sdp = _a.sdp, sender = _a.sender;
                         console.log("webrtc socket get Answer, local, offer", peerConnectionRef.current, sdp, sender);
+                        if (peerConnectionRef.current.signalingState == "closed")
+                            return;
                         try {
                             var isMe = sender === userType;
                             if (!isMe) {

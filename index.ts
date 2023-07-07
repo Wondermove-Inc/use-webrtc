@@ -604,6 +604,7 @@ const Rtc = ({
               peerConnectionRef.current.connectionState,
               deviceSwitchingYn
             );
+            if (peerConnectionRef.current.signalingState == "closed") return;
             try {
               const offerDescription = new RTCSessionDescription(sdp);
               peerConnectionRef.current.setRemoteDescription(offerDescription);
@@ -637,6 +638,7 @@ const Rtc = ({
             sdp,
             sender
           );
+          if (peerConnectionRef.current.signalingState == "closed") return;
           try {
             const isMe = sender === userType;
             if (!isMe) {
