@@ -95,6 +95,7 @@ var Rtc = function (_a) {
     var _13 = (0, react_1.useState)(), startTime = _13[0], setStartTime = _13[1];
     var _14 = (0, react_1.useState)(0), timeDiff = _14[0], setTimeDiff = _14[1];
     var _15 = (0, react_1.useState)(false), negotiationNeeded = _15[0], setNegotiationNeeded = _15[1];
+    var _16 = (0, react_1.useState)(false), answerNeeded = _16[0], setAnswerNeeded = _16[1];
     /// 다시한번 시작해
     var userType = dealerYn ? "DEALER" : "CUSTOMER";
     var playerRef = (0, react_1.useRef)();
@@ -578,43 +579,32 @@ var Rtc = function (_a) {
                     socket.on("getOffer", function (_a) {
                         var sdp = _a.sdp, sender = _a.sender;
                         return __awaiter(void 0, void 0, void 0, function () {
-                            var isMe, offerDescription, answerDescription;
+                            var isMe, offerDescription;
                             return __generator(this, function (_b) {
-                                switch (_b.label) {
-                                    case 0:
-                                        isMe = sender === userType;
-                                        console.log("offer socket received", sdp, local);
-                                        if (!!isMe) return [3 /*break*/, 2];
-                                        console.log("peerconnection:: connectionstate ", peerConnectionRef.current.connectionState, deviceSwitchingYn);
-                                        if (peerConnectionRef.current.signalingState == "closed")
-                                            return [2 /*return*/];
-                                        try {
-                                            offerDescription = new RTCSessionDescription(sdp);
-                                            peerConnectionRef.current.setRemoteDescription(offerDescription);
+                                isMe = sender === userType;
+                                console.log("offer socket received", sdp, local);
+                                if (!isMe) {
+                                    console.log("peerconnection:: connectionstate ", peerConnectionRef.current.connectionState, deviceSwitchingYn);
+                                    if (peerConnectionRef.current.signalingState == "closed")
+                                        return [2 /*return*/];
+                                    try {
+                                        offerDescription = new RTCSessionDescription(sdp);
+                                        peerConnectionRef.current.setRemoteDescription(offerDescription);
+                                    }
+                                    catch (e) {
+                                        console.log("error:", e, "deviceSwitching:", deviceSwitchingYn);
+                                        if (deviceSwitchingYn) {
                                         }
-                                        catch (e) {
-                                            console.log("error:", e, "deviceSwitching:", deviceSwitchingYn);
-                                            if (deviceSwitchingYn) {
-                                            }
-                                        }
-                                        return [4 /*yield*/, peerConnectionRef.current.createAnswer()];
-                                    case 1:
-                                        answerDescription = _b.sent();
-                                        peerConnectionRef.current.setLocalDescription(answerDescription);
-                                        console.log("answer!!", peerConnectionRef.current, candidates);
-                                        socket.emit("answer", {
-                                            sdp: answerDescription,
-                                            sender: userType,
+                                    }
+                                    setAnswerNeeded(true);
+                                    if (candidates.length > 0) {
+                                        candidates.map(function (i) {
+                                            return peerConnectionRef.current.addIceCandidate(i);
                                         });
-                                        if (candidates.length > 0) {
-                                            candidates.map(function (i) {
-                                                return peerConnectionRef.current.addIceCandidate(i);
-                                            });
-                                            candidates = [];
-                                        }
-                                        _b.label = 2;
-                                    case 2: return [2 /*return*/];
+                                        candidates = [];
+                                    }
                                 }
+                                return [2 /*return*/];
                             });
                         });
                     });
@@ -656,6 +646,29 @@ var Rtc = function (_a) {
             }
         };
     }, []);
+    (0, react_1.useEffect)(function () {
+        console.log("answer needed Effect", answerNeeded, localStreamRef.current);
+        if (answerNeeded && localStreamRef.current) {
+            (function () { return __awaiter(void 0, void 0, void 0, function () {
+                var answerDescription;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, peerConnectionRef.current.createAnswer()];
+                        case 1:
+                            answerDescription = _a.sent();
+                            peerConnectionRef.current.setLocalDescription(answerDescription);
+                            console.log("send answer!!", peerConnectionRef.current);
+                            webRtcSocketRef.current.emit("answer", {
+                                sdp: answerDescription,
+                                sender: userType,
+                            });
+                            setAnswerNeeded(false);
+                            return [2 /*return*/];
+                    }
+                });
+            }); })();
+        }
+    }, [answerNeeded, localStreamRef.current]);
     (0, react_1.useEffect)(function () {
         if (webRtcSocketRef.current) {
             var peerConnection_1 = initPeerConnection();

@@ -90,6 +90,7 @@ const Rtc = ({
   const [timeDiff, setTimeDiff] = useState<number>(0);
 
   const [negotiationNeeded, setNegotiationNeeded] = useState<boolean>(false);
+  const [answerNeeded, setAnswerNeeded] = useState<boolean>(false);
 
   /// 다시한번 시작해
   const userType: UserType = dealerYn ? "DEALER" : "CUSTOMER";
@@ -613,15 +614,8 @@ const Rtc = ({
               if (deviceSwitchingYn) {
               }
             }
+            setAnswerNeeded(true);
 
-            const answerDescription =
-              await peerConnectionRef.current.createAnswer();
-            peerConnectionRef.current.setLocalDescription(answerDescription);
-            console.log("answer!!", peerConnectionRef.current, candidates);
-            socket.emit("answer", {
-              sdp: answerDescription,
-              sender: userType,
-            });
             if (candidates.length > 0) {
               candidates.map((i) =>
                 peerConnectionRef.current.addIceCandidate(i)
@@ -673,6 +667,24 @@ const Rtc = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+    console.log("answer needed Effect", answerNeeded, localStreamRef.current);
+    if (answerNeeded && localStreamRef.current) {
+      (async () => {
+        const answerDescription =
+          await peerConnectionRef.current.createAnswer();
+        peerConnectionRef.current.setLocalDescription(answerDescription);
+
+        console.log("send answer!!", peerConnectionRef.current);
+        webRtcSocketRef.current.emit("answer", {
+          sdp: answerDescription,
+          sender: userType,
+        });
+        setAnswerNeeded(false);
+      })();
+    }
+  }, [answerNeeded, localStreamRef.current]);
 
   useEffect(() => {
     if (webRtcSocketRef.current) {
