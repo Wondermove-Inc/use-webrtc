@@ -567,7 +567,7 @@ const Rtc = ({
           );
 
           const newCandidate = new RTCIceCandidate(candidate);
-
+          if (peerConnectionRef.current.signalingState == "closed") return;
           if (peerConnectionRef.current.remoteDescription) {
             peerConnectionRef.current.addIceCandidate(newCandidate);
           } else {

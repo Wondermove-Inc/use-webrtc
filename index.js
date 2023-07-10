@@ -550,6 +550,8 @@ var Rtc = function (_a) {
                     if (!isMe) {
                         console.log("getCandidate socket received - customer", candidate, peerConnectionRef.current.connectionState);
                         var newCandidate = new RTCIceCandidate(candidate);
+                        if (peerConnectionRef.current.signalingState == "closed")
+                            return;
                         if (peerConnectionRef.current.remoteDescription) {
                             peerConnectionRef.current.addIceCandidate(newCandidate);
                         }
