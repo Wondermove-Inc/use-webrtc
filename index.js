@@ -416,116 +416,122 @@ var Rtc = function (_a) {
     var socketRef = (0, react_1.useRef)();
     (0, react_1.useEffect)(function () {
         //1)
-        var socket;
-        var localStream = new MediaStream();
-        (function () { return __awaiter(void 0, void 0, void 0, function () {
-            var manager, _id;
-            return __generator(this, function (_a) {
-                manager = new socket_io_client_1.Manager(SOCKET_URI, { transports: ['websocket'] });
-                socket = manager.socket(SOCKET_NAMESPACE); // main namespace
-                _id = chatRoomId;
-                socket.on('connect', function () {
-                    console.log("socket join, { roomId: ".concat(_id, ", sender: \"").concat(userType, "\", camera: ").concat(cameraOnYn, ", mic: ").concat(micOnYn, " }"));
-                    socket.emit('join', {
-                        roomId: _id,
-                        sender: userType,
-                        // cameraOnYn,
-                        // microphoneOnYn: micOnYn,
-                    });
-                    if (userType === 'DEALER') {
-                        socket.emit('switchDevice', {
+        try {
+            var socket_1;
+            var localStream_1 = new MediaStream();
+            (function () { return __awaiter(void 0, void 0, void 0, function () {
+                var manager, _id;
+                return __generator(this, function (_a) {
+                    manager = new socket_io_client_1.Manager(SOCKET_URI, { transports: ['websocket'] });
+                    socket_1 = manager.socket(SOCKET_NAMESPACE); // main namespace
+                    _id = chatRoomId;
+                    socket_1.on('connect', function () {
+                        console.log("socket join, { roomId: ".concat(_id, ", sender: \"").concat(userType, "\", camera: ").concat(cameraOnYn, ", mic: ").concat(micOnYn, " }"));
+                        socket_1.emit('join', {
                             roomId: _id,
                             sender: userType,
-                            deviceType: 'WEB',
-                            switchStatus: 'SUCCESS',
+                            // cameraOnYn,
+                            // microphoneOnYn: micOnYn,
                         });
-                    }
-                });
-                socket.on('microphone', function (_a) {
-                    var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
-                    var isMe = sender === userType;
-                    if (!isMe) {
-                        console.log('peer socket mic listener onYn : ', onYn);
-                        setCustomerMicOnYn(onYn);
-                    }
-                });
-                socket.on('camera', function (_a) {
-                    var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
-                    var isMe = sender === userType;
-                    if (!isMe) {
-                        console.log('socket camera listener onYn : ', onYn);
-                        setCustomerCameraOnYn(onYn);
-                    }
-                });
-                socket.on('leave', function (_a) {
-                    var roomId = _a.roomId, sender = _a.sender;
-                    var isMe = sender === userType;
-                    console.log('leave', sender);
-                    if (!isMe) {
-                        setCustomerLeftYn(true);
-                    }
-                    else {
-                        setLeftYn(true);
-                    }
-                });
-                socket.on('consultError', function (_a) {
-                    var consultId = _a.consultId, sender = _a.sender;
-                    var isMe = sender === userType;
-                    if (!isMe) {
-                        // onRefresh();
-                        setNetworkErrored(true);
-                    }
-                });
-                socket.on('switchDevice', function (_a) {
-                    var roomId = _a.roomId, sender = _a.sender, deviceType = _a.deviceType, switchStatus = _a.switchStatus;
-                    if (sender === 'DEALER') {
-                        if (userType === 'CUSTOMER') {
-                            if (switchStatus === 'ALLOW') {
-                                console.log('deviceSwitching:: allow socket received');
-                                onRefresh();
-                            }
-                        }
                         if (userType === 'DEALER') {
-                            if (switchStatus === 'REQUEST' && deviceType === 'MOBILE') {
-                                setDeviceSwitchRequested(true);
+                            socket_1.emit('switchDevice', {
+                                roomId: _id,
+                                sender: userType,
+                                deviceType: 'WEB',
+                                switchStatus: 'SUCCESS',
+                            });
+                        }
+                    });
+                    socket_1.on('microphone', function (_a) {
+                        var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
+                        var isMe = sender === userType;
+                        if (!isMe) {
+                            console.log('peer socket mic listener onYn : ', onYn);
+                            setCustomerMicOnYn(onYn);
+                        }
+                    });
+                    socket_1.on('camera', function (_a) {
+                        var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
+                        var isMe = sender === userType;
+                        if (!isMe) {
+                            console.log('socket camera listener onYn : ', onYn);
+                            setCustomerCameraOnYn(onYn);
+                        }
+                    });
+                    socket_1.on('leave', function (_a) {
+                        var roomId = _a.roomId, sender = _a.sender;
+                        var isMe = sender === userType;
+                        console.log('leave', sender);
+                        if (!isMe) {
+                            setCustomerLeftYn(true);
+                        }
+                        else {
+                            setLeftYn(true);
+                        }
+                    });
+                    socket_1.on('consultError', function (_a) {
+                        var consultId = _a.consultId, sender = _a.sender;
+                        var isMe = sender === userType;
+                        if (!isMe) {
+                            // onRefresh();
+                            setNetworkErrored(true);
+                        }
+                    });
+                    socket_1.on('switchDevice', function (_a) {
+                        var roomId = _a.roomId, sender = _a.sender, deviceType = _a.deviceType, switchStatus = _a.switchStatus;
+                        if (sender === 'DEALER') {
+                            if (userType === 'CUSTOMER') {
+                                if (switchStatus === 'ALLOW') {
+                                    console.log('deviceSwitching:: allow socket received');
+                                    onRefresh();
+                                }
                             }
-                            if (switchStatus === 'SUCCESS' &&
-                                deviceType === 'MOBILE' //&&
-                            // deviceSwitchingYn
-                            ) {
-                                // 끄기
-                                console.log('deviceSwitching:: success', switchStatus, sender, deviceSwitchRequested, deviceSwitchingYn);
-                                setDeviceSwitchSucceeded(true);
-                                setDeviceSwitchingYn(false);
-                            }
-                            if (switchStatus === 'REJECT') {
-                                // 끄기
-                                console.log('deviceSwitching:: reject ', switchStatus, sender, deviceSwitchRequested);
-                                setDeviceSwitchingYn(false); //필요한가?
+                            if (userType === 'DEALER') {
+                                if (switchStatus === 'REQUEST' && deviceType === 'MOBILE') {
+                                    setDeviceSwitchRequested(true);
+                                }
+                                if (switchStatus === 'SUCCESS' &&
+                                    deviceType === 'MOBILE' //&&
+                                // deviceSwitchingYn
+                                ) {
+                                    // 끄기
+                                    console.log('deviceSwitching:: success', switchStatus, sender, deviceSwitchRequested, deviceSwitchingYn);
+                                    setDeviceSwitchSucceeded(true);
+                                    setDeviceSwitchingYn(false);
+                                }
+                                if (switchStatus === 'REJECT') {
+                                    // 끄기
+                                    console.log('deviceSwitching:: reject ', switchStatus, sender, deviceSwitchRequested);
+                                    setDeviceSwitchingYn(false); //필요한가?
+                                }
                             }
                         }
-                    }
+                    });
+                    socketRef.current = socket_1;
+                    localStreamRef.current = localStream_1;
+                    console.log('localstream', localStream_1);
+                    return [2 /*return*/];
                 });
-                socketRef.current = socket;
-                localStreamRef.current = localStream;
-                console.log('localstream', localStream);
-                return [2 /*return*/];
-            });
-        }); })();
-        return function () {
-            console.log('socket off');
-            if (socket) {
-                socket.disconnect();
-                socketRef.current = undefined;
-            }
-            stop(deviceSwitchingYn);
-        };
+            }); })();
+            return function () {
+                console.log('socket off');
+                if (socket_1) {
+                    socket_1.disconnect();
+                    socketRef.current = undefined;
+                }
+                stop(deviceSwitchingYn);
+            };
+        }
+        catch (e) { }
     }, []);
     (0, react_1.useEffect)(function () {
-        if (playerRef.current) {
-            console.log('playerref', playerRef.current, localStreamRef.current);
-            playerRef.current.srcObject = localStreamRef.current;
+        try {
+            if (playerRef.current) {
+                console.log('playerref', playerRef.current, localStreamRef.current);
+                playerRef.current.srcObject = localStreamRef.current;
+            }
         }
+        catch (e) { }
     }, [playerRef.current, localStreamRef.current]);
     (0, react_1.useEffect)(function () {
         //1)
@@ -985,35 +991,44 @@ var Rtc = function (_a) {
         }
     }, [cameraOnYn]);
     (0, react_1.useEffect)(function () {
-        localStreamRef.current
-            .getAudioTracks()
-            .forEach(function (track) { return (track.enabled = micOnYn); });
-        socketRef.current.emit('microphone', {
-            roomId: chatRoomId,
-            sender: userType,
-            onYn: micOnYn,
-        });
+        try {
+            localStreamRef.current
+                .getAudioTracks()
+                .forEach(function (track) { return (track.enabled = micOnYn); });
+            socketRef.current.emit('microphone', {
+                roomId: chatRoomId,
+                sender: userType,
+                onYn: micOnYn,
+            });
+        }
+        catch (e) { }
     }, [micOnYn]);
     // test 용으로 추가
     (0, react_1.useEffect)(function () {
         var _a;
-        if (remoteStream) {
-            if (((_a = remoteStream.getVideoTracks()) === null || _a === void 0 ? void 0 : _a.length) > 0) {
-                remoteStream.getVideoTracks()[0].enabled = customerCameraOnYn;
-                console.log('remote camera on? off? ' + customerCameraOnYn);
+        try {
+            if (remoteStream) {
+                if (((_a = remoteStream.getVideoTracks()) === null || _a === void 0 ? void 0 : _a.length) > 0) {
+                    remoteStream.getVideoTracks()[0].enabled = customerCameraOnYn;
+                    console.log('remote camera on? off? ' + customerCameraOnYn);
+                }
             }
         }
+        catch (e) { }
     }, [customerCameraOnYn]);
     // test 용으로 추가
     (0, react_1.useEffect)(function () {
         var _a;
-        console.log(remoteStream);
-        if (remoteStream) {
-            if (((_a = remoteStream.getAudioTracks()) === null || _a === void 0 ? void 0 : _a.length) > 0) {
-                remoteStream.getAudioTracks()[0].enabled = customerMicOnYn;
-                console.log('remote mic on? off? ' + customerMicOnYn);
+        try {
+            console.log(remoteStream);
+            if (remoteStream) {
+                if (((_a = remoteStream.getAudioTracks()) === null || _a === void 0 ? void 0 : _a.length) > 0) {
+                    remoteStream.getAudioTracks()[0].enabled = customerMicOnYn;
+                    console.log('remote mic on? off? ' + customerMicOnYn);
+                }
             }
         }
+        catch (e) { }
     }, [customerMicOnYn]);
     (0, react_1.useEffect)(function () {
         try {
@@ -1153,10 +1168,10 @@ var Rtc = function (_a) {
         }
     };
     var processCandidates = function () {
-        if (remoteCandidates.length < 1) {
-            return;
-        }
         try {
+            if (remoteCandidates.length < 1) {
+                return;
+            }
             remoteCandidates.forEach(function (candidate) {
                 if (candidate) {
                     peerConnectionRef.current.addIceCandidate(candidate);

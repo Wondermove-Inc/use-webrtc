@@ -412,125 +412,129 @@ const Rtc = ({
 
   useEffect(() => {
     //1)
-    let socket: Socket;
-    const localStream = new MediaStream();
+    try {
+      let socket: Socket;
+      const localStream = new MediaStream();
 
-    (async () => {
-      const manager = new Manager(SOCKET_URI, { transports: ['websocket'] });
-      socket = manager.socket(SOCKET_NAMESPACE); // main namespace
-      const _id = chatRoomId;
+      (async () => {
+        const manager = new Manager(SOCKET_URI, { transports: ['websocket'] });
+        socket = manager.socket(SOCKET_NAMESPACE); // main namespace
+        const _id = chatRoomId;
 
-      socket.on('connect', () => {
-        console.log(
-          `socket join, { roomId: ${_id}, sender: "${userType}", camera: ${cameraOnYn}, mic: ${micOnYn} }`,
-        );
-        socket.emit('join', {
-          roomId: _id,
-          sender: userType,
-          // cameraOnYn,
-          // microphoneOnYn: micOnYn,
-        });
-
-        if (userType === 'DEALER') {
-          socket.emit('switchDevice', {
+        socket.on('connect', () => {
+          console.log(
+            `socket join, { roomId: ${_id}, sender: "${userType}", camera: ${cameraOnYn}, mic: ${micOnYn} }`,
+          );
+          socket.emit('join', {
             roomId: _id,
             sender: userType,
-            deviceType: 'WEB',
-            switchStatus: 'SUCCESS',
+            // cameraOnYn,
+            // microphoneOnYn: micOnYn,
           });
-        }
-      });
-      socket.on('microphone', ({ roomId, sender, onYn }) => {
-        const isMe: boolean = sender === userType;
-        if (!isMe) {
-          console.log('peer socket mic listener onYn : ', onYn);
-          setCustomerMicOnYn(onYn);
-        }
-      });
-      socket.on('camera', ({ roomId, sender, onYn }) => {
-        const isMe: boolean = sender === userType;
-        if (!isMe) {
-          console.log('socket camera listener onYn : ', onYn);
-          setCustomerCameraOnYn(onYn);
-        }
-      });
-      socket.on('leave', ({ roomId, sender }) => {
-        const isMe: boolean = sender === userType;
-        console.log('leave', sender);
-        if (!isMe) {
-          setCustomerLeftYn(true);
-        } else {
-          setLeftYn(true);
-        }
-      });
-      socket.on('consultError', ({ consultId, sender }) => {
-        const isMe: boolean = sender === userType;
-        if (!isMe) {
-          // onRefresh();
-          setNetworkErrored(true);
-        }
-      });
-      socket.on('switchDevice', ({ roomId, sender, deviceType, switchStatus }) => {
-        if (sender === 'DEALER') {
-          if (userType === 'CUSTOMER') {
-            if (switchStatus === 'ALLOW') {
-              console.log('deviceSwitching:: allow socket received');
-              onRefresh();
-            }
-          }
-          if (userType === 'DEALER') {
-            if (switchStatus === 'REQUEST' && deviceType === 'MOBILE') {
-              setDeviceSwitchRequested(true);
-            }
-            if (
-              switchStatus === 'SUCCESS' &&
-              deviceType === 'MOBILE' //&&
-              // deviceSwitchingYn
-            ) {
-              // 끄기
-              console.log(
-                'deviceSwitching:: success',
-                switchStatus,
-                sender,
-                deviceSwitchRequested,
-                deviceSwitchingYn,
-              );
-              setDeviceSwitchSucceeded(true);
-              setDeviceSwitchingYn(false);
-            }
 
-            if (switchStatus === 'REJECT') {
-              // 끄기
-              console.log(
-                'deviceSwitching:: reject ',
-                switchStatus,
-                sender,
-                deviceSwitchRequested,
-              );
-              setDeviceSwitchingYn(false); //필요한가?
+          if (userType === 'DEALER') {
+            socket.emit('switchDevice', {
+              roomId: _id,
+              sender: userType,
+              deviceType: 'WEB',
+              switchStatus: 'SUCCESS',
+            });
+          }
+        });
+        socket.on('microphone', ({ roomId, sender, onYn }) => {
+          const isMe: boolean = sender === userType;
+          if (!isMe) {
+            console.log('peer socket mic listener onYn : ', onYn);
+            setCustomerMicOnYn(onYn);
+          }
+        });
+        socket.on('camera', ({ roomId, sender, onYn }) => {
+          const isMe: boolean = sender === userType;
+          if (!isMe) {
+            console.log('socket camera listener onYn : ', onYn);
+            setCustomerCameraOnYn(onYn);
+          }
+        });
+        socket.on('leave', ({ roomId, sender }) => {
+          const isMe: boolean = sender === userType;
+          console.log('leave', sender);
+          if (!isMe) {
+            setCustomerLeftYn(true);
+          } else {
+            setLeftYn(true);
+          }
+        });
+        socket.on('consultError', ({ consultId, sender }) => {
+          const isMe: boolean = sender === userType;
+          if (!isMe) {
+            // onRefresh();
+            setNetworkErrored(true);
+          }
+        });
+        socket.on('switchDevice', ({ roomId, sender, deviceType, switchStatus }) => {
+          if (sender === 'DEALER') {
+            if (userType === 'CUSTOMER') {
+              if (switchStatus === 'ALLOW') {
+                console.log('deviceSwitching:: allow socket received');
+                onRefresh();
+              }
+            }
+            if (userType === 'DEALER') {
+              if (switchStatus === 'REQUEST' && deviceType === 'MOBILE') {
+                setDeviceSwitchRequested(true);
+              }
+              if (
+                switchStatus === 'SUCCESS' &&
+                deviceType === 'MOBILE' //&&
+                // deviceSwitchingYn
+              ) {
+                // 끄기
+                console.log(
+                  'deviceSwitching:: success',
+                  switchStatus,
+                  sender,
+                  deviceSwitchRequested,
+                  deviceSwitchingYn,
+                );
+                setDeviceSwitchSucceeded(true);
+                setDeviceSwitchingYn(false);
+              }
+
+              if (switchStatus === 'REJECT') {
+                // 끄기
+                console.log(
+                  'deviceSwitching:: reject ',
+                  switchStatus,
+                  sender,
+                  deviceSwitchRequested,
+                );
+                setDeviceSwitchingYn(false); //필요한가?
+              }
             }
           }
+        });
+        socketRef.current = socket;
+        localStreamRef.current = localStream;
+        console.log('localstream', localStream);
+      })();
+      return () => {
+        console.log('socket off');
+        if (socket) {
+          socket.disconnect();
+          socketRef.current = undefined;
         }
-      });
-      socketRef.current = socket;
-      localStreamRef.current = localStream;
-      console.log('localstream', localStream);
-    })();
-    return () => {
-      console.log('socket off');
-      if (socket) {
-        socket.disconnect();
-        socketRef.current = undefined;
-      }
-      stop(deviceSwitchingYn);
-    };
+        stop(deviceSwitchingYn);
+      };
+    } catch (e) {}
   }, []);
 
   useEffect(() => {
-    if (playerRef.current) {
-      console.log('playerref', playerRef.current, localStreamRef.current);
-      playerRef.current.srcObject = localStreamRef.current;
-    }
+    try {
+      if (playerRef.current) {
+        console.log('playerref', playerRef.current, localStreamRef.current);
+        playerRef.current.srcObject = localStreamRef.current;
+      }
+    } catch (e) {}
   }, [playerRef.current, localStreamRef.current]);
 
   useEffect(() => {
@@ -998,36 +1002,42 @@ const Rtc = ({
   }, [cameraOnYn]);
 
   useEffect(() => {
-    localStreamRef.current
-      .getAudioTracks()
-      .forEach((track) => (track.enabled = micOnYn));
+    try {
+      localStreamRef.current
+        .getAudioTracks()
+        .forEach((track) => (track.enabled = micOnYn));
 
-    socketRef.current.emit('microphone', {
-      roomId: chatRoomId,
-      sender: userType,
-      onYn: micOnYn,
-    });
+      socketRef.current.emit('microphone', {
+        roomId: chatRoomId,
+        sender: userType,
+        onYn: micOnYn,
+      });
+    } catch (e) {}
   }, [micOnYn]);
 
   // test 용으로 추가
   useEffect(() => {
-    if (remoteStream) {
-      if (remoteStream.getVideoTracks()?.length > 0) {
-        remoteStream.getVideoTracks()[0].enabled = customerCameraOnYn;
-        console.log('remote camera on? off? ' + customerCameraOnYn);
+    try {
+      if (remoteStream) {
+        if (remoteStream.getVideoTracks()?.length > 0) {
+          remoteStream.getVideoTracks()[0].enabled = customerCameraOnYn;
+          console.log('remote camera on? off? ' + customerCameraOnYn);
+        }
       }
-    }
+    } catch (e) {}
   }, [customerCameraOnYn]);
 
   // test 용으로 추가
   useEffect(() => {
-    console.log(remoteStream);
-    if (remoteStream) {
-      if (remoteStream.getAudioTracks()?.length > 0) {
-        remoteStream.getAudioTracks()[0].enabled = customerMicOnYn;
-        console.log('remote mic on? off? ' + customerMicOnYn);
+    try {
+      console.log(remoteStream);
+      if (remoteStream) {
+        if (remoteStream.getAudioTracks()?.length > 0) {
+          remoteStream.getAudioTracks()[0].enabled = customerMicOnYn;
+          console.log('remote mic on? off? ' + customerMicOnYn);
+        }
       }
-    }
+    } catch (e) {}
   }, [customerMicOnYn]);
 
   useEffect(() => {
@@ -1168,10 +1178,11 @@ const Rtc = ({
   };
 
   const processCandidates = () => {
-    if (remoteCandidates.length < 1) {
-      return;
-    }
     try {
+      if (remoteCandidates.length < 1) {
+        return;
+      }
+
       remoteCandidates.forEach((candidate) => {
         if (candidate) {
           peerConnectionRef.current.addIceCandidate(candidate);
