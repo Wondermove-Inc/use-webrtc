@@ -547,17 +547,24 @@ var Rtc = function (_a) {
                 socket.on("getCandidate", function (_a) {
                     var candidate = _a.candidate, sender = _a.sender;
                     var isMe = sender === userType;
-                    if (!isMe) {
-                        console.log("getCandidate socket received - customer", candidate, peerConnectionRef.current.connectionState);
-                        var newCandidate = new RTCIceCandidate(candidate);
-                        if (peerConnectionRef.current.signalingState == "closed")
-                            return;
-                        if (peerConnectionRef.current.remoteDescription) {
-                            peerConnectionRef.current.addIceCandidate(newCandidate);
+                    try {
+                        if (!isMe) {
+                            console.log("getCandidate socket received - customer", candidate, peerConnectionRef.current.connectionState);
+                            var newCandidate = new RTCIceCandidate(candidate);
+                            if (peerConnectionRef.current.signalingState == "closed")
+                                return;
+                            if (peerConnectionRef.current.remoteDescription) {
+                                if (newCandidate) {
+                                    peerConnectionRef.current.addIceCandidate(newCandidate);
+                                }
+                            }
+                            else {
+                                candidates.push(newCandidate);
+                            }
                         }
-                        else {
-                            candidates.push(newCandidate);
-                        }
+                    }
+                    catch (e) {
+                        console.error("getCandidate ~ error ~", e);
                     }
                 });
                 socket.on("all_users", function (all_users) {
@@ -600,9 +607,7 @@ var Rtc = function (_a) {
                                     }
                                     setAnswerNeeded(true);
                                     if (candidates.length > 0) {
-                                        candidates.map(function (i) {
-                                            return peerConnectionRef.current.addIceCandidate(i);
-                                        });
+                                        candidates.map(function (i) { return peerConnectionRef.current.addIceCandidate(i); });
                                         candidates = [];
                                     }
                                 }
@@ -624,9 +629,7 @@ var Rtc = function (_a) {
                                 var offerDescription = new RTCSessionDescription(sdp);
                                 peerConnectionRef.current.setRemoteDescription(offerDescription);
                                 if (candidates.length > 0) {
-                                    candidates.map(function (i) {
-                                        return peerConnectionRef.current.addIceCandidate(i);
-                                    });
+                                    candidates.map(function (i) { return peerConnectionRef.current.addIceCandidate(i); });
                                     candidates = [];
                                 }
                             }
@@ -1098,8 +1101,10 @@ var Rtc = function (_a) {
         if (remoteCandidates.length < 1) {
             return;
         }
-        remoteCandidates.map(function (candidate) {
-            return peerConnectionRef.current.addIceCandidate(candidate);
+        remoteCandidates.forEach(function (candidate) {
+            if (candidate) {
+                peerConnectionRef.current.addIceCandidate(candidate);
+            }
         });
         setRemoteCandidates([]);
     };
@@ -1162,7 +1167,9 @@ var Rtc = function (_a) {
             remoteCandidates.push(newCandidate);
         }
         else {
-            peerConnectionRef.current.addIceCandidate(newCandidate);
+            if (newCandidate) {
+                peerConnectionRef.current.addIceCandidate(newCandidate);
+            }
         }
     };
     var mediaStatus = (0, react_1.useMemo)(function () { return ({

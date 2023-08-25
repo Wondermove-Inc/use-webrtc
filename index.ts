@@ -559,20 +559,27 @@ const Rtc = ({
       let candidates = [];
       socket.on("getCandidate", ({ candidate, sender }) => {
         const isMe = sender === userType;
-        if (!isMe) {
-          console.log(
-            "getCandidate socket received - customer",
-            candidate,
-            peerConnectionRef.current.connectionState
-          );
+        try {
+          if (!isMe) {
+            console.log(
+              "getCandidate socket received - customer",
+              candidate,
+              peerConnectionRef.current.connectionState,
+            );
 
-          const newCandidate = new RTCIceCandidate(candidate);
-          if (peerConnectionRef.current.signalingState == "closed") return;
-          if (peerConnectionRef.current.remoteDescription) {
-            peerConnectionRef.current.addIceCandidate(newCandidate);
-          } else {
-            candidates.push(newCandidate);
+            const newCandidate = new RTCIceCandidate(candidate);
+            if (peerConnectionRef.current.signalingState == "closed") return;
+
+            if (peerConnectionRef.current.remoteDescription) {
+              if (newCandidate) {
+                peerConnectionRef.current.addIceCandidate(newCandidate);
+              }
+            } else {
+              candidates.push(newCandidate);
+            }
           }
+        } catch (e) {
+          console.error("getCandidate ~ error ~", e);
         }
       });
 
@@ -617,9 +624,7 @@ const Rtc = ({
             setAnswerNeeded(true);
 
             if (candidates.length > 0) {
-              candidates.map((i) =>
-                peerConnectionRef.current.addIceCandidate(i)
-              );
+              candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
               candidates = [];
             }
           }
@@ -645,9 +650,7 @@ const Rtc = ({
               const offerDescription = new RTCSessionDescription(sdp);
               peerConnectionRef.current.setRemoteDescription(offerDescription);
               if (candidates.length > 0) {
-                candidates.map((i) =>
-                  peerConnectionRef.current.addIceCandidate(i)
-                );
+                candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
                 candidates = [];
               }
             }
@@ -1134,9 +1137,11 @@ const Rtc = ({
     if (remoteCandidates.length < 1) {
       return;
     }
-    remoteCandidates.map((candidate) =>
-      peerConnectionRef.current.addIceCandidate(candidate),
-    );
+    remoteCandidates.forEach((candidate) => {
+      if (candidate) {
+        peerConnectionRef.current.addIceCandidate(candidate);
+      }
+    });
     setRemoteCandidates([]);
   };
 
@@ -1177,7 +1182,9 @@ const Rtc = ({
     ) {
       remoteCandidates.push(newCandidate);
     } else {
-      peerConnectionRef.current.addIceCandidate(newCandidate);
+      if (newCandidate) {
+        peerConnectionRef.current.addIceCandidate(newCandidate);
+      }
     }
   };
 
