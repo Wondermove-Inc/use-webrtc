@@ -674,115 +674,126 @@ const Rtc = ({
   }, []);
 
   useEffect(() => {
-    console.log("answer needed Effect", answerNeeded, localStreamRef.current);
-    if (answerNeeded && localStreamRef.current) {
-      (async () => {
-        const answerDescription =
-          await peerConnectionRef.current.createAnswer();
-        peerConnectionRef.current.setLocalDescription(answerDescription);
+    try {
+      console.log('answer needed Effect', answerNeeded, localStreamRef.current);
+      if (answerNeeded && localStreamRef.current) {
+        (async () => {
+          const answerDescription = await peerConnectionRef.current.createAnswer();
+          peerConnectionRef.current.setLocalDescription(answerDescription);
 
-        console.log("send answer!!", peerConnectionRef.current);
-        webRtcSocketRef.current.emit("answer", {
-          sdp: answerDescription,
-          sender: userType,
-        });
-        setAnswerNeeded(false);
-      })();
+          console.log('send answer!!', peerConnectionRef.current);
+          webRtcSocketRef.current.emit('answer', {
+            sdp: answerDescription,
+            sender: userType,
+          });
+          setAnswerNeeded(false);
+        })();
+      }
+    } catch (e) {
+      console.error('answer needed Effect ~ error ~', e);
     }
   }, [answerNeeded, localStreamRef.current]);
 
   useEffect(() => {
-    if (webRtcSocketRef.current) {
-      const peerConnection = initPeerConnection();
-      peerConnectionRef.current = peerConnection;
-      return () => {
-        console.log("peerConnection: close");
-        peerConnection.close();
-        peerConnectionRef.current = undefined;
-        setNegotiationNeeded(false);
-        setPeerJoinYn(false);
-      };
+    try {
+      if (webRtcSocketRef.current) {
+        const peerConnection = initPeerConnection();
+        peerConnectionRef.current = peerConnection;
+        return () => {
+          console.log('peerConnection: close');
+          peerConnection.close();
+          peerConnectionRef.current = undefined;
+          setNegotiationNeeded(false);
+          setPeerJoinYn(false);
+        };
+      }
+    } catch (e) {
+      console.error('peerConnection: close ~ error ~', e);
     }
   }, [webRtcSocketRef.current]);
 
   const initPeerConnection = () => {
-    const peerConstraints = {
-      iceServers: peerMaster.config.iceServers,
-    };
-    const peerConnection = new RTCPeerConnection(peerConstraints);
-    console.log("peerConnection init!");
-    setConnecting(true);
-    setConnected(false);
+    try {
+      const peerConstraints = {
+        iceServers: peerMaster.config.iceServers,
+      };
+      const peerConnection = new RTCPeerConnection(peerConstraints);
+      console.log('peerConnection init!');
+      setConnecting(true);
+      setConnected(false);
 
-    peerConnection.addEventListener("track", (e) => {
-      console.log("peerConnection:: on track ", e);
-      setRemoteStream(e.streams[0]);
-    });
-
-    peerConnection.addEventListener("connectionstatechange", (e) => {
-      console.log(
-        "peerConnection:: connectionstatechange",
-        peerConnection.connectionState
-      );
-      switch (peerConnection.connectionState) {
-        case "connected":
-          setConnected(true);
-          setConnecting(false);
-          break;
-        case "closed":
-        case "disconnected":
-        case "failed":
-          setConnected(false);
-          setConnecting(false);
-          onRefresh();
-          break;
-      }
-    });
-    peerConnection.addEventListener("negotiationneeded", (e) => {
-      console.log("peerConnection:: negotiationneeded");
-      setNegotiationNeeded(true);
-    });
-    peerConnection.addEventListener("icecandidateerror", (e) => {
-      // console.log('peerConnection:: icecandidateerror', e);
-    });
-    peerConnection.addEventListener("icecandidate", (e) => {
-      console.log("peerConnection:: icecandidate", e.candidate);
-      if (!e.candidate) {
-        return;
-      }
-      //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
-      webRtcSocketRef.current.emit("candidate", {
-        candidate: e.candidate,
-        sender: userType,
+      peerConnection.addEventListener('track', (e) => {
+        console.log('peerConnection:: on track ', e);
+        setRemoteStream(e.streams[0]);
       });
-    });
-    peerConnection.addEventListener("iceconnectionstatechange", (e) => {
-      console.log(
-        "peerConnection:: iceconnectionstatechange",
-        peerConnection.iceConnectionState
-      );
-    });
 
-    peerConnection.addEventListener("icegatheringstatechange", (e) => {
-      console.log(
-        "peerConnection:: icegatheringstatechange",
-        peerConnection.iceGatheringState
-      );
-      switch (peerConnection.iceGatheringState) {
-        case "complete":
-          setNegotiationNeeded(false);
-          console.log(
-            "peerConnection:: icegatheringstatechange",
-            peerConnection.iceGatheringState,
-            peerConnection.connectionState
-          );
-          if (peerConnection.connectionState === "failed") {
+      peerConnection.addEventListener('connectionstatechange', (e) => {
+        console.log(
+          'peerConnection:: connectionstatechange',
+          peerConnection.connectionState,
+        );
+        switch (peerConnection.connectionState) {
+          case 'connected':
+            setConnected(true);
+            setConnecting(false);
+            break;
+          case 'closed':
+          case 'disconnected':
+          case 'failed':
+            setConnected(false);
+            setConnecting(false);
             onRefresh();
-          }
-          break;
-      }
-    });
-    return peerConnection;
+            break;
+        }
+      });
+      peerConnection.addEventListener('negotiationneeded', (e) => {
+        console.log('peerConnection:: negotiationneeded');
+        setNegotiationNeeded(true);
+      });
+      peerConnection.addEventListener('icecandidateerror', (e) => {
+        // console.log("peerConnection:: icecandidateerror", e);
+      });
+      peerConnection.addEventListener('icecandidate', (e) => {
+        console.log('peerConnection:: icecandidate', e.candidate);
+        if (!e.candidate) {
+          return;
+        }
+        //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
+        webRtcSocketRef.current.emit('candidate', {
+          candidate: e.candidate,
+          sender: userType,
+        });
+      });
+      peerConnection.addEventListener('iceconnectionstatechange', (e) => {
+        console.log(
+          'peerConnection:: iceconnectionstatechange',
+          peerConnection.iceConnectionState,
+        );
+      });
+
+      peerConnection.addEventListener('icegatheringstatechange', (e) => {
+        console.log(
+          'peerConnection:: icegatheringstatechange',
+          peerConnection.iceGatheringState,
+        );
+        switch (peerConnection.iceGatheringState) {
+          case 'complete':
+            setNegotiationNeeded(false);
+            console.log(
+              'peerConnection:: icegatheringstatechange',
+              peerConnection.iceGatheringState,
+              peerConnection.connectionState,
+            );
+            if (peerConnection.connectionState === 'failed') {
+              onRefresh();
+            }
+            break;
+        }
+      });
+      return peerConnection;
+    } catch (e) {
+      console.error('initPeerConnection ~ error ~', e);
+    }
   };
 
   useEffect(() => {
