@@ -814,14 +814,24 @@ const Rtc = ({
 
   useEffect(() => {
     if (
-      userType === "DEALER" &&
+      userType === 'DEALER' &&
       peerConnectionRef.current &&
       localStreamRef.current &&
       playerRef.current
     ) {
       (async () => {
         if (navigator.mediaDevices) {
-          console.log("screen sharing yn: ", screenSharingYn);
+          // Hide the video element to prevent showing old stream briefly
+          playerRef.current.style.visibility = 'hidden';
+
+          // Check if the srcObject is an instance of MediaStream
+          if (playerRef.current.srcObject instanceof MediaStream) {
+            playerRef.current.srcObject
+              .getVideoTracks()
+              .forEach((track) => track.stop());
+          }
+
+          console.log('screen sharing yn: ', screenSharingYn);
           let s;
           if (screenSharingYn) {
             s = await navigator.mediaDevices.getDisplayMedia({
@@ -829,29 +839,85 @@ const Rtc = ({
               audio: false,
             });
           } else {
+            playerRef.current.style.opacity = '0';
+
+            if (!cameraOnYn) {
+              socketRef.current.emit('camera', {
+                roomId: chatRoomId,
+                sender: userType,
+                onYn: false,
+              });
+            }
+
             s = await navigator.mediaDevices.getUserMedia({
               video: true,
               audio: false,
             });
+
+            playerRef.current.style.opacity = '1';
           }
           const newVideoTrack = s
             .getVideoTracks()
-            .filter((i) => i.readyState !== "ended")[0];
+            .filter((i) => i.readyState !== 'ended')[0];
 
           newVideoTrack.onended = (e) => {
+            playerRef.current.style.opacity = '0';
+
+            if (playerRef.current.srcObject instanceof MediaStream) {
+              playerRef.current.srcObject
+                .getVideoTracks()
+                .forEach((track) => track.stop());
+            }
+
+            if (!cameraOnYn) {
+              socketRef.current.emit('camera', {
+                roomId: chatRoomId,
+                sender: userType,
+                onYn: false,
+              });
+            }
+
+            playerRef.current.style.opacity = '1';
+
             if (screenSharingYn) setScreenSharingYn(false);
           };
           const videoSender = peerConnectionRef.current
             .getSenders()
-            .filter((i) => i.track?.kind === "video");
+            .filter((i) => i.track?.kind === 'video');
 
           videoSender.forEach((sender) => {
             sender.replaceTrack(newVideoTrack);
+
+            if (screenSharingYn) {
+              console.log('post send camera screenSharingYn', screenSharingYn);
+              console.log('post send camera cameraOnYn', cameraOnYn);
+
+              if (!cameraOnYn) {
+                socketRef.current.emit('camera', {
+                  roomId: chatRoomId,
+                  sender: userType,
+                  onYn: true,
+                });
+              }
+            } else {
+              console.log('post send camera screenSharingYn', screenSharingYn);
+              console.log('post send camera cameraOnYn', cameraOnYn);
+              if (!cameraOnYn) {
+                socketRef.current.emit('camera', {
+                  roomId: chatRoomId,
+                  sender: userType,
+                  onYn: false,
+                });
+              }
+            }
           });
 
           playerRef.current.srcObject = s;
+
+          // Make the video element visible again
+          playerRef.current.style.visibility = 'visible';
         } else {
-          // throw new Error('webcam not supported');
+          // throw new Error("webcam not supported");
         }
       })();
 
@@ -1041,9 +1107,79 @@ const Rtc = ({
       setPeerId(null);
       setDestination(null);
       setDeviceSwitchingYn(false);
+      flushWebRTCSocket();
     },
     [localStreamRef.current, peerConnectionRef.current, remoteStream]
   );
+
+  const flushWebRTCSocket = () => {
+    console.log('flush');
+    let socket: Socket;
+    const manager = new Manager(SOCKET_URI, { transports: ['websocket'] });
+    socket = manager.socket(SOCKET_NAMESPACE); // main namespace
+    socket.off('getCandidate', getCandidate);
+    socket.off('getAnswer', getAnswer);
+    socket.off('all_users', allUsers);
+    socket.disconnect();
+  };
+
+  const getCandidate = ({ candidate, sender }) => {
+    const isMe = sender === 'DEALER';
+    if (!isMe) {
+      handleRemoteCandidate(candidate);
+    }
+  };
+
+  const processCandidates = () => {
+    if (remoteCandidates.length < 1) {
+      return;
+    }
+    remoteCandidates.map((candidate) =>
+      peerConnectionRef.current.addIceCandidate(candidate),
+    );
+    setRemoteCandidates([]);
+  };
+
+  const setRemoteDescription = async (offer) => {
+    try {
+      const answerDescription = new RTCSessionDescription(offer);
+      await peerConnectionRef.current.setRemoteDescription(answerDescription);
+
+      processCandidates();
+    } catch (e) {
+      console.error('setRemoteDescription ~ error ~', e);
+    }
+  };
+
+  const getAnswer = async ({ sdp, sender }) => {
+    const isMe = sender === 'DEALER';
+    if (!isMe) {
+      await setRemoteDescription(sdp);
+    }
+  };
+
+  const allUsers = async (all_users) => {
+    const users = all_users.filter((i) => i.sender !== 'DEALER');
+    const len = users.length;
+
+    //* room에 두명 이상 있을 시 handshake 로직 시작
+    if (len > 0) {
+      // await sendOffer();
+      setPeerJoinYn(true);
+    }
+  };
+
+  const handleRemoteCandidate = (iceCandidate) => {
+    const newCandidate = new RTCIceCandidate(iceCandidate);
+    if (
+      peerConnectionRef.current === null ||
+      peerConnectionRef.current?.remoteDescription == null
+    ) {
+      remoteCandidates.push(newCandidate);
+    } else {
+      peerConnectionRef.current.addIceCandidate(newCandidate);
+    }
+  };
 
   const mediaStatus = useMemo(
     () => ({

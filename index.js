@@ -785,7 +785,7 @@ var Rtc = function (_a) {
         }
     }, [peerConnectionRef.current, navigator.mediaDevices]);
     (0, react_1.useEffect)(function () {
-        if (userType === "DEALER" &&
+        if (userType === 'DEALER' &&
             peerConnectionRef.current &&
             localStreamRef.current &&
             playerRef.current) {
@@ -795,7 +795,15 @@ var Rtc = function (_a) {
                     switch (_a.label) {
                         case 0:
                             if (!navigator.mediaDevices) return [3 /*break*/, 5];
-                            console.log("screen sharing yn: ", screenSharingYn);
+                            // Hide the video element to prevent showing old stream briefly
+                            playerRef.current.style.visibility = 'hidden';
+                            // Check if the srcObject is an instance of MediaStream
+                            if (playerRef.current.srcObject instanceof MediaStream) {
+                                playerRef.current.srcObject
+                                    .getVideoTracks()
+                                    .forEach(function (track) { return track.stop(); });
+                            }
+                            console.log('screen sharing yn: ', screenSharingYn);
                             s = void 0;
                             if (!screenSharingYn) return [3 /*break*/, 2];
                             return [4 /*yield*/, navigator.mediaDevices.getDisplayMedia({
@@ -805,28 +813,76 @@ var Rtc = function (_a) {
                         case 1:
                             s = _a.sent();
                             return [3 /*break*/, 4];
-                        case 2: return [4 /*yield*/, navigator.mediaDevices.getUserMedia({
-                                video: true,
-                                audio: false,
-                            })];
+                        case 2:
+                            playerRef.current.style.opacity = '0';
+                            if (!cameraOnYn) {
+                                socketRef.current.emit('camera', {
+                                    roomId: chatRoomId,
+                                    sender: userType,
+                                    onYn: false,
+                                });
+                            }
+                            return [4 /*yield*/, navigator.mediaDevices.getUserMedia({
+                                    video: true,
+                                    audio: false,
+                                })];
                         case 3:
                             s = _a.sent();
+                            playerRef.current.style.opacity = '1';
                             _a.label = 4;
                         case 4:
                             newVideoTrack_1 = s
                                 .getVideoTracks()
-                                .filter(function (i) { return i.readyState !== "ended"; })[0];
+                                .filter(function (i) { return i.readyState !== 'ended'; })[0];
                             newVideoTrack_1.onended = function (e) {
+                                playerRef.current.style.opacity = '0';
+                                if (playerRef.current.srcObject instanceof MediaStream) {
+                                    playerRef.current.srcObject
+                                        .getVideoTracks()
+                                        .forEach(function (track) { return track.stop(); });
+                                }
+                                if (!cameraOnYn) {
+                                    socketRef.current.emit('camera', {
+                                        roomId: chatRoomId,
+                                        sender: userType,
+                                        onYn: false,
+                                    });
+                                }
+                                playerRef.current.style.opacity = '1';
                                 if (screenSharingYn)
                                     setScreenSharingYn(false);
                             };
                             videoSender = peerConnectionRef.current
                                 .getSenders()
-                                .filter(function (i) { var _a; return ((_a = i.track) === null || _a === void 0 ? void 0 : _a.kind) === "video"; });
+                                .filter(function (i) { var _a; return ((_a = i.track) === null || _a === void 0 ? void 0 : _a.kind) === 'video'; });
                             videoSender.forEach(function (sender) {
                                 sender.replaceTrack(newVideoTrack_1);
+                                if (screenSharingYn) {
+                                    console.log('post send camera screenSharingYn', screenSharingYn);
+                                    console.log('post send camera cameraOnYn', cameraOnYn);
+                                    if (!cameraOnYn) {
+                                        socketRef.current.emit('camera', {
+                                            roomId: chatRoomId,
+                                            sender: userType,
+                                            onYn: true,
+                                        });
+                                    }
+                                }
+                                else {
+                                    console.log('post send camera screenSharingYn', screenSharingYn);
+                                    console.log('post send camera cameraOnYn', cameraOnYn);
+                                    if (!cameraOnYn) {
+                                        socketRef.current.emit('camera', {
+                                            roomId: chatRoomId,
+                                            sender: userType,
+                                            onYn: false,
+                                        });
+                                    }
+                                }
                             });
                             playerRef.current.srcObject = s;
+                            // Make the video element visible again
+                            playerRef.current.style.visibility = 'visible';
                             return [3 /*break*/, 5];
                         case 5: return [2 /*return*/];
                     }
@@ -1019,7 +1075,96 @@ var Rtc = function (_a) {
         setPeerId(null);
         setDestination(null);
         setDeviceSwitchingYn(false);
+        flushWebRTCSocket();
     }, [localStreamRef.current, peerConnectionRef.current, remoteStream]);
+    var flushWebRTCSocket = function () {
+        console.log('flush');
+        var socket;
+        var manager = new socket_io_client_1.Manager(SOCKET_URI, { transports: ['websocket'] });
+        socket = manager.socket(SOCKET_NAMESPACE); // main namespace
+        socket.off('getCandidate', getCandidate);
+        socket.off('getAnswer', getAnswer);
+        socket.off('all_users', allUsers);
+        socket.disconnect();
+    };
+    var getCandidate = function (_a) {
+        var candidate = _a.candidate, sender = _a.sender;
+        var isMe = sender === 'DEALER';
+        if (!isMe) {
+            handleRemoteCandidate(candidate);
+        }
+    };
+    var processCandidates = function () {
+        if (remoteCandidates.length < 1) {
+            return;
+        }
+        remoteCandidates.map(function (candidate) {
+            return peerConnectionRef.current.addIceCandidate(candidate);
+        });
+        setRemoteCandidates([]);
+    };
+    var setRemoteDescription = function (offer) { return __awaiter(void 0, void 0, void 0, function () {
+        var answerDescription, e_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    answerDescription = new RTCSessionDescription(offer);
+                    return [4 /*yield*/, peerConnectionRef.current.setRemoteDescription(answerDescription)];
+                case 1:
+                    _a.sent();
+                    processCandidates();
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_1 = _a.sent();
+                    console.error('setRemoteDescription ~ error ~', e_1);
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    }); };
+    var getAnswer = function (_a) {
+        var sdp = _a.sdp, sender = _a.sender;
+        return __awaiter(void 0, void 0, void 0, function () {
+            var isMe;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        isMe = sender === 'DEALER';
+                        if (!!isMe) return [3 /*break*/, 2];
+                        return [4 /*yield*/, setRemoteDescription(sdp)];
+                    case 1:
+                        _b.sent();
+                        _b.label = 2;
+                    case 2: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    var allUsers = function (all_users) { return __awaiter(void 0, void 0, void 0, function () {
+        var users, len;
+        return __generator(this, function (_a) {
+            users = all_users.filter(function (i) { return i.sender !== 'DEALER'; });
+            len = users.length;
+            //* room에 두명 이상 있을 시 handshake 로직 시작
+            if (len > 0) {
+                // await sendOffer();
+                setPeerJoinYn(true);
+            }
+            return [2 /*return*/];
+        });
+    }); };
+    var handleRemoteCandidate = function (iceCandidate) {
+        var _a;
+        var newCandidate = new RTCIceCandidate(iceCandidate);
+        if (peerConnectionRef.current === null ||
+            ((_a = peerConnectionRef.current) === null || _a === void 0 ? void 0 : _a.remoteDescription) == null) {
+            remoteCandidates.push(newCandidate);
+        }
+        else {
+            peerConnectionRef.current.addIceCandidate(newCandidate);
+        }
+    };
     var mediaStatus = (0, react_1.useMemo)(function () { return ({
         cameraOnYn: cameraOnYn,
         micOnYn: micOnYn,
