@@ -558,8 +558,8 @@ const Rtc = ({
 
       let candidates = [];
       socket.on("getCandidate", ({ candidate, sender }) => {
-        const isMe = sender === userType;
         try {
+          const isMe = sender === userType;
           if (!isMe) {
             console.log(
               "getCandidate socket received - customer",
@@ -623,10 +623,12 @@ const Rtc = ({
             }
             setAnswerNeeded(true);
 
-            if (candidates.length > 0) {
-              candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
-              candidates = [];
-            }
+            try {
+              if (candidates.length > 0) {
+                candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
+                candidates = [];
+              }
+            } catch (e) {}
           }
         });
       } else {
@@ -1137,12 +1139,14 @@ const Rtc = ({
     if (remoteCandidates.length < 1) {
       return;
     }
-    remoteCandidates.forEach((candidate) => {
-      if (candidate) {
-        peerConnectionRef.current.addIceCandidate(candidate);
-      }
-    });
-    setRemoteCandidates([]);
+    try {
+      remoteCandidates.forEach((candidate) => {
+        if (candidate) {
+          peerConnectionRef.current.addIceCandidate(candidate);
+        }
+      });
+      setRemoteCandidates([]);
+    } catch (e) {}
   };
 
   const setRemoteDescription = async (offer) => {
@@ -1175,17 +1179,19 @@ const Rtc = ({
   };
 
   const handleRemoteCandidate = (iceCandidate) => {
-    const newCandidate = new RTCIceCandidate(iceCandidate);
-    if (
-      peerConnectionRef.current === null ||
-      peerConnectionRef.current?.remoteDescription == null
-    ) {
-      remoteCandidates.push(newCandidate);
-    } else {
-      if (newCandidate) {
-        peerConnectionRef.current.addIceCandidate(newCandidate);
+    try {
+      const newCandidate = new RTCIceCandidate(iceCandidate);
+      if (
+        peerConnectionRef.current === null ||
+        peerConnectionRef.current?.remoteDescription == null
+      ) {
+        remoteCandidates.push(newCandidate);
+      } else {
+        if (newCandidate) {
+          peerConnectionRef.current.addIceCandidate(newCandidate);
+        }
       }
-    }
+    } catch (e) {}
   };
 
   const mediaStatus = useMemo(
