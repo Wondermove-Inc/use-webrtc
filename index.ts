@@ -6,22 +6,22 @@ import React, {
   useRef,
   useState,
   useMemo,
-} from "react";
+} from 'react';
 
 // ** Store & Actions Imports
-import Peer from "peerjs";
+import Peer from 'peerjs';
 // import { useRouter } from "next/router";
 
-import axios from "axios";
-import { MediaConnection } from "peerjs";
-import { io, Manager, Socket } from "socket.io-client";
+import axios from 'axios';
+import { MediaConnection } from 'peerjs';
+import { io, Manager, Socket } from 'socket.io-client';
 
-import moment, { Moment } from "moment";
+import moment, { Moment } from 'moment';
 
-type UserType = "DEALER" | "CUSTOMER";
+type UserType = 'DEALER' | 'CUSTOMER';
 
 const Rtc = ({
-  chatRoomId = "testChatroom",
+  chatRoomId = 'testChatroom',
   dealerYn,
   cameraDefaultOnYn = true,
   micDefaultOnYn = true,
@@ -43,8 +43,7 @@ const Rtc = ({
 
   const [cameraOnYn, setCameraOnYn] = useState<boolean>(cameraDefaultOnYn);
   const [micOnYn, setMicOnYn] = useState<boolean>(micDefaultOnYn);
-  const [deviceChangeStartYn, setDeviceChangeStartYn] =
-    useState<boolean>(false); //내가 changing 중인지
+  const [deviceChangeStartYn, setDeviceChangeStartYn] = useState<boolean>(false); //내가 changing 중인지
   const [cardOpenedIndex, setCardOpenedIndex] = useState<number>(0);
   const [screenSharingYn, setScreenSharingYn] = useState<boolean>(false);
 
@@ -52,8 +51,7 @@ const Rtc = ({
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>();
   const [peerId, setPeerId] = useState<any>();
   const [destination, setDestination] = useState<any>();
-  const [mediaConnection, setMediaConnection] =
-    useState<MediaConnection | null>();
+  const [mediaConnection, setMediaConnection] = useState<MediaConnection | null>();
 
   const [finding, setFinding] = useState<boolean>(false);
   const [connected, setConnected] = useState<boolean>(false);
@@ -67,10 +65,8 @@ const Rtc = ({
   const [networkErrored, setNetworkErrored] = useState<boolean>(false);
   const [networkOnline, setNetworkOnline] = useState<boolean>(navigator.onLine);
 
-  const [deviceSwitchRequested, setDeviceSwitchRequested] =
-    useState<boolean>(false);
-  const [deviceSwitchSucceeded, setDeviceSwitchSucceeded] =
-    useState<boolean>(false);
+  const [deviceSwitchRequested, setDeviceSwitchRequested] = useState<boolean>(false);
+  const [deviceSwitchSucceeded, setDeviceSwitchSucceeded] = useState<boolean>(false);
   const [deviceSwitchingYn, setDeviceSwitchingYn] = useState<boolean>(false); // 상대방이 changing 중인지
 
   // modal errored
@@ -93,7 +89,7 @@ const Rtc = ({
   const [answerNeeded, setAnswerNeeded] = useState<boolean>(false);
 
   /// 다시한번 시작해
-  const userType: UserType = dealerYn ? "DEALER" : "CUSTOMER";
+  const userType: UserType = dealerYn ? 'DEALER' : 'CUSTOMER';
 
   const playerRef = useRef<HTMLVideoElement>();
   const remotePlayerRef = useRef<HTMLVideoElement>();
@@ -106,298 +102,298 @@ const Rtc = ({
     path: WEBRTC_PATH,
     port: SERVER_PORT,
     secure: true,
-    debug: process.env.NEXT_PUBLIC_ENV_NODE_ENV === "development" ? 3 : 1,
+    debug: process.env.NEXT_PUBLIC_ENV_NODE_ENV === 'development' ? 3 : 1,
     config: {
       iceServers: [
-        { urls: ["stun:stun01.sipphone.com"] },
-        { urls: ["stun:stun.ekiga.net"] },
-        { urls: ["stun:stunserver.org"] },
-        { urls: ["stun:stun.softjoys.com"] },
-        { urls: ["stun:stun.voiparound.com"] },
-        { urls: ["stun:stun.voipbuster.com"] },
-        { urls: ["stun:stun.voipstunt.com"] },
-        { urls: ["stun:stun.voxgratia.org"] },
-        { urls: ["stun:stun.xten.com"] },
-        { urls: ["stun:stun.1und1.de:3478"] },
-        { urls: ["stun:stun.2talk.co.nz:3478"] },
-        { urls: ["stun:stun.2talk.com:3478"] },
-        { urls: ["stun:stun.3clogic.com:3478"] },
-        { urls: ["stun:stun.3cx.com:3478"] },
-        { urls: ["stun:stun.a-mm.tv:3478"] },
-        { urls: ["stun:stun.aa.net.uk:3478"] },
-        { urls: ["stun:stun.acrobits.cz:3478"] },
-        { urls: ["stun:stun.actionvoip.com:3478"] },
-        { urls: ["stun:stun.advfn.com:3478"] },
-        { urls: ["stun:stun.aeta-audio.com:3478"] },
-        { urls: ["stun:stun.aeta.com:3478"] },
-        { urls: ["stun:stun.alltel.com.au:3478"] },
-        { urls: ["stun:stun.altar.com.pl:3478"] },
-        { urls: ["stun:stun.annatel.net:3478"] },
-        { urls: ["stun:stun.antisip.com:3478"] },
-        { urls: ["stun:stun.arbuz.ru:3478"] },
-        { urls: ["stun:stun.avigora.com:3478"] },
-        { urls: ["stun:stun.avigora.fr:3478"] },
-        { urls: ["stun:stun.awa-shima.com:3478"] },
-        { urls: ["stun:stun.awt.be:3478"] },
-        { urls: ["stun:stun.b2b2c.ca:3478"] },
-        { urls: ["stun:stun.bahnhof.net:3478"] },
-        { urls: ["stun:stun.barracuda.com:3478"] },
-        { urls: ["stun:stun.bluesip.net:3478"] },
-        { urls: ["stun:stun.bmwgs.cz:3478"] },
-        { urls: ["stun:stun.botonakis.com:3478"] },
-        { urls: ["stun:stun.budgetphone.nl:3478"] },
-        { urls: ["stun:stun.budgetsip.com:3478"] },
-        { urls: ["stun:stun.cablenet-as.net:3478"] },
-        { urls: ["stun:stun.callromania.ro:3478"] },
-        { urls: ["stun:stun.callwithus.com:3478"] },
-        { urls: ["stun:stun.cbsys.net:3478"] },
-        { urls: ["stun:stun.chathelp.ru:3478"] },
-        { urls: ["stun:stun.cheapvoip.com:3478"] },
-        { urls: ["stun:stun.ciktel.com:3478"] },
-        { urls: ["stun:stun.cloopen.com:3478"] },
-        { urls: ["stun:stun.colouredlines.com.au:3478"] },
-        { urls: ["stun:stun.comfi.com:3478"] },
-        { urls: ["stun:stun.commpeak.com:3478"] },
-        { urls: ["stun:stun.comtube.com:3478"] },
-        { urls: ["stun:stun.comtube.ru:3478"] },
-        { urls: ["stun:stun.cope.es:3478"] },
-        { urls: ["stun:stun.counterpath.com:3478"] },
-        { urls: ["stun:stun.counterpath.net:3478"] },
-        { urls: ["stun:stun.cryptonit.net:3478"] },
-        { urls: ["stun:stun.darioflaccovio.it:3478"] },
-        { urls: ["stun:stun.datamanagement.it:3478"] },
-        { urls: ["stun:stun.dcalling.de:3478"] },
-        { urls: ["stun:stun.decanet.fr:3478"] },
-        { urls: ["stun:stun.demos.ru:3478"] },
-        { urls: ["stun:stun.develz.org:3478"] },
-        { urls: ["stun:stun.dingaling.ca:3478"] },
-        { urls: ["stun:stun.doublerobotics.com:3478"] },
-        { urls: ["stun:stun.drogon.net:3478"] },
-        { urls: ["stun:stun.duocom.es:3478"] },
-        { urls: ["stun:stun.dus.net:3478"] },
-        { urls: ["stun:stun.e-fon.ch:3478"] },
-        { urls: ["stun:stun.easybell.de:3478"] },
-        { urls: ["stun:stun.easycall.pl:3478"] },
-        { urls: ["stun:stun.easyvoip.com:3478"] },
-        { urls: ["stun:stun.efficace-factory.com:3478"] },
-        { urls: ["stun:stun.einsundeins.com:3478"] },
-        { urls: ["stun:stun.einsundeins.de:3478"] },
-        { urls: ["stun:stun.ekiga.net:3478"] },
-        { urls: ["stun:stun.epygi.com:3478"] },
-        { urls: ["stun:stun.etoilediese.fr:3478"] },
-        { urls: ["stun:stun.eyeball.com:3478"] },
-        { urls: ["stun:stun.faktortel.com.au:3478"] },
-        { urls: ["stun:stun.freecall.com:3478"] },
-        { urls: ["stun:stun.freeswitch.org:3478"] },
-        { urls: ["stun:stun.freevoipdeal.com:3478"] },
-        { urls: ["stun:stun.fuzemeeting.com:3478"] },
-        { urls: ["stun:stun.gmx.de:3478"] },
-        { urls: ["stun:stun.gmx.net:3478"] },
-        { urls: ["stun:stun.gradwell.com:3478"] },
-        { urls: ["stun:stun.halonet.pl:3478"] },
-        { urls: ["stun:stun.hellonanu.com:3478"] },
-        { urls: ["stun:stun.hoiio.com:3478"] },
-        { urls: ["stun:stun.hosteurope.de:3478"] },
-        { urls: ["stun:stun.ideasip.com:3478"] },
-        { urls: ["stun:stun.imesh.com:3478"] },
-        { urls: ["stun:stun.infra.net:3478"] },
-        { urls: ["stun:stun.internetcalls.com:3478"] },
-        { urls: ["stun:stun.intervoip.com:3478"] },
-        { urls: ["stun:stun.ipcomms.net:3478"] },
-        { urls: ["stun:stun.ipfire.org:3478"] },
-        { urls: ["stun:stun.ippi.fr:3478"] },
-        { urls: ["stun:stun.ipshka.com:3478"] },
-        { urls: ["stun:stun.iptel.org:3478"] },
-        { urls: ["stun:stun.irian.at:3478"] },
-        { urls: ["stun:stun.it1.hr:3478"] },
-        { urls: ["stun:stun.ivao.aero:3478"] },
-        { urls: ["stun:stun.jappix.com:3478"] },
-        { urls: ["stun:stun.jumblo.com:3478"] },
-        { urls: ["stun:stun.justvoip.com:3478"] },
-        { urls: ["stun:stun.kanet.ru:3478"] },
-        { urls: ["stun:stun.kiwilink.co.nz:3478"] },
-        { urls: ["stun:stun.kundenserver.de:3478"] },
-        { urls: ["stun:stun.l.google.com:19302"] },
-        { urls: ["stun:stun.linea7.net:3478"] },
-        { urls: ["stun:stun.linphone.org:3478"] },
-        { urls: ["stun:stun.liveo.fr:3478"] },
-        { urls: ["stun:stun.lowratevoip.com:3478"] },
-        { urls: ["stun:stun.lugosoft.com:3478"] },
-        { urls: ["stun:stun.lundimatin.fr:3478"] },
-        { urls: ["stun:stun.magnet.ie:3478"] },
-        { urls: ["stun:stun.manle.com:3478"] },
-        { urls: ["stun:stun.mgn.ru:3478"] },
-        { urls: ["stun:stun.mit.de:3478"] },
-        { urls: ["stun:stun.mitake.com.tw:3478"] },
-        { urls: ["stun:stun.miwifi.com:3478"] },
-        { urls: ["stun:stun.modulus.gr:3478"] },
-        { urls: ["stun:stun.mozcom.com:3478"] },
-        { urls: ["stun:stun.myvoiptraffic.com:3478"] },
-        { urls: ["stun:stun.mywatson.it:3478"] },
-        { urls: ["stun:stun.nas.net:3478"] },
-        { urls: ["stun:stun.neotel.co.za:3478"] },
-        { urls: ["stun:stun.netappel.com:3478"] },
-        { urls: ["stun:stun.netappel.fr:3478"] },
-        { urls: ["stun:stun.netgsm.com.tr:3478"] },
-        { urls: ["stun:stun.nfon.net:3478"] },
-        { urls: ["stun:stun.noblogs.org:3478"] },
-        { urls: ["stun:stun.noc.ams-ix.net:3478"] },
-        { urls: ["stun:stun.node4.co.uk:3478"] },
-        { urls: ["stun:stun.nonoh.net:3478"] },
-        { urls: ["stun:stun.nottingham.ac.uk:3478"] },
-        { urls: ["stun:stun.nova.is:3478"] },
-        { urls: ["stun:stun.nventure.com:3478"] },
-        { urls: ["stun:stun.on.net.mk:3478"] },
-        { urls: ["stun:stun.ooma.com:3478"] },
-        { urls: ["stun:stun.ooonet.ru:3478"] },
-        { urls: ["stun:stun.oriontelekom.rs:3478"] },
-        { urls: ["stun:stun.outland-net.de:3478"] },
-        { urls: ["stun:stun.ozekiphone.com:3478"] },
-        { urls: ["stun:stun.patlive.com:3478"] },
-        { urls: ["stun:stun.personal-voip.de:3478"] },
-        { urls: ["stun:stun.petcube.com:3478"] },
-        { urls: ["stun:stun.phone.com:3478"] },
-        { urls: ["stun:stun.phoneserve.com:3478"] },
-        { urls: ["stun:stun.pjsip.org:3478"] },
-        { urls: ["stun:stun.poivy.com:3478"] },
-        { urls: ["stun:stun.powerpbx.org:3478"] },
-        { urls: ["stun:stun.powervoip.com:3478"] },
-        { urls: ["stun:stun.ppdi.com:3478"] },
-        { urls: ["stun:stun.prizee.com:3478"] },
-        { urls: ["stun:stun.qq.com:3478"] },
-        { urls: ["stun:stun.qvod.com:3478"] },
-        { urls: ["stun:stun.rackco.com:3478"] },
-        { urls: ["stun:stun.rapidnet.de:3478"] },
-        { urls: ["stun:stun.rb-net.com:3478"] },
-        { urls: ["stun:stun.refint.net:3478"] },
-        { urls: ["stun:stun.remote-learner.net:3478"] },
-        { urls: ["stun:stun.rixtelecom.se:3478"] },
-        { urls: ["stun:stun.rockenstein.de:3478"] },
-        { urls: ["stun:stun.rolmail.net:3478"] },
-        { urls: ["stun:stun.rounds.com:3478"] },
-        { urls: ["stun:stun.rynga.com:3478"] },
-        { urls: ["stun:stun.samsungsmartcam.com:3478"] },
-        { urls: ["stun:stun.schlund.de:3478"] },
-        { urls: ["stun:stun.services.mozilla.com:3478"] },
-        { urls: ["stun:stun.sigmavoip.com:3478"] },
-        { urls: ["stun:stun.sip.us:3478"] },
-        { urls: ["stun:stun.sipdiscount.com:3478"] },
-        { urls: ["stun:stun.sipgate.net:10000"] },
-        { urls: ["stun:stun.sipgate.net:3478"] },
-        { urls: ["stun:stun.siplogin.de:3478"] },
-        { urls: ["stun:stun.sipnet.net:3478"] },
-        { urls: ["stun:stun.sipnet.ru:3478"] },
-        { urls: ["stun:stun.siportal.it:3478"] },
-        { urls: ["stun:stun.sippeer.dk:3478"] },
-        { urls: ["stun:stun.siptraffic.com:3478"] },
-        { urls: ["stun:stun.skylink.ru:3478"] },
-        { urls: ["stun:stun.sma.de:3478"] },
-        { urls: ["stun:stun.smartvoip.com:3478"] },
-        { urls: ["stun:stun.smsdiscount.com:3478"] },
-        { urls: ["stun:stun.snafu.de:3478"] },
-        { urls: ["stun:stun.softjoys.com:3478"] },
-        { urls: ["stun:stun.solcon.nl:3478"] },
-        { urls: ["stun:stun.solnet.ch:3478"] },
-        { urls: ["stun:stun.sonetel.com:3478"] },
-        { urls: ["stun:stun.sonetel.net:3478"] },
-        { urls: ["stun:stun.sovtest.ru:3478"] },
-        { urls: ["stun:stun.speedy.com.ar:3478"] },
-        { urls: ["stun:stun.spokn.com:3478"] },
-        { urls: ["stun:stun.srce.hr:3478"] },
-        { urls: ["stun:stun.ssl7.net:3478"] },
-        { urls: ["stun:stun.stunprotocol.org:3478"] },
-        { urls: ["stun:stun.symform.com:3478"] },
-        { urls: ["stun:stun.symplicity.com:3478"] },
-        { urls: ["stun:stun.sysadminman.net:3478"] },
-        { urls: ["stun:stun.t-online.de:3478"] },
-        { urls: ["stun:stun.tagan.ru:3478"] },
-        { urls: ["stun:stun.tatneft.ru:3478"] },
-        { urls: ["stun:stun.teachercreated.com:3478"] },
-        { urls: ["stun:stun.tel.lu:3478"] },
-        { urls: ["stun:stun.telbo.com:3478"] },
-        { urls: ["stun:stun.telefacil.com:3478"] },
-        { urls: ["stun:stun.tis-dialog.ru:3478"] },
-        { urls: ["stun:stun.tng.de:3478"] },
-        { urls: ["stun:stun.twt.it:3478"] },
-        { urls: ["stun:stun.u-blox.com:3478"] },
-        { urls: ["stun:stun.ucallweconn.net:3478"] },
-        { urls: ["stun:stun.ucsb.edu:3478"] },
-        { urls: ["stun:stun.ucw.cz:3478"] },
-        { urls: ["stun:stun.uls.co.za:3478"] },
-        { urls: ["stun:stun.unseen.is:3478"] },
-        { urls: ["stun:stun.usfamily.net:3478"] },
-        { urls: ["stun:stun.veoh.com:3478"] },
-        { urls: ["stun:stun.vidyo.com:3478"] },
-        { urls: ["stun:stun.vipgroup.net:3478"] },
-        { urls: ["stun:stun.virtual-call.com:3478"] },
-        { urls: ["stun:stun.viva.gr:3478"] },
-        { urls: ["stun:stun.vivox.com:3478"] },
-        { urls: ["stun:stun.vline.com:3478"] },
-        { urls: ["stun:stun.vo.lu:3478"] },
-        { urls: ["stun:stun.vodafone.ro:3478"] },
-        { urls: ["stun:stun.voicetrading.com:3478"] },
-        { urls: ["stun:stun.voip.aebc.com:3478"] },
-        { urls: ["stun:stun.voip.blackberry.com:3478"] },
-        { urls: ["stun:stun.voip.eutelia.it:3478"] },
-        { urls: ["stun:stun.voiparound.com:3478"] },
-        { urls: ["stun:stun.voipblast.com:3478"] },
-        { urls: ["stun:stun.voipbuster.com:3478"] },
-        { urls: ["stun:stun.voipbusterpro.com:3478"] },
-        { urls: ["stun:stun.voipcheap.co.uk:3478"] },
-        { urls: ["stun:stun.voipcheap.com:3478"] },
-        { urls: ["stun:stun.voipfibre.com:3478"] },
-        { urls: ["stun:stun.voipgain.com:3478"] },
-        { urls: ["stun:stun.voipgate.com:3478"] },
-        { urls: ["stun:stun.voipinfocenter.com:3478"] },
-        { urls: ["stun:stun.voipplanet.nl:3478"] },
-        { urls: ["stun:stun.voippro.com:3478"] },
-        { urls: ["stun:stun.voipraider.com:3478"] },
-        { urls: ["stun:stun.voipstunt.com:3478"] },
-        { urls: ["stun:stun.voipwise.com:3478"] },
-        { urls: ["stun:stun.voipzoom.com:3478"] },
-        { urls: ["stun:stun.vopium.com:3478"] },
-        { urls: ["stun:stun.voxgratia.org:3478"] },
-        { urls: ["stun:stun.voxox.com:3478"] },
-        { urls: ["stun:stun.voys.nl:3478"] },
-        { urls: ["stun:stun.voztele.com:3478"] },
-        { urls: ["stun:stun.vyke.com:3478"] },
-        { urls: ["stun:stun.webcalldirect.com:3478"] },
-        { urls: ["stun:stun.whoi.edu:3478"] },
-        { urls: ["stun:stun.wifirst.net:3478"] },
-        { urls: ["stun:stun.wwdl.net:3478"] },
-        { urls: ["stun:stun.xs4all.nl:3478"] },
-        { urls: ["stun:stun.xtratelecom.es:3478"] },
-        { urls: ["stun:stun.yesss.at:3478"] },
-        { urls: ["stun:stun.zadarma.com:3478"] },
-        { urls: ["stun:stun.zadv.com:3478"] },
-        { urls: ["stun:stun.zoiper.com:3478"] },
-        { urls: ["stun:stun1.faktortel.com.au:3478"] },
-        { urls: ["stun:stun1.l.google.com:19302"] },
-        { urls: ["stun:stun1.voiceeclipse.net:3478"] },
-        { urls: ["stun:stun2.l.google.com:19302"] },
-        { urls: ["stun:stun3.l.google.com:19302"] },
-        { urls: ["stun:stun4.l.google.com:19302"] },
-        { urls: ["stun:stunserver.org:3478"] },
+        { urls: ['stun:stun01.sipphone.com'] },
+        { urls: ['stun:stun.ekiga.net'] },
+        { urls: ['stun:stunserver.org'] },
+        { urls: ['stun:stun.softjoys.com'] },
+        { urls: ['stun:stun.voiparound.com'] },
+        { urls: ['stun:stun.voipbuster.com'] },
+        { urls: ['stun:stun.voipstunt.com'] },
+        { urls: ['stun:stun.voxgratia.org'] },
+        { urls: ['stun:stun.xten.com'] },
+        { urls: ['stun:stun.1und1.de:3478'] },
+        { urls: ['stun:stun.2talk.co.nz:3478'] },
+        { urls: ['stun:stun.2talk.com:3478'] },
+        { urls: ['stun:stun.3clogic.com:3478'] },
+        { urls: ['stun:stun.3cx.com:3478'] },
+        { urls: ['stun:stun.a-mm.tv:3478'] },
+        { urls: ['stun:stun.aa.net.uk:3478'] },
+        { urls: ['stun:stun.acrobits.cz:3478'] },
+        { urls: ['stun:stun.actionvoip.com:3478'] },
+        { urls: ['stun:stun.advfn.com:3478'] },
+        { urls: ['stun:stun.aeta-audio.com:3478'] },
+        { urls: ['stun:stun.aeta.com:3478'] },
+        { urls: ['stun:stun.alltel.com.au:3478'] },
+        { urls: ['stun:stun.altar.com.pl:3478'] },
+        { urls: ['stun:stun.annatel.net:3478'] },
+        { urls: ['stun:stun.antisip.com:3478'] },
+        { urls: ['stun:stun.arbuz.ru:3478'] },
+        { urls: ['stun:stun.avigora.com:3478'] },
+        { urls: ['stun:stun.avigora.fr:3478'] },
+        { urls: ['stun:stun.awa-shima.com:3478'] },
+        { urls: ['stun:stun.awt.be:3478'] },
+        { urls: ['stun:stun.b2b2c.ca:3478'] },
+        { urls: ['stun:stun.bahnhof.net:3478'] },
+        { urls: ['stun:stun.barracuda.com:3478'] },
+        { urls: ['stun:stun.bluesip.net:3478'] },
+        { urls: ['stun:stun.bmwgs.cz:3478'] },
+        { urls: ['stun:stun.botonakis.com:3478'] },
+        { urls: ['stun:stun.budgetphone.nl:3478'] },
+        { urls: ['stun:stun.budgetsip.com:3478'] },
+        { urls: ['stun:stun.cablenet-as.net:3478'] },
+        { urls: ['stun:stun.callromania.ro:3478'] },
+        { urls: ['stun:stun.callwithus.com:3478'] },
+        { urls: ['stun:stun.cbsys.net:3478'] },
+        { urls: ['stun:stun.chathelp.ru:3478'] },
+        { urls: ['stun:stun.cheapvoip.com:3478'] },
+        { urls: ['stun:stun.ciktel.com:3478'] },
+        { urls: ['stun:stun.cloopen.com:3478'] },
+        { urls: ['stun:stun.colouredlines.com.au:3478'] },
+        { urls: ['stun:stun.comfi.com:3478'] },
+        { urls: ['stun:stun.commpeak.com:3478'] },
+        { urls: ['stun:stun.comtube.com:3478'] },
+        { urls: ['stun:stun.comtube.ru:3478'] },
+        { urls: ['stun:stun.cope.es:3478'] },
+        { urls: ['stun:stun.counterpath.com:3478'] },
+        { urls: ['stun:stun.counterpath.net:3478'] },
+        { urls: ['stun:stun.cryptonit.net:3478'] },
+        { urls: ['stun:stun.darioflaccovio.it:3478'] },
+        { urls: ['stun:stun.datamanagement.it:3478'] },
+        { urls: ['stun:stun.dcalling.de:3478'] },
+        { urls: ['stun:stun.decanet.fr:3478'] },
+        { urls: ['stun:stun.demos.ru:3478'] },
+        { urls: ['stun:stun.develz.org:3478'] },
+        { urls: ['stun:stun.dingaling.ca:3478'] },
+        { urls: ['stun:stun.doublerobotics.com:3478'] },
+        { urls: ['stun:stun.drogon.net:3478'] },
+        { urls: ['stun:stun.duocom.es:3478'] },
+        { urls: ['stun:stun.dus.net:3478'] },
+        { urls: ['stun:stun.e-fon.ch:3478'] },
+        { urls: ['stun:stun.easybell.de:3478'] },
+        { urls: ['stun:stun.easycall.pl:3478'] },
+        { urls: ['stun:stun.easyvoip.com:3478'] },
+        { urls: ['stun:stun.efficace-factory.com:3478'] },
+        { urls: ['stun:stun.einsundeins.com:3478'] },
+        { urls: ['stun:stun.einsundeins.de:3478'] },
+        { urls: ['stun:stun.ekiga.net:3478'] },
+        { urls: ['stun:stun.epygi.com:3478'] },
+        { urls: ['stun:stun.etoilediese.fr:3478'] },
+        { urls: ['stun:stun.eyeball.com:3478'] },
+        { urls: ['stun:stun.faktortel.com.au:3478'] },
+        { urls: ['stun:stun.freecall.com:3478'] },
+        { urls: ['stun:stun.freeswitch.org:3478'] },
+        { urls: ['stun:stun.freevoipdeal.com:3478'] },
+        { urls: ['stun:stun.fuzemeeting.com:3478'] },
+        { urls: ['stun:stun.gmx.de:3478'] },
+        { urls: ['stun:stun.gmx.net:3478'] },
+        { urls: ['stun:stun.gradwell.com:3478'] },
+        { urls: ['stun:stun.halonet.pl:3478'] },
+        { urls: ['stun:stun.hellonanu.com:3478'] },
+        { urls: ['stun:stun.hoiio.com:3478'] },
+        { urls: ['stun:stun.hosteurope.de:3478'] },
+        { urls: ['stun:stun.ideasip.com:3478'] },
+        { urls: ['stun:stun.imesh.com:3478'] },
+        { urls: ['stun:stun.infra.net:3478'] },
+        { urls: ['stun:stun.internetcalls.com:3478'] },
+        { urls: ['stun:stun.intervoip.com:3478'] },
+        { urls: ['stun:stun.ipcomms.net:3478'] },
+        { urls: ['stun:stun.ipfire.org:3478'] },
+        { urls: ['stun:stun.ippi.fr:3478'] },
+        { urls: ['stun:stun.ipshka.com:3478'] },
+        { urls: ['stun:stun.iptel.org:3478'] },
+        { urls: ['stun:stun.irian.at:3478'] },
+        { urls: ['stun:stun.it1.hr:3478'] },
+        { urls: ['stun:stun.ivao.aero:3478'] },
+        { urls: ['stun:stun.jappix.com:3478'] },
+        { urls: ['stun:stun.jumblo.com:3478'] },
+        { urls: ['stun:stun.justvoip.com:3478'] },
+        { urls: ['stun:stun.kanet.ru:3478'] },
+        { urls: ['stun:stun.kiwilink.co.nz:3478'] },
+        { urls: ['stun:stun.kundenserver.de:3478'] },
+        { urls: ['stun:stun.l.google.com:19302'] },
+        { urls: ['stun:stun.linea7.net:3478'] },
+        { urls: ['stun:stun.linphone.org:3478'] },
+        { urls: ['stun:stun.liveo.fr:3478'] },
+        { urls: ['stun:stun.lowratevoip.com:3478'] },
+        { urls: ['stun:stun.lugosoft.com:3478'] },
+        { urls: ['stun:stun.lundimatin.fr:3478'] },
+        { urls: ['stun:stun.magnet.ie:3478'] },
+        { urls: ['stun:stun.manle.com:3478'] },
+        { urls: ['stun:stun.mgn.ru:3478'] },
+        { urls: ['stun:stun.mit.de:3478'] },
+        { urls: ['stun:stun.mitake.com.tw:3478'] },
+        { urls: ['stun:stun.miwifi.com:3478'] },
+        { urls: ['stun:stun.modulus.gr:3478'] },
+        { urls: ['stun:stun.mozcom.com:3478'] },
+        { urls: ['stun:stun.myvoiptraffic.com:3478'] },
+        { urls: ['stun:stun.mywatson.it:3478'] },
+        { urls: ['stun:stun.nas.net:3478'] },
+        { urls: ['stun:stun.neotel.co.za:3478'] },
+        { urls: ['stun:stun.netappel.com:3478'] },
+        { urls: ['stun:stun.netappel.fr:3478'] },
+        { urls: ['stun:stun.netgsm.com.tr:3478'] },
+        { urls: ['stun:stun.nfon.net:3478'] },
+        { urls: ['stun:stun.noblogs.org:3478'] },
+        { urls: ['stun:stun.noc.ams-ix.net:3478'] },
+        { urls: ['stun:stun.node4.co.uk:3478'] },
+        { urls: ['stun:stun.nonoh.net:3478'] },
+        { urls: ['stun:stun.nottingham.ac.uk:3478'] },
+        { urls: ['stun:stun.nova.is:3478'] },
+        { urls: ['stun:stun.nventure.com:3478'] },
+        { urls: ['stun:stun.on.net.mk:3478'] },
+        { urls: ['stun:stun.ooma.com:3478'] },
+        { urls: ['stun:stun.ooonet.ru:3478'] },
+        { urls: ['stun:stun.oriontelekom.rs:3478'] },
+        { urls: ['stun:stun.outland-net.de:3478'] },
+        { urls: ['stun:stun.ozekiphone.com:3478'] },
+        { urls: ['stun:stun.patlive.com:3478'] },
+        { urls: ['stun:stun.personal-voip.de:3478'] },
+        { urls: ['stun:stun.petcube.com:3478'] },
+        { urls: ['stun:stun.phone.com:3478'] },
+        { urls: ['stun:stun.phoneserve.com:3478'] },
+        { urls: ['stun:stun.pjsip.org:3478'] },
+        { urls: ['stun:stun.poivy.com:3478'] },
+        { urls: ['stun:stun.powerpbx.org:3478'] },
+        { urls: ['stun:stun.powervoip.com:3478'] },
+        { urls: ['stun:stun.ppdi.com:3478'] },
+        { urls: ['stun:stun.prizee.com:3478'] },
+        { urls: ['stun:stun.qq.com:3478'] },
+        { urls: ['stun:stun.qvod.com:3478'] },
+        { urls: ['stun:stun.rackco.com:3478'] },
+        { urls: ['stun:stun.rapidnet.de:3478'] },
+        { urls: ['stun:stun.rb-net.com:3478'] },
+        { urls: ['stun:stun.refint.net:3478'] },
+        { urls: ['stun:stun.remote-learner.net:3478'] },
+        { urls: ['stun:stun.rixtelecom.se:3478'] },
+        { urls: ['stun:stun.rockenstein.de:3478'] },
+        { urls: ['stun:stun.rolmail.net:3478'] },
+        { urls: ['stun:stun.rounds.com:3478'] },
+        { urls: ['stun:stun.rynga.com:3478'] },
+        { urls: ['stun:stun.samsungsmartcam.com:3478'] },
+        { urls: ['stun:stun.schlund.de:3478'] },
+        { urls: ['stun:stun.services.mozilla.com:3478'] },
+        { urls: ['stun:stun.sigmavoip.com:3478'] },
+        { urls: ['stun:stun.sip.us:3478'] },
+        { urls: ['stun:stun.sipdiscount.com:3478'] },
+        { urls: ['stun:stun.sipgate.net:10000'] },
+        { urls: ['stun:stun.sipgate.net:3478'] },
+        { urls: ['stun:stun.siplogin.de:3478'] },
+        { urls: ['stun:stun.sipnet.net:3478'] },
+        { urls: ['stun:stun.sipnet.ru:3478'] },
+        { urls: ['stun:stun.siportal.it:3478'] },
+        { urls: ['stun:stun.sippeer.dk:3478'] },
+        { urls: ['stun:stun.siptraffic.com:3478'] },
+        { urls: ['stun:stun.skylink.ru:3478'] },
+        { urls: ['stun:stun.sma.de:3478'] },
+        { urls: ['stun:stun.smartvoip.com:3478'] },
+        { urls: ['stun:stun.smsdiscount.com:3478'] },
+        { urls: ['stun:stun.snafu.de:3478'] },
+        { urls: ['stun:stun.softjoys.com:3478'] },
+        { urls: ['stun:stun.solcon.nl:3478'] },
+        { urls: ['stun:stun.solnet.ch:3478'] },
+        { urls: ['stun:stun.sonetel.com:3478'] },
+        { urls: ['stun:stun.sonetel.net:3478'] },
+        { urls: ['stun:stun.sovtest.ru:3478'] },
+        { urls: ['stun:stun.speedy.com.ar:3478'] },
+        { urls: ['stun:stun.spokn.com:3478'] },
+        { urls: ['stun:stun.srce.hr:3478'] },
+        { urls: ['stun:stun.ssl7.net:3478'] },
+        { urls: ['stun:stun.stunprotocol.org:3478'] },
+        { urls: ['stun:stun.symform.com:3478'] },
+        { urls: ['stun:stun.symplicity.com:3478'] },
+        { urls: ['stun:stun.sysadminman.net:3478'] },
+        { urls: ['stun:stun.t-online.de:3478'] },
+        { urls: ['stun:stun.tagan.ru:3478'] },
+        { urls: ['stun:stun.tatneft.ru:3478'] },
+        { urls: ['stun:stun.teachercreated.com:3478'] },
+        { urls: ['stun:stun.tel.lu:3478'] },
+        { urls: ['stun:stun.telbo.com:3478'] },
+        { urls: ['stun:stun.telefacil.com:3478'] },
+        { urls: ['stun:stun.tis-dialog.ru:3478'] },
+        { urls: ['stun:stun.tng.de:3478'] },
+        { urls: ['stun:stun.twt.it:3478'] },
+        { urls: ['stun:stun.u-blox.com:3478'] },
+        { urls: ['stun:stun.ucallweconn.net:3478'] },
+        { urls: ['stun:stun.ucsb.edu:3478'] },
+        { urls: ['stun:stun.ucw.cz:3478'] },
+        { urls: ['stun:stun.uls.co.za:3478'] },
+        { urls: ['stun:stun.unseen.is:3478'] },
+        { urls: ['stun:stun.usfamily.net:3478'] },
+        { urls: ['stun:stun.veoh.com:3478'] },
+        { urls: ['stun:stun.vidyo.com:3478'] },
+        { urls: ['stun:stun.vipgroup.net:3478'] },
+        { urls: ['stun:stun.virtual-call.com:3478'] },
+        { urls: ['stun:stun.viva.gr:3478'] },
+        { urls: ['stun:stun.vivox.com:3478'] },
+        { urls: ['stun:stun.vline.com:3478'] },
+        { urls: ['stun:stun.vo.lu:3478'] },
+        { urls: ['stun:stun.vodafone.ro:3478'] },
+        { urls: ['stun:stun.voicetrading.com:3478'] },
+        { urls: ['stun:stun.voip.aebc.com:3478'] },
+        { urls: ['stun:stun.voip.blackberry.com:3478'] },
+        { urls: ['stun:stun.voip.eutelia.it:3478'] },
+        { urls: ['stun:stun.voiparound.com:3478'] },
+        { urls: ['stun:stun.voipblast.com:3478'] },
+        { urls: ['stun:stun.voipbuster.com:3478'] },
+        { urls: ['stun:stun.voipbusterpro.com:3478'] },
+        { urls: ['stun:stun.voipcheap.co.uk:3478'] },
+        { urls: ['stun:stun.voipcheap.com:3478'] },
+        { urls: ['stun:stun.voipfibre.com:3478'] },
+        { urls: ['stun:stun.voipgain.com:3478'] },
+        { urls: ['stun:stun.voipgate.com:3478'] },
+        { urls: ['stun:stun.voipinfocenter.com:3478'] },
+        { urls: ['stun:stun.voipplanet.nl:3478'] },
+        { urls: ['stun:stun.voippro.com:3478'] },
+        { urls: ['stun:stun.voipraider.com:3478'] },
+        { urls: ['stun:stun.voipstunt.com:3478'] },
+        { urls: ['stun:stun.voipwise.com:3478'] },
+        { urls: ['stun:stun.voipzoom.com:3478'] },
+        { urls: ['stun:stun.vopium.com:3478'] },
+        { urls: ['stun:stun.voxgratia.org:3478'] },
+        { urls: ['stun:stun.voxox.com:3478'] },
+        { urls: ['stun:stun.voys.nl:3478'] },
+        { urls: ['stun:stun.voztele.com:3478'] },
+        { urls: ['stun:stun.vyke.com:3478'] },
+        { urls: ['stun:stun.webcalldirect.com:3478'] },
+        { urls: ['stun:stun.whoi.edu:3478'] },
+        { urls: ['stun:stun.wifirst.net:3478'] },
+        { urls: ['stun:stun.wwdl.net:3478'] },
+        { urls: ['stun:stun.xs4all.nl:3478'] },
+        { urls: ['stun:stun.xtratelecom.es:3478'] },
+        { urls: ['stun:stun.yesss.at:3478'] },
+        { urls: ['stun:stun.zadarma.com:3478'] },
+        { urls: ['stun:stun.zadv.com:3478'] },
+        { urls: ['stun:stun.zoiper.com:3478'] },
+        { urls: ['stun:stun1.faktortel.com.au:3478'] },
+        { urls: ['stun:stun1.l.google.com:19302'] },
+        { urls: ['stun:stun1.voiceeclipse.net:3478'] },
+        { urls: ['stun:stun2.l.google.com:19302'] },
+        { urls: ['stun:stun3.l.google.com:19302'] },
+        { urls: ['stun:stun4.l.google.com:19302'] },
+        { urls: ['stun:stunserver.org:3478'] },
         {
-          urls: ["turn:20.56.33.118:3478"],
-          username: "turnuser",
-          credential: "Wonder9595",
-          credentialType: "password",
+          urls: ['turn:20.56.33.118:3478'],
+          username: 'turnuser',
+          credential: 'Wonder9595',
+          credentialType: 'password',
         },
         {
-          // urls: ['turn:51.116.99.76:3478'],
+          // urls: ["turn:51.116.99.76:3478"],
           urls: [
-            "turn:webrtcwondermove.germanywestcentral.cloudapp.azure.com:443?transport=tcp",
+            'turn:webrtcwondermove.germanywestcentral.cloudapp.azure.com:443?transport=tcp',
           ],
-          username: "turnuser",
-          credential: "Wonder9595",
-          credentialType: "password",
+          username: 'turnuser',
+          credential: 'Wonder9595',
+          credentialType: 'password',
         },
         {
-          urls: ["turn:20.39.188.117:3478"],
-          username: "turnuser",
-          credential: "Wonder9595",
-          credentialType: "password",
+          urls: ['turn:20.39.188.117:3478'],
+          username: 'turnuser',
+          credential: 'Wonder9595',
+          credentialType: 'password',
         },
       ],
     },
@@ -420,111 +416,108 @@ const Rtc = ({
     const localStream = new MediaStream();
 
     (async () => {
-      const manager = new Manager(SOCKET_URI, { transports: ["websocket"] });
+      const manager = new Manager(SOCKET_URI, { transports: ['websocket'] });
       socket = manager.socket(SOCKET_NAMESPACE); // main namespace
       const _id = chatRoomId;
 
-      socket.on("connect", () => {
+      socket.on('connect', () => {
         console.log(
-          `socket join, { roomId: ${_id}, sender: '${userType}', camera: ${cameraOnYn}, mic: ${micOnYn} }`
+          `socket join, { roomId: ${_id}, sender: "${userType}", camera: ${cameraOnYn}, mic: ${micOnYn} }`,
         );
-        socket.emit("join", {
+        socket.emit('join', {
           roomId: _id,
           sender: userType,
           // cameraOnYn,
           // microphoneOnYn: micOnYn,
         });
 
-        if (userType === "DEALER") {
-          socket.emit("switchDevice", {
+        if (userType === 'DEALER') {
+          socket.emit('switchDevice', {
             roomId: _id,
             sender: userType,
-            deviceType: "WEB",
-            switchStatus: "SUCCESS",
+            deviceType: 'WEB',
+            switchStatus: 'SUCCESS',
           });
         }
       });
-      socket.on("microphone", ({ roomId, sender, onYn }) => {
+      socket.on('microphone', ({ roomId, sender, onYn }) => {
         const isMe: boolean = sender === userType;
         if (!isMe) {
-          console.log("peer socket mic listener onYn : ", onYn);
+          console.log('peer socket mic listener onYn : ', onYn);
           setCustomerMicOnYn(onYn);
         }
       });
-      socket.on("camera", ({ roomId, sender, onYn }) => {
+      socket.on('camera', ({ roomId, sender, onYn }) => {
         const isMe: boolean = sender === userType;
         if (!isMe) {
-          console.log("socket camera listener onYn : ", onYn);
+          console.log('socket camera listener onYn : ', onYn);
           setCustomerCameraOnYn(onYn);
         }
       });
-      socket.on("leave", ({ roomId, sender }) => {
+      socket.on('leave', ({ roomId, sender }) => {
         const isMe: boolean = sender === userType;
-        console.log("leave", sender);
+        console.log('leave', sender);
         if (!isMe) {
           setCustomerLeftYn(true);
         } else {
           setLeftYn(true);
         }
       });
-      socket.on("consultError", ({ consultId, sender }) => {
+      socket.on('consultError', ({ consultId, sender }) => {
         const isMe: boolean = sender === userType;
         if (!isMe) {
           // onRefresh();
           setNetworkErrored(true);
         }
       });
-      socket.on(
-        "switchDevice",
-        ({ roomId, sender, deviceType, switchStatus }) => {
-          if (sender === "DEALER") {
-            if (userType === "CUSTOMER") {
-              if (switchStatus === "ALLOW") {
-                console.log("deviceSwitching:: allow socket received");
-                onRefresh();
-              }
+      socket.on('switchDevice', ({ roomId, sender, deviceType, switchStatus }) => {
+        if (sender === 'DEALER') {
+          if (userType === 'CUSTOMER') {
+            if (switchStatus === 'ALLOW') {
+              console.log('deviceSwitching:: allow socket received');
+              onRefresh();
             }
-            if (userType === "DEALER") {
-              if (switchStatus === "REQUEST" && deviceType === "MOBILE") {
-                setDeviceSwitchRequested(true);
-              }
-              if (
-                switchStatus === "SUCCESS" &&
-                deviceType === "MOBILE" //&&
-                // deviceSwitchingYn
-              ) {
-                // 끄기
-                console.log(
-                  "deviceSwitching:: success",
-                  switchStatus,
-                  sender,
-                  deviceSwitchRequested,
-                  deviceSwitchingYn
-                );
-                setDeviceSwitchSucceeded(true);
-                setDeviceSwitchingYn(false);
-              }
+          }
+          if (userType === 'DEALER') {
+            if (switchStatus === 'REQUEST' && deviceType === 'MOBILE') {
+              setDeviceSwitchRequested(true);
+            }
+            if (
+              switchStatus === 'SUCCESS' &&
+              deviceType === 'MOBILE' //&&
+              // deviceSwitchingYn
+            ) {
+              // 끄기
+              console.log(
+                'deviceSwitching:: success',
+                switchStatus,
+                sender,
+                deviceSwitchRequested,
+                deviceSwitchingYn,
+              );
+              setDeviceSwitchSucceeded(true);
+              setDeviceSwitchingYn(false);
+            }
 
-              if (switchStatus === "REJECT") {
-                // 끄기
-                console.log(
-                  "deviceSwitching:: reject ",
-                  switchStatus,
-                  sender,
-                  deviceSwitchRequested
-                );
-                setDeviceSwitchingYn(false); //필요한가?
-              }
+            if (switchStatus === 'REJECT') {
+              // 끄기
+              console.log(
+                'deviceSwitching:: reject ',
+                switchStatus,
+                sender,
+                deviceSwitchRequested,
+              );
+              setDeviceSwitchingYn(false); //필요한가?
             }
           }
         }
-      );
+      });
       socketRef.current = socket;
       localStreamRef.current = localStream;
-      console.log("localstream", localStream);
+      console.log('localstream', localStream);
     })();
     return () => {
-      console.log("socket off");
+      console.log('socket off');
       if (socket) {
         socket.disconnect();
         socketRef.current = undefined;
@@ -535,7 +528,7 @@ const Rtc = ({
 
   useEffect(() => {
     if (playerRef.current) {
-      console.log("playerref", playerRef.current, localStreamRef.current);
+      console.log('playerref', playerRef.current, localStreamRef.current);
       playerRef.current.srcObject = localStreamRef.current;
     }
   }, [playerRef.current, localStreamRef.current]);
@@ -545,30 +538,30 @@ const Rtc = ({
     let socket: Socket;
     (async () => {
       const manager = new Manager(SIGNAL_SOCKET_URI, {
-        transports: ["websocket", "polling"],
+        transports: ['websocket', 'polling'],
         secure: true,
       });
       socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
       const _id = chatRoomId;
 
-      socket.on("connect", () => {
-        console.log("webrtc socket connected");
-        socket.emit("join_room", { room: chatRoomId, sender: userType });
+      socket.on('connect', () => {
+        console.log('webrtc socket connected');
+        socket.emit('join_room', { room: chatRoomId, sender: userType });
       });
 
       let candidates = [];
-      socket.on("getCandidate", ({ candidate, sender }) => {
+      socket.on('getCandidate', ({ candidate, sender }) => {
         try {
           const isMe = sender === userType;
           if (!isMe) {
             console.log(
-              "getCandidate socket received - customer",
+              'getCandidate socket received - customer',
               candidate,
               peerConnectionRef.current.connectionState,
             );
 
             const newCandidate = new RTCIceCandidate(candidate);
-            if (peerConnectionRef.current.signalingState == "closed") return;
+            if (peerConnectionRef.current.signalingState == 'closed') return;
 
             if (peerConnectionRef.current.remoteDescription) {
               if (newCandidate) {
@@ -579,45 +572,45 @@ const Rtc = ({
             }
           }
         } catch (e) {
-          console.error("getCandidate ~ error ~", e);
+          console.error('getCandidate ~ error ~', e);
         }
       });
 
-      socket.on("all_users", (all_users) => {
-        console.log("all_users socket received", all_users);
+      socket.on('all_users', (all_users) => {
+        console.log('all_users socket received', all_users);
         const users = all_users.filter((i) => i.sender !== userType);
         const len = users.length;
 
-        console.log("all_users length!!!", len);
+        console.log('all_users length!!!', len);
         //* room에 두명 이상 있을 시 handshake 로직 시작
-        if (userType === "DEALER") {
+        if (userType === 'DEALER') {
           if (len > 0) {
             setPeerJoinYn(true);
           }
         }
       });
-      socket.on("disconnect", (reason) => {
-        console.log("socket disconnected by", reason); // "ping timeout"
+      socket.on('disconnect', (reason) => {
+        console.log('socket disconnected by', reason); // "ping timeout"
         // webRtcSocketRef.current = undefined;
         // socket.connect();
       });
 
-      if (userType === "CUSTOMER") {
-        socket.on("getOffer", async ({ sdp, sender }) => {
+      if (userType === 'CUSTOMER') {
+        socket.on('getOffer', async ({ sdp, sender }) => {
           const isMe = sender === userType;
-          console.log("offer socket received", sdp, local);
+          console.log('offer socket received', sdp, local);
           if (!isMe) {
             console.log(
-              "peerconnection:: connectionstate ",
+              'peerconnection:: connectionstate ',
               peerConnectionRef.current.connectionState,
-              deviceSwitchingYn
+              deviceSwitchingYn,
             );
-            if (peerConnectionRef.current.signalingState == "closed") return;
+            if (peerConnectionRef.current.signalingState == 'closed') return;
             try {
               const offerDescription = new RTCSessionDescription(sdp);
               peerConnectionRef.current.setRemoteDescription(offerDescription);
             } catch (e) {
-              console.log("error:", e, "deviceSwitching:", deviceSwitchingYn);
+              console.log('error:', e, 'deviceSwitching:', deviceSwitchingYn);
               if (deviceSwitchingYn) {
               }
             }
@@ -632,22 +625,22 @@ const Rtc = ({
           }
         });
       } else {
-        socket.on("getAnswer", ({ sdp, sender }) => {
+        socket.on('getAnswer', ({ sdp, sender }) => {
           console.log(
-            "webrtc socket get Answer, local, offer",
+            'webrtc socket get Answer, local, offer',
             peerConnectionRef.current,
             sdp,
-            sender
+            sender,
           );
-          if (peerConnectionRef.current.signalingState == "closed") return;
+          if (peerConnectionRef.current.signalingState == 'closed') return;
           try {
             const isMe = sender === userType;
             if (!isMe) {
               console.log(
-                "answer socket get",
+                'answer socket get',
                 sdp,
                 peerConnectionRef.current,
-                candidates
+                candidates,
               );
               const offerDescription = new RTCSessionDescription(sdp);
               peerConnectionRef.current.setRemoteDescription(offerDescription);
@@ -657,7 +650,7 @@ const Rtc = ({
               }
             }
           } catch (e) {
-            console.error("sendAnswer ~ error ~", e);
+            console.error('sendAnswer ~ error ~', e);
           }
         });
       }
@@ -665,7 +658,7 @@ const Rtc = ({
     })();
 
     return () => {
-      console.log("socket off");
+      console.log('socket off');
       if (socket) {
         socket.disconnect();
         webRtcSocketRef.current = undefined;
@@ -797,34 +790,38 @@ const Rtc = ({
   };
 
   useEffect(() => {
-    if (peerConnectionRef.current) {
-      (async () => {
-        if (navigator.mediaDevices) {
-          console.log("set local user media");
-          let s = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
-
-          s.getTracks().forEach((track) => {
-            if (track.kind === "video") {
-              track.enabled = cameraOnYn;
-            } else if (track.kind === "audio") {
-              track.enabled = micOnYn;
-            }
-            console.log(track, localStreamRef.current);
-            peerConnectionRef.current.addTrack(track, localStreamRef.current);
-            localStreamRef.current.addTrack(track);
-          });
-          return () => {
-            s.getTracks().forEach((track) => {
-              track.stop();
+    try {
+      if (peerConnectionRef.current) {
+        (async () => {
+          if (navigator.mediaDevices) {
+            console.log('set local user media');
+            let s = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: true,
             });
-          };
-        } else {
-          // throw new Error('webcam not supported');
-        }
-      })();
+
+            s.getTracks().forEach((track) => {
+              if (track.kind === 'video') {
+                track.enabled = cameraOnYn;
+              } else if (track.kind === 'audio') {
+                track.enabled = micOnYn;
+              }
+              console.log(track, localStreamRef.current);
+              peerConnectionRef.current.addTrack(track, localStreamRef.current);
+              localStreamRef.current.addTrack(track);
+            });
+            return () => {
+              s.getTracks().forEach((track) => {
+                track.stop();
+              });
+            };
+          } else {
+            // throw new Error("webcam not supported");
+          }
+        })();
+      }
+    } catch (e) {
+      console.error('peerConnectionRef ~ error ~', e);
     }
   }, [peerConnectionRef.current, navigator.mediaDevices]);
 
@@ -946,46 +943,58 @@ const Rtc = ({
   }, [screenSharingYn]);
 
   useEffect(() => {
-    if (negotiationNeeded && peerJoinYn) {
-      (async () => {
-        if (userType === "DEALER") {
-          const sessionConstraints: RTCAnswerOptions = {
-            mandatory: {
-              OfferToReceiveAudio: true,
-              OfferToReceiveVideo: true,
-            },
-          };
-          const offerDescription = await peerConnectionRef.current.createOffer(
-            sessionConstraints
-          );
-          console.log("createoffer ~ offerDescription", offerDescription);
-          await peerConnectionRef.current.setLocalDescription(offerDescription);
-          webRtcSocketRef.current.emit("offer", {
-            sdp: offerDescription,
-            sender: userType,
-          });
-        }
-      })();
+    try {
+      if (negotiationNeeded && peerJoinYn) {
+        (async () => {
+          if (userType === 'DEALER') {
+            const sessionConstraints: RTCAnswerOptions = {
+              mandatory: {
+                OfferToReceiveAudio: true,
+                OfferToReceiveVideo: true,
+              },
+            };
+            const offerDescription = await peerConnectionRef.current.createOffer(
+              sessionConstraints,
+            );
+            console.log('createoffer ~ offerDescription', offerDescription);
+            await peerConnectionRef.current.setLocalDescription(offerDescription);
+            webRtcSocketRef.current.emit('offer', {
+              sdp: offerDescription,
+              sender: userType,
+            });
+          }
+        })();
+      }
+    } catch (e) {
+      console.error('createoffer ~ offerDescription ~ error ~', e);
     }
   }, [negotiationNeeded, peerJoinYn]);
 
   useEffect(() => {
-    if (remoteStream && remotePlayerRef.current) {
-      remotePlayerRef.current.srcObject = remoteStream;
+    try {
+      if (remoteStream && remotePlayerRef.current) {
+        remotePlayerRef.current.srcObject = remoteStream;
+      }
+    } catch (e) {
+      console.error('remoteStream ~ error ~', e);
     }
   }, [remoteStream, remotePlayerRef.current]);
 
   useEffect(() => {
-    localStreamRef.current
-      .getVideoTracks()
-      .forEach((track) => (track.enabled = cameraOnYn));
+    try {
+      localStreamRef.current
+        .getVideoTracks()
+        .forEach((track) => (track.enabled = cameraOnYn));
 
-    console.log("send camera socket", cameraOnYn);
-    socketRef.current.emit("camera", {
-      roomId: chatRoomId,
-      sender: userType,
-      onYn: cameraOnYn,
-    });
+      console.log('send camera socket', cameraOnYn);
+      socketRef.current.emit('camera', {
+        roomId: chatRoomId,
+        sender: userType,
+        onYn: cameraOnYn,
+      });
+    } catch (e) {
+      console.error('send camera socket ~ error ~', e);
+    }
   }, [cameraOnYn]);
 
   useEffect(() => {
@@ -993,7 +1002,7 @@ const Rtc = ({
       .getAudioTracks()
       .forEach((track) => (track.enabled = micOnYn));
 
-    socketRef.current.emit("microphone", {
+    socketRef.current.emit('microphone', {
       roomId: chatRoomId,
       sender: userType,
       onYn: micOnYn,
@@ -1005,7 +1014,7 @@ const Rtc = ({
     if (remoteStream) {
       if (remoteStream.getVideoTracks()?.length > 0) {
         remoteStream.getVideoTracks()[0].enabled = customerCameraOnYn;
-        console.log("remote camera on? off? " + customerCameraOnYn);
+        console.log('remote camera on? off? ' + customerCameraOnYn);
       }
     }
   }, [customerCameraOnYn]);
@@ -1016,35 +1025,39 @@ const Rtc = ({
     if (remoteStream) {
       if (remoteStream.getAudioTracks()?.length > 0) {
         remoteStream.getAudioTracks()[0].enabled = customerMicOnYn;
-        console.log("remote mic on? off? " + customerMicOnYn);
+        console.log('remote mic on? off? ' + customerMicOnYn);
       }
     }
   }, [customerMicOnYn]);
 
   useEffect(() => {
-    //* ice connection 상태가 completed 일 경우 remoteStream 설정
-    if (connected) {
-      console.log("completed!!");
-      setStartTime((prev) => prev || moment());
+    try {
+      //* ice connection 상태가 completed 일 경우 remoteStream 설정
+      if (connected) {
+        console.log('completed!!');
+        setStartTime((prev) => prev || moment());
 
-      socketRef.current.emit("microphone", {
-        roomId: chatRoomId,
-        sender: userType,
-        onYn: micOnYn,
-      });
-      console.log("send connected camera socket", cameraOnYn);
-      socketRef.current.emit("camera", {
-        roomId: chatRoomId,
-        sender: userType,
-        onYn: cameraOnYn,
-      });
+        socketRef.current.emit('microphone', {
+          roomId: chatRoomId,
+          sender: userType,
+          onYn: micOnYn,
+        });
+        console.log('send connected camera socket', cameraOnYn);
+        socketRef.current.emit('camera', {
+          roomId: chatRoomId,
+          sender: userType,
+          onYn: cameraOnYn,
+        });
+      }
+    } catch (e) {
+      console.error('send connected camera socket ~ error ~', e);
     }
   }, [connected]);
 
   useEffect(() => {
     if (startTime) {
       let interval = setInterval(() => {
-        setTimeDiff(moment().diff(startTime, "seconds"));
+        setTimeDiff(moment().diff(startTime, 'seconds'));
       }, 1000);
       return () => {
         setTimeDiff(0);
@@ -1054,78 +1067,86 @@ const Rtc = ({
   }, [startTime]);
 
   const allowChangeDevice = useCallback(() => {
-    if (!socketRef.current) return alert("why");
-    console.log(socketRef.current);
-    socketRef.current?.emit("switchDevice", {
-      roomId: chatRoomId,
-      sender: userType,
-      deviceType: "WEB",
-      switchStatus: "ALLOW",
-    });
-    // allow 후 device switching = true
-    setDeviceSwitchingYn(true);
-    setDeviceSwitchRequested(false);
+    try {
+      if (!socketRef.current) return alert('why');
+      console.log(socketRef.current);
+      socketRef.current?.emit('switchDevice', {
+        roomId: chatRoomId,
+        sender: userType,
+        deviceType: 'WEB',
+        switchStatus: 'ALLOW',
+      });
+      // allow 후 device switching = true
+      setDeviceSwitchingYn(true);
+      setDeviceSwitchRequested(false);
+    } catch (e) {}
   }, [socketRef.current]);
 
   const rejectChangeDevice = useCallback(() => {
-    socketRef.current?.emit("switchDevice", {
-      roomId: chatRoomId,
-      sender: userType,
-      deviceType: "WEB",
-      switchStatus: "REJECT",
-    });
-    //reject시 nothing
-    setDeviceSwitchRequested(false);
+    try {
+      socketRef.current?.emit('switchDevice', {
+        roomId: chatRoomId,
+        sender: userType,
+        deviceType: 'WEB',
+        switchStatus: 'REJECT',
+      });
+      //reject시 nothing
+      setDeviceSwitchRequested(false);
+    } catch (e) {}
   }, [socketRef.current]);
 
   const onRefresh = () => {
-    console.log("refreshing start");
-    peerConnectionRef.current?.close();
-    peerConnectionRef.current = initPeerConnection();
-    setNetworkErrored(false);
+    try {
+      console.log('refreshing start');
+      peerConnectionRef.current?.close();
+      peerConnectionRef.current = initPeerConnection();
+      setNetworkErrored(false);
+    } catch (e) {}
   };
   const leaveSocket = useCallback(() => {
-    console.log("leave");
-    socketRef.current?.emit("leave", { roomId: chatRoomId, sender: userType });
+    console.log('leave');
+    socketRef.current?.emit('leave', { roomId: chatRoomId, sender: userType });
     setLeftYn(true);
   }, [socketRef.current, chatRoomId]);
 
   const stop = useCallback(
     (refreshing = false) => {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true, video: true })
-        .then((mediaStream) => {
-          mediaStream.getTracks().forEach((track) => {
-            track.stop();
-            localStreamRef.current?.removeTrack(track);
-            console.log("local track stopped");
+      try {
+        navigator.mediaDevices
+          .getUserMedia({ audio: true, video: true })
+          .then((mediaStream) => {
+            mediaStream.getTracks().forEach((track) => {
+              track.stop();
+              localStreamRef.current?.removeTrack(track);
+              console.log('local track stopped');
+            });
           });
-        });
 
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => {
-          // track.stop();
-          track.stop();
-          localStreamRef.current.removeTrack(track);
-        });
-      }
-      if (peerConnectionRef.current) {
-        peerConnectionRef.current.close();
-      }
-      if (remoteStream) {
-        // localStream.removeTrack(); // localStream.release();
-        remoteStream.getTracks().forEach((track) => {
-          track.stop();
-          remoteStream.removeTrack(track);
-        });
-        setRemoteStream(null);
-      }
-      setPeerId(null);
-      setDestination(null);
-      setDeviceSwitchingYn(false);
-      flushWebRTCSocket();
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach((track) => {
+            // track.stop();
+            track.stop();
+            localStreamRef.current.removeTrack(track);
+          });
+        }
+        if (peerConnectionRef.current) {
+          peerConnectionRef.current.close();
+        }
+        if (remoteStream) {
+          // localStream.removeTrack(); // localStream.release();
+          remoteStream.getTracks().forEach((track) => {
+            track.stop();
+            remoteStream.removeTrack(track);
+          });
+          setRemoteStream(null);
+        }
+        setPeerId(null);
+        setDestination(null);
+        setDeviceSwitchingYn(false);
+        flushWebRTCSocket();
+      } catch (e) {}
     },
-    [localStreamRef.current, peerConnectionRef.current, remoteStream]
+    [localStreamRef.current, peerConnectionRef.current, remoteStream],
   );
 
   const flushWebRTCSocket = () => {
@@ -1213,7 +1234,7 @@ const Rtc = ({
       customerMicOnYn,
       customerCameraOnYn,
     }),
-    [cameraOnYn, micOnYn, screenSharingYn, customerMicOnYn, customerCameraOnYn]
+    [cameraOnYn, micOnYn, screenSharingYn, customerMicOnYn, customerCameraOnYn],
   );
   const connectStatus = useMemo(
     () => ({
@@ -1251,7 +1272,7 @@ const Rtc = ({
       deviceSwitchingYn,
       deviceSwitchRequested,
       deviceSwitchSucceeded,
-    ]
+    ],
   );
   const stream = useMemo(() => {
     return { localStream: localStreamRef.current, remoteStream };
