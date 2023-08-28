@@ -671,13 +671,19 @@ var Rtc = function (_a) {
                             case 0: return [4 /*yield*/, peerConnectionRef.current.createAnswer()];
                             case 1:
                                 answerDescription = _a.sent();
-                                peerConnectionRef.current.setLocalDescription(answerDescription);
-                                console.log('send answer!!', peerConnectionRef.current);
-                                webRtcSocketRef.current.emit('answer', {
-                                    sdp: answerDescription,
-                                    sender: userType,
-                                });
-                                setAnswerNeeded(false);
+                                console.log('createanswer ~ answerDescription', answerDescription);
+                                if (answerDescription) {
+                                    peerConnectionRef.current.setLocalDescription(answerDescription);
+                                    console.log('send answer!!', peerConnectionRef.current);
+                                    webRtcSocketRef.current.emit('answer', {
+                                        sdp: answerDescription,
+                                        sender: userType,
+                                    });
+                                    setAnswerNeeded(false);
+                                }
+                                else {
+                                    console.error('error ~');
+                                }
                                 return [2 /*return*/];
                         }
                     });
@@ -935,7 +941,7 @@ var Rtc = function (_a) {
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
-                                if (!(userType === 'DEALER')) return [3 /*break*/, 3];
+                                if (!(userType === 'DEALER')) return [3 /*break*/, 2];
                                 sessionConstraints = {
                                     mandatory: {
                                         OfferToReceiveAudio: true,
@@ -946,15 +952,18 @@ var Rtc = function (_a) {
                             case 1:
                                 offerDescription = _a.sent();
                                 console.log('createoffer ~ offerDescription', offerDescription);
-                                return [4 /*yield*/, peerConnectionRef.current.setLocalDescription(offerDescription)];
-                            case 2:
-                                _a.sent();
-                                webRtcSocketRef.current.emit('offer', {
-                                    sdp: offerDescription,
-                                    sender: userType,
-                                });
-                                _a.label = 3;
-                            case 3: return [2 /*return*/];
+                                if (offerDescription) {
+                                    peerConnectionRef.current.setLocalDescription(offerDescription);
+                                    webRtcSocketRef.current.emit('offer', {
+                                        sdp: offerDescription,
+                                        sender: userType,
+                                    });
+                                }
+                                else {
+                                    console.error('error ~');
+                                }
+                                _a.label = 2;
+                            case 2: return [2 /*return*/];
                         }
                     });
                 }); })();

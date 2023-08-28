@@ -676,14 +676,20 @@ const Rtc = ({
       if (answerNeeded && localStreamRef.current) {
         (async () => {
           const answerDescription = await peerConnectionRef.current.createAnswer();
-          peerConnectionRef.current.setLocalDescription(answerDescription);
+          console.log('createanswer ~ answerDescription', answerDescription);
 
-          console.log('send answer!!', peerConnectionRef.current);
-          webRtcSocketRef.current.emit('answer', {
-            sdp: answerDescription,
-            sender: userType,
-          });
-          setAnswerNeeded(false);
+          if (answerDescription) {
+            peerConnectionRef.current.setLocalDescription(answerDescription);
+
+            console.log('send answer!!', peerConnectionRef.current);
+            webRtcSocketRef.current.emit('answer', {
+              sdp: answerDescription,
+              sender: userType,
+            });
+            setAnswerNeeded(false);
+          } else {
+            console.error('error ~');
+          }
         })();
       }
     } catch (e) {
@@ -961,11 +967,16 @@ const Rtc = ({
               sessionConstraints,
             );
             console.log('createoffer ~ offerDescription', offerDescription);
-            await peerConnectionRef.current.setLocalDescription(offerDescription);
-            webRtcSocketRef.current.emit('offer', {
-              sdp: offerDescription,
-              sender: userType,
-            });
+
+            if (offerDescription) {
+              peerConnectionRef.current.setLocalDescription(offerDescription);
+              webRtcSocketRef.current.emit('offer', {
+                sdp: offerDescription,
+                sender: userType,
+              });
+            } else {
+              console.error('error ~');
+            }
           }
         })();
       }
