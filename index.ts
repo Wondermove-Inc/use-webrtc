@@ -413,7 +413,6 @@ const Rtc = ({
   useEffect(() => {
     //1)
     try {
-      flushWebRTCSocket();
       let socket: Socket;
       const localStream = new MediaStream();
 
@@ -543,7 +542,7 @@ const Rtc = ({
     let socket: Socket;
     (async () => {
       const manager = new Manager(SIGNAL_SOCKET_URI, {
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
         secure: true,
       });
       socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace

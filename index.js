@@ -417,7 +417,6 @@ var Rtc = function (_a) {
     (0, react_1.useEffect)(function () {
         //1)
         try {
-            flushWebRTCSocket();
             var socket_1;
             var localStream_1 = new MediaStream();
             (function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -541,7 +540,7 @@ var Rtc = function (_a) {
             var manager, _id, candidates;
             return __generator(this, function (_a) {
                 manager = new socket_io_client_1.Manager(SIGNAL_SOCKET_URI, {
-                    transports: ['websocket'],
+                    transports: ['websocket', 'polling'],
                     secure: true,
                 });
                 socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
