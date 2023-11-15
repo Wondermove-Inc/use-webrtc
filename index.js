@@ -72,32 +72,31 @@ var Rtc = function (_a) {
     var _r = (0, react_1.useState)(false), finding = _r[0], setFinding = _r[1];
     var _s = (0, react_1.useState)(false), connected = _s[0], setConnected = _s[1];
     var _t = (0, react_1.useState)(false), connecting = _t[0], setConnecting = _t[1];
-    var _u = (0, react_1.useState)(), local = _u[0], setLocal = _u[1];
-    var _v = (0, react_1.useState)(), mediaDevices = _v[0], setMediaDevices = _v[1];
-    var _w = (0, react_1.useState)(), peerErrorMessage = _w[0], setPeerErrorMessage = _w[1];
-    var _x = (0, react_1.useState)(), streamCameraErrored = _x[0], setStreamCameraErrored = _x[1];
-    var _y = (0, react_1.useState)(), streamMicErrored = _y[0], setStreamMicErrored = _y[1];
-    var _z = (0, react_1.useState)(false), networkErrored = _z[0], setNetworkErrored = _z[1];
-    var _0 = (0, react_1.useState)(navigator.onLine), networkOnline = _0[0], setNetworkOnline = _0[1];
-    var _1 = (0, react_1.useState)(false), deviceSwitchRequested = _1[0], setDeviceSwitchRequested = _1[1];
-    var _2 = (0, react_1.useState)(false), deviceSwitchSucceeded = _2[0], setDeviceSwitchSucceeded = _2[1];
-    var _3 = (0, react_1.useState)(false), deviceSwitchingYn = _3[0], setDeviceSwitchingYn = _3[1]; // 상대방이 changing 중인지
+    var _u = (0, react_1.useState)(), mediaDevices = _u[0], setMediaDevices = _u[1];
+    var _v = (0, react_1.useState)(), peerErrorMessage = _v[0], setPeerErrorMessage = _v[1];
+    var _w = (0, react_1.useState)(), streamCameraErrored = _w[0], setStreamCameraErrored = _w[1];
+    var _x = (0, react_1.useState)(), streamMicErrored = _x[0], setStreamMicErrored = _x[1];
+    var _y = (0, react_1.useState)(false), networkErrored = _y[0], setNetworkErrored = _y[1];
+    var _z = (0, react_1.useState)(navigator.onLine), networkOnline = _z[0], setNetworkOnline = _z[1];
+    var _0 = (0, react_1.useState)(false), deviceSwitchRequested = _0[0], setDeviceSwitchRequested = _0[1];
+    var _1 = (0, react_1.useState)(false), deviceSwitchSucceeded = _1[0], setDeviceSwitchSucceeded = _1[1];
+    var _2 = (0, react_1.useState)(false), deviceSwitchingYn = _2[0], setDeviceSwitchingYn = _2[1]; // 상대방이 changing 중인지
     // modal errored
-    var _4 = (0, react_1.useState)(), peerModalErrorMessage = _4[0], setPeerModalErrorMessage = _4[1];
-    var _5 = (0, react_1.useState)(true), customerMicOnYn = _5[0], setCustomerMicOnYn = _5[1];
-    var _6 = (0, react_1.useState)(true), customerCameraOnYn = _6[0], setCustomerCameraOnYn = _6[1];
-    var _7 = (0, react_1.useState)(false), customerLeftYn = _7[0], setCustomerLeftYn = _7[1];
-    var _8 = (0, react_1.useState)(), socketInstance = _8[0], setSocketInstance = _8[1];
-    var _9 = (0, react_1.useState)(), webRtcSocketInstance = _9[0], setWebRtcSocketInstance = _9[1];
-    var _10 = (0, react_1.useState)([]), remoteCandidates = _10[0], setRemoteCandidates = _10[1];
-    var _11 = (0, react_1.useState)(false), peerJoinYn = _11[0], setPeerJoinYn = _11[1];
-    var _12 = (0, react_1.useState)(false), leftYn = _12[0], setLeftYn = _12[1];
-    var _13 = (0, react_1.useState)(), startTime = _13[0], setStartTime = _13[1];
-    var _14 = (0, react_1.useState)(0), timeDiff = _14[0], setTimeDiff = _14[1];
-    var _15 = (0, react_1.useState)(false), negotiationNeeded = _15[0], setNegotiationNeeded = _15[1];
-    var _16 = (0, react_1.useState)(false), answerNeeded = _16[0], setAnswerNeeded = _16[1];
+    var _3 = (0, react_1.useState)(), peerModalErrorMessage = _3[0], setPeerModalErrorMessage = _3[1];
+    var _4 = (0, react_1.useState)(true), customerMicOnYn = _4[0], setCustomerMicOnYn = _4[1];
+    var _5 = (0, react_1.useState)(true), customerCameraOnYn = _5[0], setCustomerCameraOnYn = _5[1];
+    var _6 = (0, react_1.useState)(false), customerLeftYn = _6[0], setCustomerLeftYn = _6[1];
+    var _7 = (0, react_1.useState)(), socketInstance = _7[0], setSocketInstance = _7[1];
+    var _8 = (0, react_1.useState)(), webRtcSocketInstance = _8[0], setWebRtcSocketInstance = _8[1];
+    var _9 = (0, react_1.useState)([]), remoteCandidates = _9[0], setRemoteCandidates = _9[1];
+    var _10 = (0, react_1.useState)(false), peerJoinYn = _10[0], setPeerJoinYn = _10[1];
+    var _11 = (0, react_1.useState)(false), leftYn = _11[0], setLeftYn = _11[1];
+    var _12 = (0, react_1.useState)(), startTime = _12[0], setStartTime = _12[1];
+    var _13 = (0, react_1.useState)(0), timeDiff = _13[0], setTimeDiff = _13[1];
+    var _14 = (0, react_1.useState)(false), negotiationNeeded = _14[0], setNegotiationNeeded = _14[1];
+    var _15 = (0, react_1.useState)(false), answerNeeded = _15[0], setAnswerNeeded = _15[1];
     /// 다시한번 시작해
-    var userType = dealerYn ? 'DEALER' : 'CUSTOMER';
+    var userType = (0, react_1.useMemo)(function () { return (dealerYn ? 'DEALER' : 'CUSTOMER'); }, [dealerYn]);
     var playerRef = (0, react_1.useRef)();
     var remotePlayerRef = (0, react_1.useRef)();
     var webRtcSocketRef = (0, react_1.useRef)();
@@ -388,9 +387,7 @@ var Rtc = function (_a) {
                 },
                 {
                     // urls: ["turn:51.116.99.76:3478"],
-                    urls: [
-                        'turn:webrtcwondermove.germanywestcentral.cloudapp.azure.com:443?transport=tcp',
-                    ],
+                    urls: ['turn:webrtcwondermove.germanywestcentral.cloudapp.azure.com:443?transport=tcp'],
                     username: 'turnuser',
                     credential: 'Wonder9595',
                     credentialType: 'password',
@@ -405,6 +402,68 @@ var Rtc = function (_a) {
         },
     };
     var peerSlave = __assign(__assign({}, peerMaster), { host: SERVER_SLAVE_URI });
+    var initPeerConnection = function () {
+        // const peerConstraints = {
+        //   iceServers: peerMaster.config.iceServers,
+        // };
+        // const peerConnection = new RTCPeerConnection(peerConstraints);
+        // console.log('peerConnection init!');
+        setConnecting(true);
+        setConnected(false);
+        peerConnectionRef.current.addEventListener('track', function (e) {
+            console.log('peerConnection:: on track ', e);
+            setRemoteStream(e.streams[0]);
+        });
+        peerConnectionRef.current.addEventListener('connectionstatechange', function (e) {
+            console.log('peerConnection:: connectionstatechange', peerConnectionRef.current.connectionState);
+            switch (peerConnectionRef.current.connectionState) {
+                case 'connected':
+                    setConnected(true);
+                    setConnecting(false);
+                    break;
+                case 'closed':
+                case 'disconnected':
+                case 'failed':
+                    setConnected(false);
+                    setConnecting(false);
+                    onRefresh();
+                    break;
+            }
+        });
+        peerConnectionRef.current.addEventListener('negotiationneeded', function (e) {
+            console.log('peerConnection:: negotiationneeded');
+            setNegotiationNeeded(true);
+        });
+        peerConnectionRef.current.addEventListener('icecandidateerror', function (e) {
+            // console.log("peerConnection:: icecandidateerror", e);
+        });
+        peerConnectionRef.current.addEventListener('icecandidate', function (e) {
+            console.log('peerConnection:: icecandidate', e.candidate);
+            if (!e.candidate) {
+                return;
+            }
+            //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
+            webRtcSocketRef.current.emit('candidate', {
+                candidate: e.candidate,
+                sender: userType,
+            });
+        });
+        peerConnectionRef.current.addEventListener('iceconnectionstatechange', function (e) {
+            console.log('peerConnection:: iceconnectionstatechange', peerConnectionRef.current.iceConnectionState);
+        });
+        peerConnectionRef.current.addEventListener('icegatheringstatechange', function (e) {
+            console.log('peerConnection:: icegatheringstatechange', peerConnectionRef.current.iceGatheringState);
+            switch (peerConnectionRef.current.iceGatheringState) {
+                case 'complete':
+                    setNegotiationNeeded(false);
+                    console.log('peerConnection:: icegatheringstatechange', peerConnectionRef.current.iceGatheringState, peerConnectionRef.current.connectionState);
+                    if (peerConnectionRef.current.connectionState === 'failed') {
+                        onRefresh();
+                    }
+                    break;
+            }
+        });
+    };
     /**
      * 1. 딜ㄹ러 입장 시 로컬스트림 켜짐
      * 2. 접속 시 소켓 또는 알디 연동
@@ -415,567 +474,408 @@ var Rtc = function (_a) {
     // 함수들 ~
     var socketRef = (0, react_1.useRef)();
     (0, react_1.useEffect)(function () {
-        //1)
-        try {
-            var socket_1;
-            var localStream_1 = new MediaStream();
-            (function () { return __awaiter(void 0, void 0, void 0, function () {
-                var manager, _id;
-                return __generator(this, function (_a) {
-                    manager = new socket_io_client_1.Manager(SOCKET_URI, { transports: ['websocket'] });
-                    socket_1 = manager.socket(SOCKET_NAMESPACE); // main namespace
-                    _id = chatRoomId;
-                    socket_1.on('connect', function () {
-                        console.log("socket join, { roomId: ".concat(_id, ", sender: \"").concat(userType, "\", camera: ").concat(cameraOnYn, ", mic: ").concat(micOnYn, " }"));
-                        socket_1.emit('join', {
-                            roomId: _id,
-                            sender: userType,
-                            // cameraOnYn,
-                            // microphoneOnYn: micOnYn,
-                        });
-                        if (userType === 'DEALER') {
-                            socket_1.emit('switchDevice', {
-                                roomId: _id,
-                                sender: userType,
-                                deviceType: 'WEB',
-                                switchStatus: 'SUCCESS',
-                            });
-                        }
-                    });
-                    socket_1.on('microphone', function (_a) {
-                        var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
-                        var isMe = sender === userType;
-                        if (!isMe) {
-                            console.log('peer socket mic listener onYn : ', onYn);
-                            setCustomerMicOnYn(onYn);
-                        }
-                    });
-                    socket_1.on('camera', function (_a) {
-                        var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
-                        var isMe = sender === userType;
-                        if (!isMe) {
-                            console.log('socket camera listener onYn : ', onYn);
-                            setCustomerCameraOnYn(onYn);
-                        }
-                    });
-                    socket_1.on('leave', function (_a) {
-                        var roomId = _a.roomId, sender = _a.sender;
-                        var isMe = sender === userType;
-                        console.log('leave', sender);
-                        if (!isMe) {
-                            setCustomerLeftYn(true);
-                        }
-                        else {
-                            setLeftYn(true);
-                        }
-                    });
-                    socket_1.on('consultError', function (_a) {
-                        var consultId = _a.consultId, sender = _a.sender;
-                        var isMe = sender === userType;
-                        if (!isMe) {
-                            // onRefresh();
-                            setNetworkErrored(true);
-                        }
-                    });
-                    socket_1.on('switchDevice', function (_a) {
-                        var roomId = _a.roomId, sender = _a.sender, deviceType = _a.deviceType, switchStatus = _a.switchStatus;
-                        if (sender === 'DEALER') {
-                            if (userType === 'CUSTOMER') {
-                                if (switchStatus === 'ALLOW') {
-                                    console.log('deviceSwitching:: allow socket received');
-                                    onRefresh();
-                                }
-                            }
-                            if (userType === 'DEALER') {
-                                if (switchStatus === 'REQUEST' && deviceType === 'MOBILE') {
-                                    setDeviceSwitchRequested(true);
-                                }
-                                if (switchStatus === 'SUCCESS' &&
-                                    deviceType === 'MOBILE' //&&
-                                // deviceSwitchingYn
-                                ) {
-                                    // 끄기
-                                    console.log('deviceSwitching:: success', switchStatus, sender, deviceSwitchRequested, deviceSwitchingYn);
-                                    setDeviceSwitchSucceeded(true);
-                                    setDeviceSwitchingYn(false);
-                                }
-                                if (switchStatus === 'REJECT') {
-                                    // 끄기
-                                    console.log('deviceSwitching:: reject ', switchStatus, sender, deviceSwitchRequested);
-                                    setDeviceSwitchingYn(false); //필요한가?
-                                }
-                            }
-                        }
-                    });
-                    socketRef.current = socket_1;
-                    localStreamRef.current = localStream_1;
-                    console.log('localstream', localStream_1);
-                    return [2 /*return*/];
-                });
-            }); })();
-            return function () {
-                console.log('socket off');
-                if (socket_1) {
-                    socket_1.disconnect();
-                    socketRef.current = undefined;
-                }
-                stop(deviceSwitchingYn);
-            };
-        }
-        catch (e) { }
-    }, []);
-    (0, react_1.useEffect)(function () {
-        try {
-            if (playerRef.current) {
-                console.log('playerref', playerRef.current, localStreamRef.current);
-                playerRef.current.srcObject = localStreamRef.current;
-            }
-        }
-        catch (e) { }
-    }, [playerRef.current, localStreamRef.current]);
-    (0, react_1.useEffect)(function () {
-        //1)
-        var socket;
-        (function () { return __awaiter(void 0, void 0, void 0, function () {
-            var manager, _id, candidates;
-            return __generator(this, function (_a) {
-                manager = new socket_io_client_1.Manager(SIGNAL_SOCKET_URI, {
-                    transports: ['websocket', 'polling'],
-                    secure: true,
-                });
-                socket = manager.socket(SIGNAL_SOCKET_NAMESPACE); // main nakmespace
-                _id = chatRoomId;
-                socket.on('connect', function () {
-                    console.log('webrtc socket connected');
-                    socket.emit('join_room', { room: chatRoomId, sender: userType });
-                });
-                candidates = [];
-                // socket.on('getCandidate', ({ candidate, sender }) => {
-                //   try {
-                //     const isMe = sender === userType;
-                //     if (!isMe) {
-                //       console.log(
-                //         'getCandidate socket received - customer',
-                //         candidate,
-                //         peerConnectionRef.current.connectionState,
-                //       );
-                //       const newCandidate = new RTCIceCandidate(candidate);
-                //       if (peerConnectionRef.current.signalingState == 'closed') return;
-                //       if (peerConnectionRef.current.remoteDescription) {
-                //         if (newCandidate) {
-                //           peerConnectionRef.current.addIceCandidate(newCandidate);
-                //         }
-                //       } else {
-                //         candidates.push(newCandidate);
-                //       }
-                //     }
-                //   } catch (e) {
-                //     console.error('getCandidate ~ error ~', e);
-                //   }
-                // });
-                socket.on('getCandidate', function (_a) {
-                    var candidate = _a.candidate, sender = _a.sender;
-                    return __awaiter(void 0, void 0, void 0, function () {
-                        var isMe, newCandidate, e_1;
-                        return __generator(this, function (_b) {
-                            switch (_b.label) {
-                                case 0:
-                                    _b.trys.push([0, 5, , 6]);
-                                    isMe = sender === userType;
-                                    if (!!isMe) return [3 /*break*/, 4];
-                                    console.log('getCandidate socket received - customer', candidate, peerConnectionRef.current.connectionState);
-                                    newCandidate = new RTCIceCandidate(candidate);
-                                    if (peerConnectionRef.current.signalingState == 'closed')
-                                        return [2 /*return*/];
-                                    if (!peerConnectionRef.current.remoteDescription) return [3 /*break*/, 3];
-                                    if (!newCandidate) return [3 /*break*/, 2];
-                                    return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(newCandidate)];
-                                case 1:
-                                    _b.sent();
-                                    _b.label = 2;
-                                case 2: return [3 /*break*/, 4];
-                                case 3:
-                                    candidates.push(newCandidate);
-                                    _b.label = 4;
-                                case 4: return [3 /*break*/, 6];
-                                case 5:
-                                    e_1 = _b.sent();
-                                    console.error('getCandidate ~ error ~', e_1);
-                                    return [3 /*break*/, 6];
-                                case 6: return [2 /*return*/];
-                            }
-                        });
-                    });
-                });
-                socket.on('all_users', function (all_users) {
-                    console.log('all_users socket received', all_users);
-                    var users = all_users.filter(function (i) { return i.sender !== userType; });
-                    var len = users.length;
-                    console.log('all_users length!!!', len);
-                    //* room에 두명 이상 있을 시 handshake 로직 시작
-                    if (userType === 'DEALER') {
-                        if (len > 0) {
-                            setPeerJoinYn(true);
-                        }
-                    }
-                });
-                socket.on('disconnect', function (reason) {
-                    console.log('socket disconnected by', reason); // "ping timeout"
-                    // webRtcSocketRef.current = undefined;
-                    // socket.connect();
-                });
-                if (userType === 'CUSTOMER') {
-                    // socket.on('getOffer', async ({ sdp, sender }) => {
-                    //   const isMe = sender === userType;
-                    //   console.log('offer socket received', sdp, local);
-                    //   if (!isMe) {
-                    //     console.log(
-                    //       'peerconnection:: connectionstate ',
-                    //       peerConnectionRef.current.connectionState,
-                    //       deviceSwitchingYn,
-                    //     );
-                    //     if (peerConnectionRef.current.signalingState == 'closed') return;
-                    //     try {
-                    //       const offerDescription = new RTCSessionDescription(sdp);
-                    //       peerConnectionRef.current.setRemoteDescription(offerDescription);
-                    //     } catch (e) {
-                    //       console.log('error:', e, 'deviceSwitching:', deviceSwitchingYn);
-                    //       if (deviceSwitchingYn) {
-                    //       }
-                    //     }
-                    //     setAnswerNeeded(true);
-                    //     try {
-                    //       if (candidates.length > 0) {
-                    //         candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
-                    //         candidates = [];
-                    //       }
-                    //     } catch (e) {}
-                    //   }
-                    // });
-                    socket.on('getOffer', function (_a) {
-                        var sdp = _a.sdp, sender = _a.sender;
-                        return __awaiter(void 0, void 0, void 0, function () {
-                            var isMe, offerDescription, e_2, _i, candidates_1, candidate, e_3, e_4;
-                            return __generator(this, function (_b) {
-                                switch (_b.label) {
-                                    case 0:
-                                        isMe = sender === userType;
-                                        console.log('offer socket received', sdp);
-                                        if (!!isMe) return [3 /*break*/, 14];
-                                        console.log('peerconnection:: connectionstate ', peerConnectionRef.current.connectionState, deviceSwitchingYn);
-                                        if (peerConnectionRef.current.signalingState == 'closed')
-                                            return [2 /*return*/];
-                                        _b.label = 1;
-                                    case 1:
-                                        _b.trys.push([1, 3, , 4]);
-                                        offerDescription = new RTCSessionDescription(sdp);
-                                        return [4 /*yield*/, peerConnectionRef.current.setRemoteDescription(offerDescription)];
-                                    case 2:
-                                        _b.sent();
-                                        return [3 /*break*/, 4];
-                                    case 3:
-                                        e_2 = _b.sent();
-                                        console.log('setRemoteDescription error:', e_2, 'deviceSwitching:', deviceSwitchingYn);
-                                        return [3 /*break*/, 4];
-                                    case 4:
-                                        setAnswerNeeded(true);
-                                        _b.label = 5;
-                                    case 5:
-                                        _b.trys.push([5, 12, , 13]);
-                                        _i = 0, candidates_1 = candidates;
-                                        _b.label = 6;
-                                    case 6:
-                                        if (!(_i < candidates_1.length)) return [3 /*break*/, 11];
-                                        candidate = candidates_1[_i];
-                                        _b.label = 7;
-                                    case 7:
-                                        _b.trys.push([7, 9, , 10]);
-                                        return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(candidate)];
-                                    case 8:
-                                        _b.sent();
-                                        return [3 /*break*/, 10];
-                                    case 9:
-                                        e_3 = _b.sent();
-                                        console.error('Error adding ice candidate:', e_3);
-                                        return [3 /*break*/, 10];
-                                    case 10:
-                                        _i++;
-                                        return [3 /*break*/, 6];
-                                    case 11: return [3 /*break*/, 13];
-                                    case 12:
-                                        e_4 = _b.sent();
-                                        return [3 /*break*/, 13];
-                                    case 13:
-                                        candidates = []; // 후보 추가 후 배열 비우기
-                                        _b.label = 14;
-                                    case 14: return [2 /*return*/];
-                                }
-                            });
-                        });
-                    });
-                }
-                else {
-                    // socket.on('getAnswer', async({ sdp, sender }) => {
-                    //   console.log(
-                    //     'webrtc socket get Answer, local, offer',
-                    //     peerConnectionRef.current,
-                    //     sdp,
-                    //     sender,
-                    //   );
-                    //   if (peerConnectionRef.current.signalingState == 'closed') return;
-                    //   try {
-                    //     const isMe = sender === userType;
-                    //     if (!isMe) {
-                    //       console.log(
-                    //         'answer socket get',
-                    //         sdp,
-                    //         peerConnectionRef.current,
-                    //         candidates,
-                    //       );
-                    //       const offerDescription = new RTCSessionDescription(sdp);
-                    //       await peerConnectionRef.current.setRemoteDescription(offerDescription);
-                    //       if (candidates.length > 0) {
-                    //         candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
-                    //         candidates = [];
-                    //       }
-                    //     }
-                    //   } catch (e) {
-                    //     console.error('sendAnswer ~ error ~', e);
-                    //   }
-                    // });
-                    socket.on('getAnswer', function (_a) {
-                        var sdp = _a.sdp, sender = _a.sender;
-                        return __awaiter(void 0, void 0, void 0, function () {
-                            var isMe, offerDescription, _i, candidates_2, candidate, e_5, e_6;
-                            return __generator(this, function (_b) {
-                                switch (_b.label) {
-                                    case 0:
-                                        console.log('webrtc socket get Answer, local, offer', peerConnectionRef.current, sdp, sender);
-                                        if (peerConnectionRef.current.signalingState == 'closed')
-                                            return [2 /*return*/];
-                                        _b.label = 1;
-                                    case 1:
-                                        _b.trys.push([1, 10, , 11]);
-                                        isMe = sender === userType;
-                                        if (!!isMe) return [3 /*break*/, 9];
-                                        console.log('answer socket get', sdp, peerConnectionRef.current, candidates);
-                                        offerDescription = new RTCSessionDescription(sdp);
-                                        return [4 /*yield*/, peerConnectionRef.current.setRemoteDescription(offerDescription)];
-                                    case 2:
-                                        _b.sent();
-                                        _i = 0, candidates_2 = candidates;
-                                        _b.label = 3;
-                                    case 3:
-                                        if (!(_i < candidates_2.length)) return [3 /*break*/, 8];
-                                        candidate = candidates_2[_i];
-                                        _b.label = 4;
-                                    case 4:
-                                        _b.trys.push([4, 6, , 7]);
-                                        return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(candidate)];
-                                    case 5:
-                                        _b.sent();
-                                        return [3 /*break*/, 7];
-                                    case 6:
-                                        e_5 = _b.sent();
-                                        console.error('Error adding ice candidate:', e_5);
-                                        return [3 /*break*/, 7];
-                                    case 7:
-                                        _i++;
-                                        return [3 /*break*/, 3];
-                                    case 8:
-                                        candidates = []; // 후보 처리 후 배열 비우기
-                                        _b.label = 9;
-                                    case 9: return [3 /*break*/, 11];
-                                    case 10:
-                                        e_6 = _b.sent();
-                                        console.error('sendAnswer ~ error ~', e_6);
-                                        return [3 /*break*/, 11];
-                                    case 11: return [2 /*return*/];
-                                }
-                            });
-                        });
-                    });
-                }
-                webRtcSocketRef.current = socket;
-                return [2 /*return*/];
+        var initSocket = function () {
+            var socket;
+            var localStream = new MediaStream();
+            var manager = new socket_io_client_1.Manager(SOCKET_URI, { transports: ['websocket'] });
+            socket = manager.socket(SOCKET_NAMESPACE); // main namespace
+            var webRtcManager = new socket_io_client_1.Manager(SIGNAL_SOCKET_URI, {
+                transports: ['websocket', 'polling'],
+                secure: true,
             });
-        }); })();
+            var webRtcSocket = webRtcManager.socket(SIGNAL_SOCKET_NAMESPACE);
+            webRtcSocketRef.current = webRtcSocket;
+            socketRef.current = socket;
+            localStreamRef.current = localStream;
+            console.log('localstream', localStream);
+        };
+        initSocket();
         return function () {
             console.log('socket off');
-            if (socket) {
-                socket.disconnect();
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current = undefined;
+            }
+            if (webRtcSocketRef.current) {
+                webRtcSocketRef.current.disconnect();
                 webRtcSocketRef.current = undefined;
             }
+            stop(deviceSwitchingYn);
         };
     }, []);
     (0, react_1.useEffect)(function () {
-        try {
-            console.log('answer needed Effect', answerNeeded, localStreamRef.current);
-            if (answerNeeded && localStreamRef.current) {
-                (function () { return __awaiter(void 0, void 0, void 0, function () {
-                    var answerDescription;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0: return [4 /*yield*/, peerConnectionRef.current.createAnswer()];
-                            case 1:
-                                answerDescription = _a.sent();
-                                console.log('createanswer ~ answerDescription', answerDescription);
-                                if (answerDescription) {
-                                    peerConnectionRef.current.setLocalDescription(answerDescription);
-                                    console.log('send answer!!', peerConnectionRef.current);
-                                    webRtcSocketRef.current.emit('answer', {
-                                        sdp: answerDescription,
-                                        sender: userType,
-                                    });
-                                    setAnswerNeeded(false);
-                                }
-                                else {
-                                    console.error('error ~');
-                                }
-                                return [2 /*return*/];
-                        }
-                    });
-                }); })();
-            }
-        }
-        catch (e) {
-            console.error('answer needed Effect ~ error ~', e);
-        }
-    }, [answerNeeded, localStreamRef.current]);
-    (0, react_1.useEffect)(function () {
-        try {
-            if (webRtcSocketRef.current) {
-                var peerConnection_1 = initPeerConnection();
-                peerConnectionRef.current = peerConnection_1;
-                return function () {
-                    console.log('peerConnection: close');
-                    peerConnection_1.close();
-                    peerConnectionRef.current = undefined;
-                    flushWebRTCSocket();
-                    setNegotiationNeeded(false);
-                    setPeerJoinYn(false);
-                };
-            }
-        }
-        catch (e) {
-            console.error('peerConnection: close ~ error ~', e);
-        }
-    }, [webRtcSocketRef.current]);
-    var initPeerConnection = function () {
-        try {
-            var peerConstraints = {
-                iceServers: peerMaster.config.iceServers,
-            };
-            var peerConnection_2 = new RTCPeerConnection(peerConstraints);
-            console.log('peerConnection init!');
-            setConnecting(true);
-            setConnected(false);
-            peerConnection_2.addEventListener('track', function (e) {
-                console.log('peerConnection:: on track ', e);
-                setRemoteStream(e.streams[0]);
+        if (!socketRef.current)
+            return;
+        var _id = chatRoomId;
+        var onSocketConnect = function () {
+            console.log("socket join, { roomId: ".concat(_id, ", sender: \"").concat(userType, "\", camera: ").concat(cameraOnYn, ", mic: ").concat(micOnYn, " }"));
+            socketRef.current.emit('join', {
+                roomId: _id,
+                sender: userType,
+                // cameraOnYn,
+                // microphoneOnYn: micOnYn,
             });
-            peerConnection_2.addEventListener('connectionstatechange', function (e) {
-                console.log('peerConnection:: connectionstatechange', peerConnection_2.connectionState);
-                switch (peerConnection_2.connectionState) {
-                    case 'connected':
-                        setConnected(true);
-                        setConnecting(false);
-                        break;
-                    case 'closed':
-                    case 'disconnected':
-                    case 'failed':
-                        setConnected(false);
-                        setConnecting(false);
-                        onRefresh();
-                        break;
-                }
-            });
-            peerConnection_2.addEventListener('negotiationneeded', function (e) {
-                console.log('peerConnection:: negotiationneeded');
-                setNegotiationNeeded(true);
-            });
-            peerConnection_2.addEventListener('icecandidateerror', function (e) {
-                // console.log("peerConnection:: icecandidateerror", e);
-            });
-            peerConnection_2.addEventListener('icecandidate', function (e) {
-                console.log('peerConnection:: icecandidate', e.candidate);
-                if (!e.candidate) {
-                    return;
-                }
-                //* trickle 상태를 유지하기 위해 곧바로 Customer에게 ice candidate 전달
-                webRtcSocketRef.current.emit('candidate', {
-                    candidate: e.candidate,
+            if (userType === 'DEALER') {
+                socketRef.current.emit('switchDevice', {
+                    roomId: _id,
                     sender: userType,
+                    deviceType: 'WEB',
+                    switchStatus: 'SUCCESS',
+                });
+            }
+        };
+        var onSocketMic = function (_a) {
+            var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
+            var isMe = sender === userType;
+            if (!isMe) {
+                console.log('peer socket mic listener onYn : ', onYn);
+                setCustomerMicOnYn(onYn);
+            }
+        };
+        var onSocketCamera = function (_a) {
+            var roomId = _a.roomId, sender = _a.sender, onYn = _a.onYn;
+            var isMe = sender === userType;
+            if (!isMe) {
+                console.log('socket camera listener onYn : ', onYn);
+                setCustomerCameraOnYn(onYn);
+            }
+        };
+        var onSocketLeave = function (_a) {
+            var roomId = _a.roomId, sender = _a.sender;
+            var isMe = sender === userType;
+            console.log('leave', sender);
+            if (!isMe) {
+                setCustomerLeftYn(true);
+            }
+            else {
+                setLeftYn(true);
+            }
+        };
+        var onSocketConsultError = function (_a) {
+            var consultId = _a.consultId, sender = _a.sender;
+            var isMe = sender === userType;
+            if (!isMe) {
+                // onRefresh();
+                setNetworkErrored(true);
+            }
+        };
+        var onSocketSwitchDevice = function (_a) {
+            var roomId = _a.roomId, sender = _a.sender, deviceType = _a.deviceType, switchStatus = _a.switchStatus;
+            if (sender === 'DEALER') {
+                if (userType === 'CUSTOMER') {
+                    if (switchStatus === 'ALLOW') {
+                        console.log('deviceSwitching:: allow socket received');
+                        onRefresh();
+                    }
+                }
+                if (userType === 'DEALER') {
+                    if (switchStatus === 'REQUEST' && deviceType === 'MOBILE') {
+                        setDeviceSwitchRequested(true);
+                    }
+                    if (switchStatus === 'SUCCESS' &&
+                        deviceType === 'MOBILE' //&&
+                    // deviceSwitchingYn
+                    ) {
+                        // 끄기
+                        console.log('deviceSwitching:: success', switchStatus, sender, deviceSwitchRequested, deviceSwitchingYn);
+                        setDeviceSwitchSucceeded(true);
+                        setDeviceSwitchingYn(false);
+                    }
+                    if (switchStatus === 'REJECT') {
+                        // 끄기
+                        console.log('deviceSwitching:: reject ', switchStatus, sender, deviceSwitchRequested);
+                        setDeviceSwitchingYn(false); //필요한가?
+                    }
+                }
+            }
+        };
+        socketRef.current.on('connect', onSocketConnect);
+        socketRef.current.on('microphone', onSocketMic);
+        socketRef.current.on('camera', onSocketCamera);
+        socketRef.current.on('leave', onSocketLeave);
+        socketRef.current.on('consultError', onSocketConsultError);
+        socketRef.current.on('switchDevice', onSocketSwitchDevice);
+    }, [socketRef.current]);
+    (0, react_1.useEffect)(function () {
+        if (!playerRef.current || !localStreamRef.current)
+            return;
+        console.log('playerref', playerRef.current, localStreamRef.current);
+        playerRef.current.srcObject = localStreamRef.current;
+    }, [playerRef.current, localStreamRef.current]);
+    (0, react_1.useEffect)(function () {
+        if (!webRtcSocketRef.current)
+            return;
+        var candidates = [];
+        var onWebRtcSocketConnect = function () {
+            console.log('webrtc socket connected');
+            webRtcSocketRef.current.emit('join_room', { room: chatRoomId, sender: userType });
+        };
+        var onGetCadidate = function (_a) {
+            var candidate = _a.candidate, sender = _a.sender;
+            return __awaiter(void 0, void 0, void 0, function () {
+                var isMe, newCandidate, e_1;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            _b.trys.push([0, 5, , 6]);
+                            isMe = sender === userType;
+                            if (!!isMe) return [3 /*break*/, 4];
+                            console.log('getCandidate socket received - customer', candidate, peerConnectionRef.current.connectionState);
+                            newCandidate = new RTCIceCandidate(candidate);
+                            if (peerConnectionRef.current.signalingState == 'closed')
+                                return [2 /*return*/];
+                            if (!peerConnectionRef.current.remoteDescription) return [3 /*break*/, 3];
+                            if (!newCandidate) return [3 /*break*/, 2];
+                            return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(newCandidate)];
+                        case 1:
+                            _b.sent();
+                            _b.label = 2;
+                        case 2: return [3 /*break*/, 4];
+                        case 3:
+                            candidates.push(newCandidate);
+                            _b.label = 4;
+                        case 4: return [3 /*break*/, 6];
+                        case 5:
+                            e_1 = _b.sent();
+                            console.error('getCandidate ~ error ~', e_1);
+                            return [3 /*break*/, 6];
+                        case 6: return [2 /*return*/];
+                    }
                 });
             });
-            peerConnection_2.addEventListener('iceconnectionstatechange', function (e) {
-                console.log('peerConnection:: iceconnectionstatechange', peerConnection_2.iceConnectionState);
+        };
+        var onAllUsers = function (all_users) {
+            console.log('all_users socket received', all_users);
+            var users = all_users.filter(function (i) { return i.sender !== userType; });
+            var len = users.length;
+            console.log('all_users length!!!', len);
+            //* room에 두명 이상 있을 시 handshake 로직 시작
+            if (userType === 'DEALER') {
+                if (len > 0) {
+                    setPeerJoinYn(true);
+                }
+            }
+        };
+        var onDisconnect = function (reason) {
+            console.log('socket disconnected by', reason); // "ping timeout"
+            // webRtcSocketRef.current = undefined;
+            // webRtcSocketRef.current.connect();
+        };
+        var onGetOffer = function (_a) {
+            var sdp = _a.sdp, sender = _a.sender;
+            return __awaiter(void 0, void 0, void 0, function () {
+                var isMe, offerDescription, e_2, _i, candidates_1, candidate, e_3, e_4;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            isMe = sender === userType;
+                            console.log('offer socket received', sdp);
+                            if (!!isMe) return [3 /*break*/, 14];
+                            console.log('peerconnection:: connectionstate ', peerConnectionRef.current.connectionState, deviceSwitchingYn);
+                            if (peerConnectionRef.current.signalingState == 'closed')
+                                return [2 /*return*/];
+                            _b.label = 1;
+                        case 1:
+                            _b.trys.push([1, 3, , 4]);
+                            offerDescription = new RTCSessionDescription(sdp);
+                            return [4 /*yield*/, peerConnectionRef.current.setRemoteDescription(offerDescription)];
+                        case 2:
+                            _b.sent();
+                            return [3 /*break*/, 4];
+                        case 3:
+                            e_2 = _b.sent();
+                            console.log('setRemoteDescription error:', e_2, 'deviceSwitching:', deviceSwitchingYn);
+                            return [3 /*break*/, 4];
+                        case 4:
+                            setAnswerNeeded(true);
+                            _b.label = 5;
+                        case 5:
+                            _b.trys.push([5, 12, , 13]);
+                            _i = 0, candidates_1 = candidates;
+                            _b.label = 6;
+                        case 6:
+                            if (!(_i < candidates_1.length)) return [3 /*break*/, 11];
+                            candidate = candidates_1[_i];
+                            _b.label = 7;
+                        case 7:
+                            _b.trys.push([7, 9, , 10]);
+                            return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(candidate)];
+                        case 8:
+                            _b.sent();
+                            return [3 /*break*/, 10];
+                        case 9:
+                            e_3 = _b.sent();
+                            console.error('Error adding ice candidate:', e_3);
+                            return [3 /*break*/, 10];
+                        case 10:
+                            _i++;
+                            return [3 /*break*/, 6];
+                        case 11: return [3 /*break*/, 13];
+                        case 12:
+                            e_4 = _b.sent();
+                            return [3 /*break*/, 13];
+                        case 13:
+                            candidates = []; // 후보 추가 후 배열 비우기
+                            _b.label = 14;
+                        case 14: return [2 /*return*/];
+                    }
+                });
             });
-            peerConnection_2.addEventListener('icegatheringstatechange', function (e) {
-                console.log('peerConnection:: icegatheringstatechange', peerConnection_2.iceGatheringState);
-                switch (peerConnection_2.iceGatheringState) {
-                    case 'complete':
-                        setNegotiationNeeded(false);
-                        console.log('peerConnection:: icegatheringstatechange', peerConnection_2.iceGatheringState, peerConnection_2.connectionState);
-                        if (peerConnection_2.connectionState === 'failed') {
-                            onRefresh();
+        };
+        var onGetAnswer = function (_a) {
+            var sdp = _a.sdp, sender = _a.sender;
+            return __awaiter(void 0, void 0, void 0, function () {
+                var isMe, offerDescription, _i, candidates_2, candidate, e_5, e_6;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            console.log('webrtc socket get Answer, local, offer', peerConnectionRef.current, sdp, sender);
+                            if (peerConnectionRef.current.signalingState == 'closed')
+                                return [2 /*return*/];
+                            _b.label = 1;
+                        case 1:
+                            _b.trys.push([1, 10, , 11]);
+                            isMe = sender === userType;
+                            if (!!isMe) return [3 /*break*/, 9];
+                            console.log('answer socket get', sdp, peerConnectionRef.current, candidates);
+                            offerDescription = new RTCSessionDescription(sdp);
+                            return [4 /*yield*/, peerConnectionRef.current.setRemoteDescription(offerDescription)];
+                        case 2:
+                            _b.sent();
+                            _i = 0, candidates_2 = candidates;
+                            _b.label = 3;
+                        case 3:
+                            if (!(_i < candidates_2.length)) return [3 /*break*/, 8];
+                            candidate = candidates_2[_i];
+                            _b.label = 4;
+                        case 4:
+                            _b.trys.push([4, 6, , 7]);
+                            return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(candidate)];
+                        case 5:
+                            _b.sent();
+                            return [3 /*break*/, 7];
+                        case 6:
+                            e_5 = _b.sent();
+                            console.error('Error adding ice candidate:', e_5);
+                            return [3 /*break*/, 7];
+                        case 7:
+                            _i++;
+                            return [3 /*break*/, 3];
+                        case 8:
+                            candidates = []; // 후보 처리 후 배열 비우기
+                            _b.label = 9;
+                        case 9: return [3 /*break*/, 11];
+                        case 10:
+                            e_6 = _b.sent();
+                            console.error('sendAnswer ~ error ~', e_6);
+                            return [3 /*break*/, 11];
+                        case 11: return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        webRtcSocketRef.current.on('connect', onWebRtcSocketConnect);
+        webRtcSocketRef.current.on('getCandidate', onGetCadidate);
+        webRtcSocketRef.current.on('all_users', onAllUsers);
+        webRtcSocketRef.current.on('disconnect', onDisconnect);
+        if (userType === 'CUSTOMER') {
+            webRtcSocketRef.current.on('getOffer', onGetOffer);
+        }
+        else {
+            webRtcSocketRef.current.on('getAnswer', onGetAnswer);
+        }
+    }, [webRtcSocketRef.current]);
+    (0, react_1.useEffect)(function () {
+        console.log('answer needed Effect', answerNeeded, localStreamRef.current);
+        if (!answerNeeded || !localStreamRef.current || !peerConnectionRef.current || !webRtcSocketRef.current)
+            return;
+        var sendAnswer = function () { return __awaiter(void 0, void 0, void 0, function () {
+            var answerDescription;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, peerConnectionRef.current.createAnswer()];
+                    case 1:
+                        answerDescription = _a.sent();
+                        console.log('createanswer ~ answerDescription', answerDescription);
+                        if (answerDescription) {
+                            peerConnectionRef.current.setLocalDescription(answerDescription);
+                            console.log('send answer!!', peerConnectionRef.current);
+                            webRtcSocketRef.current.emit('answer', {
+                                sdp: answerDescription,
+                                sender: userType,
+                            });
+                            setAnswerNeeded(false);
                         }
-                        break;
+                        else {
+                            console.error('error ~');
+                        }
+                        return [2 /*return*/];
                 }
             });
-            return peerConnection_2;
-        }
-        catch (e) {
-            console.error('initPeerConnection ~ error ~', e);
-        }
-    };
+        }); };
+        sendAnswer();
+    }, [answerNeeded, localStreamRef.current, peerConnectionRef.current]);
     (0, react_1.useEffect)(function () {
-        try {
-            if (peerConnectionRef.current) {
-                (function () { return __awaiter(void 0, void 0, void 0, function () {
-                    var s_1;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                if (!navigator.mediaDevices) return [3 /*break*/, 2];
-                                console.log('set local user media');
-                                return [4 /*yield*/, navigator.mediaDevices.getUserMedia({
-                                        video: true,
-                                        audio: true,
-                                    })];
-                            case 1:
-                                s_1 = _a.sent();
-                                s_1.getTracks().forEach(function (track) {
-                                    if (track.kind === 'video') {
-                                        track.enabled = cameraOnYn;
-                                    }
-                                    else if (track.kind === 'audio') {
-                                        track.enabled = micOnYn;
-                                    }
-                                    console.log(track, localStreamRef.current);
-                                    peerConnectionRef.current.addTrack(track, localStreamRef.current);
-                                    localStreamRef.current.addTrack(track);
+        if (!webRtcSocketRef.current)
+            return;
+        var peerConstraints = {
+            iceServers: peerMaster.config.iceServers,
+        };
+        peerConnectionRef.current = new RTCPeerConnection(peerConstraints);
+        // const peerConnection = initPeerConnection();
+        // peerConnectionRef.current = peerConnection;
+        return function () {
+            console.log('peerConnection: close');
+            peerConnectionRef.current.close();
+            peerConnectionRef.current = undefined;
+            flushWebRTCSocket();
+            setNegotiationNeeded(false);
+            setPeerJoinYn(false);
+        };
+    }, [webRtcSocketRef.current]);
+    (0, react_1.useEffect)(function () {
+        if (!peerConnectionRef.current)
+            return;
+        initPeerConnection();
+    }, [peerConnectionRef.current]);
+    (0, react_1.useEffect)(function () {
+        if (!peerConnectionRef.current || !navigator.mediaDevices || !localStreamRef.current)
+            return;
+        var setLocalMedia = function () { return __awaiter(void 0, void 0, void 0, function () {
+            var s;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        console.log('set local user media');
+                        return [4 /*yield*/, navigator.mediaDevices.getUserMedia({
+                                video: true,
+                                audio: true,
+                            })];
+                    case 1:
+                        s = _a.sent();
+                        s.getTracks().forEach(function (track) {
+                            if (track.kind === 'video') {
+                                track.enabled = cameraOnYn;
+                            }
+                            else if (track.kind === 'audio') {
+                                track.enabled = micOnYn;
+                            }
+                            console.log(track, localStreamRef.current);
+                            peerConnectionRef.current.addTrack(track, localStreamRef.current);
+                            localStreamRef.current.addTrack(track);
+                        });
+                        return [2 /*return*/, function () {
+                                s.getTracks().forEach(function (track) {
+                                    track.stop();
                                 });
-                                return [2 /*return*/, function () {
-                                        s_1.getTracks().forEach(function (track) {
-                                            track.stop();
-                                        });
-                                    }];
-                            case 2: return [2 /*return*/];
-                        }
-                    });
-                }); })();
-            }
-        }
-        catch (e) {
-            console.error('peerConnectionRef ~ error ~', e);
-        }
-    }, [peerConnectionRef.current, navigator.mediaDevices]);
+                            }];
+                }
+            });
+        }); };
+        setLocalMedia();
+    }, [peerConnectionRef.current, navigator.mediaDevices, localStreamRef.current]);
     (0, react_1.useEffect)(function () {
-        if (userType === 'DEALER' &&
-            peerConnectionRef.current &&
-            localStreamRef.current &&
-            playerRef.current) {
+        if (userType === 'DEALER' && peerConnectionRef.current && localStreamRef.current && playerRef.current) {
             (function () { return __awaiter(void 0, void 0, void 0, function () {
                 var s, newVideoTrack_1, videoSender;
                 return __generator(this, function (_a) {
@@ -986,9 +886,7 @@ var Rtc = function (_a) {
                             playerRef.current.style.visibility = 'hidden';
                             // Check if the srcObject is an instance of MediaStream
                             if (playerRef.current.srcObject instanceof MediaStream) {
-                                playerRef.current.srcObject
-                                    .getVideoTracks()
-                                    .forEach(function (track) { return track.stop(); });
+                                playerRef.current.srcObject.getVideoTracks().forEach(function (track) { return track.stop(); });
                             }
                             console.log('screen sharing yn: ', screenSharingYn);
                             s = void 0;
@@ -1018,15 +916,11 @@ var Rtc = function (_a) {
                             playerRef.current.style.opacity = '1';
                             _a.label = 4;
                         case 4:
-                            newVideoTrack_1 = s
-                                .getVideoTracks()
-                                .filter(function (i) { return i.readyState !== 'ended'; })[0];
+                            newVideoTrack_1 = s.getVideoTracks().filter(function (i) { return i.readyState !== 'ended'; })[0];
                             newVideoTrack_1.onended = function (e) {
                                 playerRef.current.style.opacity = '0';
                                 if (playerRef.current.srcObject instanceof MediaStream) {
-                                    playerRef.current.srcObject
-                                        .getVideoTracks()
-                                        .forEach(function (track) { return track.stop(); });
+                                    playerRef.current.srcObject.getVideoTracks().forEach(function (track) { return track.stop(); });
                                 }
                                 if (!cameraOnYn) {
                                     socketRef.current.emit('camera', {
@@ -1039,9 +933,7 @@ var Rtc = function (_a) {
                                 if (screenSharingYn)
                                     setScreenSharingYn(false);
                             };
-                            videoSender = peerConnectionRef.current
-                                .getSenders()
-                                .filter(function (i) { var _a; return ((_a = i.track) === null || _a === void 0 ? void 0 : _a.kind) === 'video'; });
+                            videoSender = peerConnectionRef.current.getSenders().filter(function (i) { var _a; return ((_a = i.track) === null || _a === void 0 ? void 0 : _a.kind) === 'video'; });
                             videoSender.forEach(function (sender) {
                                 sender.replaceTrack(newVideoTrack_1);
                                 if (screenSharingYn) {
@@ -1083,60 +975,51 @@ var Rtc = function (_a) {
         }
     }, [screenSharingYn]);
     (0, react_1.useEffect)(function () {
-        try {
-            if (negotiationNeeded && peerJoinYn) {
-                (function () { return __awaiter(void 0, void 0, void 0, function () {
-                    var sessionConstraints, offerDescription;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                if (!(userType === 'DEALER')) return [3 /*break*/, 2];
-                                sessionConstraints = {
-                                    mandatory: {
-                                        OfferToReceiveAudio: true,
-                                        OfferToReceiveVideo: true,
-                                    },
-                                };
-                                return [4 /*yield*/, peerConnectionRef.current.createOffer(sessionConstraints)];
-                            case 1:
-                                offerDescription = _a.sent();
-                                console.log('createoffer ~ offerDescription', offerDescription);
-                                if (offerDescription) {
-                                    peerConnectionRef.current.setLocalDescription(offerDescription);
-                                    webRtcSocketRef.current.emit('offer', {
-                                        sdp: offerDescription,
-                                        sender: userType,
-                                    });
-                                }
-                                else {
-                                    console.error('error ~');
-                                }
-                                _a.label = 2;
-                            case 2: return [2 /*return*/];
+        var createOffer = function () { return __awaiter(void 0, void 0, void 0, function () {
+            var sessionConstraints, offerDescription;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (userType !== 'DEALER')
+                            return [2 /*return*/];
+                        sessionConstraints = {
+                            mandatory: {
+                                OfferToReceiveAudio: true,
+                                OfferToReceiveVideo: true,
+                            },
+                        };
+                        return [4 /*yield*/, peerConnectionRef.current.createOffer(sessionConstraints)];
+                    case 1:
+                        offerDescription = _a.sent();
+                        console.log('createoffer ~ offerDescription', offerDescription);
+                        if (offerDescription) {
+                            peerConnectionRef.current.setLocalDescription(offerDescription);
+                            webRtcSocketRef.current.emit('offer', {
+                                sdp: offerDescription,
+                                sender: userType,
+                            });
                         }
-                    });
-                }); })();
-            }
-        }
-        catch (e) {
-            console.error('createoffer ~ offerDescription ~ error ~', e);
-        }
-    }, [negotiationNeeded, peerJoinYn]);
+                        else {
+                            console.error('error ~');
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        }); };
+        if (!(negotiationNeeded && peerJoinYn) || !peerConnectionRef.current || !webRtcSocketRef.current)
+            return;
+        createOffer();
+    }, [negotiationNeeded, peerJoinYn, peerConnectionRef.current, webRtcSocketRef.current]);
     (0, react_1.useEffect)(function () {
-        try {
-            if (remoteStream && remotePlayerRef.current) {
-                remotePlayerRef.current.srcObject = remoteStream;
-            }
-        }
-        catch (e) {
-            console.error('remoteStream ~ error ~', e);
-        }
+        if (!remoteStream || !remotePlayerRef.current)
+            return;
+        remotePlayerRef.current.srcObject = remoteStream;
     }, [remoteStream, remotePlayerRef.current]);
     (0, react_1.useEffect)(function () {
+        if (!localStreamRef.current || !socketRef.current)
+            return;
         try {
-            localStreamRef.current
-                .getVideoTracks()
-                .forEach(function (track) { return (track.enabled = cameraOnYn); });
+            localStreamRef.current.getVideoTracks().forEach(function (track) { return (track.enabled = cameraOnYn); });
             console.log('send camera socket', cameraOnYn);
             socketRef.current.emit('camera', {
                 roomId: chatRoomId,
@@ -1147,70 +1030,56 @@ var Rtc = function (_a) {
         catch (e) {
             console.error('send camera socket ~ error ~', e);
         }
-    }, [cameraOnYn]);
+    }, [cameraOnYn, localStreamRef.current, socketRef.current]);
     (0, react_1.useEffect)(function () {
-        try {
-            localStreamRef.current
-                .getAudioTracks()
-                .forEach(function (track) { return (track.enabled = micOnYn); });
-            socketRef.current.emit('microphone', {
-                roomId: chatRoomId,
-                sender: userType,
-                onYn: micOnYn,
-            });
-        }
-        catch (e) { }
-    }, [micOnYn]);
+        if (!localStreamRef.current || !socketRef.current)
+            return;
+        localStreamRef.current.getAudioTracks().forEach(function (track) { return (track.enabled = micOnYn); });
+        socketRef.current.emit('microphone', {
+            roomId: chatRoomId,
+            sender: userType,
+            onYn: micOnYn,
+        });
+    }, [micOnYn, localStreamRef.current, socketRef.current]);
     // test 용으로 추가
     (0, react_1.useEffect)(function () {
         var _a;
-        try {
-            if (remoteStream) {
-                if (((_a = remoteStream.getVideoTracks()) === null || _a === void 0 ? void 0 : _a.length) > 0) {
-                    remoteStream.getVideoTracks()[0].enabled = customerCameraOnYn;
-                    console.log('remote camera on? off? ' + customerCameraOnYn);
-                }
-            }
+        if (!remoteStream)
+            return;
+        if (((_a = remoteStream.getVideoTracks()) === null || _a === void 0 ? void 0 : _a.length) > 0) {
+            remoteStream.getVideoTracks()[0].enabled = customerCameraOnYn;
+            console.log('remote camera on? off? ' + customerCameraOnYn);
         }
-        catch (e) { }
-    }, [customerCameraOnYn]);
+    }, [customerCameraOnYn, remoteStream]);
     // test 용으로 추가
     (0, react_1.useEffect)(function () {
         var _a;
-        try {
-            console.log(remoteStream);
-            if (remoteStream) {
-                if (((_a = remoteStream.getAudioTracks()) === null || _a === void 0 ? void 0 : _a.length) > 0) {
-                    remoteStream.getAudioTracks()[0].enabled = customerMicOnYn;
-                    console.log('remote mic on? off? ' + customerMicOnYn);
-                }
-            }
+        console.log(remoteStream);
+        if (!remoteStream)
+            return;
+        if (((_a = remoteStream.getAudioTracks()) === null || _a === void 0 ? void 0 : _a.length) > 0) {
+            remoteStream.getAudioTracks()[0].enabled = customerMicOnYn;
+            console.log('remote mic on? off? ' + customerMicOnYn);
         }
-        catch (e) { }
-    }, [customerMicOnYn]);
+    }, [customerMicOnYn, remoteStream]);
     (0, react_1.useEffect)(function () {
-        try {
-            //* ice connection 상태가 completed 일 경우 remoteStream 설정
-            if (connected) {
-                console.log('completed!!');
-                setStartTime(function (prev) { return prev || (0, moment_1.default)(); });
-                socketRef.current.emit('microphone', {
-                    roomId: chatRoomId,
-                    sender: userType,
-                    onYn: micOnYn,
-                });
-                console.log('send connected camera socket', cameraOnYn);
-                socketRef.current.emit('camera', {
-                    roomId: chatRoomId,
-                    sender: userType,
-                    onYn: cameraOnYn,
-                });
-            }
-        }
-        catch (e) {
-            console.error('send connected camera socket ~ error ~', e);
-        }
-    }, [connected]);
+        //* ice connection 상태가 completed 일 경우 remoteStream 설정
+        if (!connected || !socketRef.current)
+            return;
+        console.log('completed!!');
+        setStartTime(function (prev) { return prev || (0, moment_1.default)(); });
+        socketRef.current.emit('microphone', {
+            roomId: chatRoomId,
+            sender: userType,
+            onYn: micOnYn,
+        });
+        console.log('send connected camera socket', cameraOnYn);
+        socketRef.current.emit('camera', {
+            roomId: chatRoomId,
+            sender: userType,
+            onYn: cameraOnYn,
+        });
+    }, [connected, socketRef.current]);
     (0, react_1.useEffect)(function () {
         if (startTime) {
             var interval_1 = setInterval(function () {
@@ -1259,7 +1128,12 @@ var Rtc = function (_a) {
         try {
             console.log('refreshing start');
             (_a = peerConnectionRef.current) === null || _a === void 0 ? void 0 : _a.close();
-            peerConnectionRef.current = initPeerConnection();
+            peerConnectionRef.current = undefined;
+            var peerConstraints = {
+                iceServers: peerMaster.config.iceServers,
+            };
+            peerConnectionRef.current = new RTCPeerConnection(peerConstraints);
+            // initPeerConnection();
             setNetworkErrored(false);
         }
         catch (e) { }
@@ -1273,9 +1147,7 @@ var Rtc = function (_a) {
     var stop = (0, react_1.useCallback)(function (refreshing) {
         if (refreshing === void 0) { refreshing = false; }
         try {
-            navigator.mediaDevices
-                .getUserMedia({ audio: true, video: true })
-                .then(function (mediaStream) {
+            navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(function (mediaStream) {
                 mediaStream.getTracks().forEach(function (track) {
                     var _a;
                     track.stop();
@@ -1447,8 +1319,7 @@ var Rtc = function (_a) {
                 case 0:
                     _b.trys.push([0, 4, , 5]);
                     newCandidate = new RTCIceCandidate(iceCandidate);
-                    if (!(peerConnectionRef.current === null ||
-                        ((_a = peerConnectionRef.current) === null || _a === void 0 ? void 0 : _a.remoteDescription) == null)) return [3 /*break*/, 1];
+                    if (!(peerConnectionRef.current === null || ((_a = peerConnectionRef.current) === null || _a === void 0 ? void 0 : _a.remoteDescription) == null)) return [3 /*break*/, 1];
                     remoteCandidates.push(newCandidate);
                     return [3 /*break*/, 3];
                 case 1:
