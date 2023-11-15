@@ -604,7 +604,7 @@ const Rtc = ({
       webRtcSocketRef.current.emit('join_room', { room: chatRoomId, sender: userType });
     };
 
-    const onGetCadidate = ({ candidate, sender }) => {
+    const onGetCadidate = async ({ candidate, sender }) => {
       try {
         const isMe = sender === userType;
         if (!isMe) {
