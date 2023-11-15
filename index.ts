@@ -554,29 +554,50 @@ const Rtc = ({
       });
 
       let candidates = [];
-      socket.on('getCandidate', ({ candidate, sender }) => {
+      // socket.on('getCandidate', ({ candidate, sender }) => {
+      //   try {
+      //     const isMe = sender === userType;
+      //     if (!isMe) {
+      //       console.log(
+      //         'getCandidate socket received - customer',
+      //         candidate,
+      //         peerConnectionRef.current.connectionState,
+      //       );
+
+      //       const newCandidate = new RTCIceCandidate(candidate);
+      //       if (peerConnectionRef.current.signalingState == 'closed') return;
+
+      //       if (peerConnectionRef.current.remoteDescription) {
+      //         if (newCandidate) {
+      //           peerConnectionRef.current.addIceCandidate(newCandidate);
+      //         }
+      //       } else {
+      //         candidates.push(newCandidate);
+      //       }
+      //     }
+      //   } catch (e) {
+      //     console.error('getCandidate ~ error ~', e);
+      //   }
+      // });
+      socket.on('getCandidate', async ({ candidate, sender }) => {
         try {
-          const isMe = sender === userType;
-          if (!isMe) {
-            console.log(
-              'getCandidate socket received - customer',
-              candidate,
-              peerConnectionRef.current.connectionState,
-            );
-
-            const newCandidate = new RTCIceCandidate(candidate);
-            if (peerConnectionRef.current.signalingState == 'closed') return;
-
-            if (peerConnectionRef.current.remoteDescription) {
-              if (newCandidate) {
-                peerConnectionRef.current.addIceCandidate(newCandidate);
-              }
-            } else {
-              candidates.push(newCandidate);
+            const isMe = sender === userType;
+            if (!isMe) {
+                console.log('getCandidate socket received - customer', candidate, peerConnectionRef.current.connectionState);
+    
+                const newCandidate = new RTCIceCandidate(candidate);
+                if (peerConnectionRef.current.signalingState == 'closed') return;
+    
+                if (peerConnectionRef.current.remoteDescription) {
+                    if (newCandidate) {
+                        await peerConnectionRef.current.addIceCandidate(newCandidate);
+                    }
+                } else {
+                    candidates.push(newCandidate);
+                }
             }
-          }
         } catch (e) {
-          console.error('getCandidate ~ error ~', e);
+            console.error('getCandidate ~ error ~', e);
         }
       });
 
@@ -600,63 +621,118 @@ const Rtc = ({
       });
 
       if (userType === 'CUSTOMER') {
+        // socket.on('getOffer', async ({ sdp, sender }) => {
+        //   const isMe = sender === userType;
+        //   console.log('offer socket received', sdp, local);
+        //   if (!isMe) {
+        //     console.log(
+        //       'peerconnection:: connectionstate ',
+        //       peerConnectionRef.current.connectionState,
+        //       deviceSwitchingYn,
+        //     );
+        //     if (peerConnectionRef.current.signalingState == 'closed') return;
+        //     try {
+        //       const offerDescription = new RTCSessionDescription(sdp);
+        //       peerConnectionRef.current.setRemoteDescription(offerDescription);
+        //     } catch (e) {
+        //       console.log('error:', e, 'deviceSwitching:', deviceSwitchingYn);
+        //       if (deviceSwitchingYn) {
+        //       }
+        //     }
+        //     setAnswerNeeded(true);
+
+        //     try {
+        //       if (candidates.length > 0) {
+        //         candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
+        //         candidates = [];
+        //       }
+        //     } catch (e) {}
+        //   }
+        // });
         socket.on('getOffer', async ({ sdp, sender }) => {
           const isMe = sender === userType;
-          console.log('offer socket received', sdp, local);
+          console.log('offer socket received', sdp);
           if (!isMe) {
-            console.log(
-              'peerconnection:: connectionstate ',
-              peerConnectionRef.current.connectionState,
-              deviceSwitchingYn,
-            );
-            if (peerConnectionRef.current.signalingState == 'closed') return;
-            try {
-              const offerDescription = new RTCSessionDescription(sdp);
-              peerConnectionRef.current.setRemoteDescription(offerDescription);
-            } catch (e) {
-              console.log('error:', e, 'deviceSwitching:', deviceSwitchingYn);
-              if (deviceSwitchingYn) {
+              console.log('peerconnection:: connectionstate ', peerConnectionRef.current.connectionState, deviceSwitchingYn);
+              if (peerConnectionRef.current.signalingState == 'closed') return;
+      
+              try {
+                  const offerDescription = new RTCSessionDescription(sdp);
+                  await peerConnectionRef.current.setRemoteDescription(offerDescription);
+              } catch (e) {
+                  console.log('setRemoteDescription error:', e, 'deviceSwitching:', deviceSwitchingYn);
+                  // 필요한 추가 오류 처리
               }
-            }
-            setAnswerNeeded(true);
-
-            try {
-              if (candidates.length > 0) {
-                candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
-                candidates = [];
+              setAnswerNeeded(true);
+      
+              try {
+                  for (let candidate of candidates) {
+                      try {
+                          await peerConnectionRef.current.addIceCandidate(candidate);
+                      } catch (e) {
+                          console.error('Error adding ice candidate:', e);
+                      }
+                  }
+              } catch (e) {
+                  // candidates 배열 처리 중 오류 발생 시 처리
               }
-            } catch (e) {}
+              candidates = []; // 후보 추가 후 배열 비우기
           }
-        });
+      });
       } else {
-        socket.on('getAnswer', ({ sdp, sender }) => {
-          console.log(
-            'webrtc socket get Answer, local, offer',
-            peerConnectionRef.current,
-            sdp,
-            sender,
-          );
+        // socket.on('getAnswer', async({ sdp, sender }) => {
+        //   console.log(
+        //     'webrtc socket get Answer, local, offer',
+        //     peerConnectionRef.current,
+        //     sdp,
+        //     sender,
+        //   );
+        //   if (peerConnectionRef.current.signalingState == 'closed') return;
+        //   try {
+        //     const isMe = sender === userType;
+        //     if (!isMe) {
+        //       console.log(
+        //         'answer socket get',
+        //         sdp,
+        //         peerConnectionRef.current,
+        //         candidates,
+        //       );
+        //       const offerDescription = new RTCSessionDescription(sdp);
+        //       await peerConnectionRef.current.setRemoteDescription(offerDescription);
+        //       if (candidates.length > 0) {
+        //         candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
+        //         candidates = [];
+        //       }
+        //     }
+        //   } catch (e) {
+        //     console.error('sendAnswer ~ error ~', e);
+        //   }
+        // });
+        socket.on('getAnswer', async ({ sdp, sender }) => {
+          console.log('webrtc socket get Answer, local, offer', peerConnectionRef.current, sdp, sender);
           if (peerConnectionRef.current.signalingState == 'closed') return;
+      
           try {
-            const isMe = sender === userType;
-            if (!isMe) {
-              console.log(
-                'answer socket get',
-                sdp,
-                peerConnectionRef.current,
-                candidates,
-              );
-              const offerDescription = new RTCSessionDescription(sdp);
-              peerConnectionRef.current.setRemoteDescription(offerDescription);
-              if (candidates.length > 0) {
-                candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
-                candidates = [];
+              const isMe = sender === userType;
+              if (!isMe) {
+                  console.log('answer socket get', sdp, peerConnectionRef.current, candidates);
+                  const offerDescription = new RTCSessionDescription(sdp);
+                  await peerConnectionRef.current.setRemoteDescription(offerDescription);
+      
+                  // 여기서 candidates 배열 처리
+                  for (let candidate of candidates) {
+                      try {
+                          await peerConnectionRef.current.addIceCandidate(candidate);
+                      } catch (e) {
+                          console.error('Error adding ice candidate:', e);
+                      }
+                  }
+                  candidates = []; // 후보 처리 후 배열 비우기
               }
-            }
           } catch (e) {
-            console.error('sendAnswer ~ error ~', e);
+              console.error('sendAnswer ~ error ~', e);
           }
-        });
+      });
       }
       webRtcSocketRef.current = socket;
     })();
@@ -1189,20 +1265,39 @@ const Rtc = ({
     }
   };
 
-  const processCandidates = () => {
-    try {
-      if (remoteCandidates.length < 1) {
-        return;
-      }
+  // const processCandidates = () => {
+  //   try {
+  //     if (remoteCandidates.length < 1) {
+  //       return;
+  //     }
 
-      remoteCandidates.forEach((candidate) => {
+  //     remoteCandidates.forEach((candidate) => {
+  //       if (candidate) {
+  //         peerConnectionRef.current.addIceCandidate(candidate);
+  //       }
+  //     });
+  //     setRemoteCandidates([]);
+  //   } catch (e) {}
+  // };
+
+  const processCandidates = async () => {
+    if (remoteCandidates.length < 1) {
+      return;
+    }
+
+    for (let candidate of remoteCandidates) {
+      try {
         if (candidate) {
-          peerConnectionRef.current.addIceCandidate(candidate);
+          await peerConnectionRef.current.addIceCandidate(candidate);
         }
-      });
-      setRemoteCandidates([]);
-    } catch (e) {}
-  };
+      } catch (e) {
+        console.error('Error adding remote ice candidate:', e);
+        // 필요한 추가 오류 처리
+      }
+    }
+
+    setRemoteCandidates([]);
+};
 
   const setRemoteDescription = async (offer) => {
     try {
@@ -1233,7 +1328,23 @@ const Rtc = ({
     }
   };
 
-  const handleRemoteCandidate = (iceCandidate) => {
+  // const handleRemoteCandidate = (iceCandidate) => {
+  //   try {
+  //     const newCandidate = new RTCIceCandidate(iceCandidate);
+  //     if (
+  //       peerConnectionRef.current === null ||
+  //       peerConnectionRef.current?.remoteDescription == null
+  //     ) {
+  //       remoteCandidates.push(newCandidate);
+  //     } else {
+  //       if (newCandidate) {
+  //         peerConnectionRef.current.addIceCandidate(newCandidate);
+  //       }
+  //     }
+  //   } catch (e) {}
+  // };
+
+  const handleRemoteCandidate = async (iceCandidate) => {
     try {
       const newCandidate = new RTCIceCandidate(iceCandidate);
       if (
@@ -1243,12 +1354,15 @@ const Rtc = ({
         remoteCandidates.push(newCandidate);
       } else {
         if (newCandidate) {
-          peerConnectionRef.current.addIceCandidate(newCandidate);
+          await peerConnectionRef.current.addIceCandidate(newCandidate);
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('Error handling remote ice candidate:', e);
+      // 필요한 추가 오류 처리
+    }
   };
-
+  
   const mediaStatus = useMemo(
     () => ({
       cameraOnYn,

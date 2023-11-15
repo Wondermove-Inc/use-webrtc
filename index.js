@@ -550,28 +550,62 @@ var Rtc = function (_a) {
                     socket.emit('join_room', { room: chatRoomId, sender: userType });
                 });
                 candidates = [];
+                // socket.on('getCandidate', ({ candidate, sender }) => {
+                //   try {
+                //     const isMe = sender === userType;
+                //     if (!isMe) {
+                //       console.log(
+                //         'getCandidate socket received - customer',
+                //         candidate,
+                //         peerConnectionRef.current.connectionState,
+                //       );
+                //       const newCandidate = new RTCIceCandidate(candidate);
+                //       if (peerConnectionRef.current.signalingState == 'closed') return;
+                //       if (peerConnectionRef.current.remoteDescription) {
+                //         if (newCandidate) {
+                //           peerConnectionRef.current.addIceCandidate(newCandidate);
+                //         }
+                //       } else {
+                //         candidates.push(newCandidate);
+                //       }
+                //     }
+                //   } catch (e) {
+                //     console.error('getCandidate ~ error ~', e);
+                //   }
+                // });
                 socket.on('getCandidate', function (_a) {
                     var candidate = _a.candidate, sender = _a.sender;
-                    try {
-                        var isMe = sender === userType;
-                        if (!isMe) {
-                            console.log('getCandidate socket received - customer', candidate, peerConnectionRef.current.connectionState);
-                            var newCandidate = new RTCIceCandidate(candidate);
-                            if (peerConnectionRef.current.signalingState == 'closed')
-                                return;
-                            if (peerConnectionRef.current.remoteDescription) {
-                                if (newCandidate) {
-                                    peerConnectionRef.current.addIceCandidate(newCandidate);
-                                }
+                    return __awaiter(void 0, void 0, void 0, function () {
+                        var isMe, newCandidate, e_1;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
+                                case 0:
+                                    _b.trys.push([0, 5, , 6]);
+                                    isMe = sender === userType;
+                                    if (!!isMe) return [3 /*break*/, 4];
+                                    console.log('getCandidate socket received - customer', candidate, peerConnectionRef.current.connectionState);
+                                    newCandidate = new RTCIceCandidate(candidate);
+                                    if (peerConnectionRef.current.signalingState == 'closed')
+                                        return [2 /*return*/];
+                                    if (!peerConnectionRef.current.remoteDescription) return [3 /*break*/, 3];
+                                    if (!newCandidate) return [3 /*break*/, 2];
+                                    return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(newCandidate)];
+                                case 1:
+                                    _b.sent();
+                                    _b.label = 2;
+                                case 2: return [3 /*break*/, 4];
+                                case 3:
+                                    candidates.push(newCandidate);
+                                    _b.label = 4;
+                                case 4: return [3 /*break*/, 6];
+                                case 5:
+                                    e_1 = _b.sent();
+                                    console.error('getCandidate ~ error ~', e_1);
+                                    return [3 /*break*/, 6];
+                                case 6: return [2 /*return*/];
                             }
-                            else {
-                                candidates.push(newCandidate);
-                            }
-                        }
-                    }
-                    catch (e) {
-                        console.error('getCandidate ~ error ~', e);
-                    }
+                        });
+                    });
                 });
                 socket.on('all_users', function (all_users) {
                     console.log('all_users socket received', all_users);
@@ -591,61 +625,175 @@ var Rtc = function (_a) {
                     // socket.connect();
                 });
                 if (userType === 'CUSTOMER') {
+                    // socket.on('getOffer', async ({ sdp, sender }) => {
+                    //   const isMe = sender === userType;
+                    //   console.log('offer socket received', sdp, local);
+                    //   if (!isMe) {
+                    //     console.log(
+                    //       'peerconnection:: connectionstate ',
+                    //       peerConnectionRef.current.connectionState,
+                    //       deviceSwitchingYn,
+                    //     );
+                    //     if (peerConnectionRef.current.signalingState == 'closed') return;
+                    //     try {
+                    //       const offerDescription = new RTCSessionDescription(sdp);
+                    //       peerConnectionRef.current.setRemoteDescription(offerDescription);
+                    //     } catch (e) {
+                    //       console.log('error:', e, 'deviceSwitching:', deviceSwitchingYn);
+                    //       if (deviceSwitchingYn) {
+                    //       }
+                    //     }
+                    //     setAnswerNeeded(true);
+                    //     try {
+                    //       if (candidates.length > 0) {
+                    //         candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
+                    //         candidates = [];
+                    //       }
+                    //     } catch (e) {}
+                    //   }
+                    // });
                     socket.on('getOffer', function (_a) {
                         var sdp = _a.sdp, sender = _a.sender;
                         return __awaiter(void 0, void 0, void 0, function () {
-                            var isMe, offerDescription;
+                            var isMe, offerDescription, e_2, _i, candidates_1, candidate, e_3, e_4;
                             return __generator(this, function (_b) {
-                                isMe = sender === userType;
-                                console.log('offer socket received', sdp, local);
-                                if (!isMe) {
-                                    console.log('peerconnection:: connectionstate ', peerConnectionRef.current.connectionState, deviceSwitchingYn);
-                                    if (peerConnectionRef.current.signalingState == 'closed')
-                                        return [2 /*return*/];
-                                    try {
+                                switch (_b.label) {
+                                    case 0:
+                                        isMe = sender === userType;
+                                        console.log('offer socket received', sdp);
+                                        if (!!isMe) return [3 /*break*/, 14];
+                                        console.log('peerconnection:: connectionstate ', peerConnectionRef.current.connectionState, deviceSwitchingYn);
+                                        if (peerConnectionRef.current.signalingState == 'closed')
+                                            return [2 /*return*/];
+                                        _b.label = 1;
+                                    case 1:
+                                        _b.trys.push([1, 3, , 4]);
                                         offerDescription = new RTCSessionDescription(sdp);
-                                        peerConnectionRef.current.setRemoteDescription(offerDescription);
-                                    }
-                                    catch (e) {
-                                        console.log('error:', e, 'deviceSwitching:', deviceSwitchingYn);
-                                        if (deviceSwitchingYn) {
-                                        }
-                                    }
-                                    setAnswerNeeded(true);
-                                    try {
-                                        if (candidates.length > 0) {
-                                            candidates.map(function (i) { return peerConnectionRef.current.addIceCandidate(i); });
-                                            candidates = [];
-                                        }
-                                    }
-                                    catch (e) { }
+                                        return [4 /*yield*/, peerConnectionRef.current.setRemoteDescription(offerDescription)];
+                                    case 2:
+                                        _b.sent();
+                                        return [3 /*break*/, 4];
+                                    case 3:
+                                        e_2 = _b.sent();
+                                        console.log('setRemoteDescription error:', e_2, 'deviceSwitching:', deviceSwitchingYn);
+                                        return [3 /*break*/, 4];
+                                    case 4:
+                                        setAnswerNeeded(true);
+                                        _b.label = 5;
+                                    case 5:
+                                        _b.trys.push([5, 12, , 13]);
+                                        _i = 0, candidates_1 = candidates;
+                                        _b.label = 6;
+                                    case 6:
+                                        if (!(_i < candidates_1.length)) return [3 /*break*/, 11];
+                                        candidate = candidates_1[_i];
+                                        _b.label = 7;
+                                    case 7:
+                                        _b.trys.push([7, 9, , 10]);
+                                        return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(candidate)];
+                                    case 8:
+                                        _b.sent();
+                                        return [3 /*break*/, 10];
+                                    case 9:
+                                        e_3 = _b.sent();
+                                        console.error('Error adding ice candidate:', e_3);
+                                        return [3 /*break*/, 10];
+                                    case 10:
+                                        _i++;
+                                        return [3 /*break*/, 6];
+                                    case 11: return [3 /*break*/, 13];
+                                    case 12:
+                                        e_4 = _b.sent();
+                                        return [3 /*break*/, 13];
+                                    case 13:
+                                        candidates = []; // 후보 추가 후 배열 비우기
+                                        _b.label = 14;
+                                    case 14: return [2 /*return*/];
                                 }
-                                return [2 /*return*/];
                             });
                         });
                     });
                 }
                 else {
+                    // socket.on('getAnswer', async({ sdp, sender }) => {
+                    //   console.log(
+                    //     'webrtc socket get Answer, local, offer',
+                    //     peerConnectionRef.current,
+                    //     sdp,
+                    //     sender,
+                    //   );
+                    //   if (peerConnectionRef.current.signalingState == 'closed') return;
+                    //   try {
+                    //     const isMe = sender === userType;
+                    //     if (!isMe) {
+                    //       console.log(
+                    //         'answer socket get',
+                    //         sdp,
+                    //         peerConnectionRef.current,
+                    //         candidates,
+                    //       );
+                    //       const offerDescription = new RTCSessionDescription(sdp);
+                    //       await peerConnectionRef.current.setRemoteDescription(offerDescription);
+                    //       if (candidates.length > 0) {
+                    //         candidates.map((i) => peerConnectionRef.current.addIceCandidate(i));
+                    //         candidates = [];
+                    //       }
+                    //     }
+                    //   } catch (e) {
+                    //     console.error('sendAnswer ~ error ~', e);
+                    //   }
+                    // });
                     socket.on('getAnswer', function (_a) {
                         var sdp = _a.sdp, sender = _a.sender;
-                        console.log('webrtc socket get Answer, local, offer', peerConnectionRef.current, sdp, sender);
-                        if (peerConnectionRef.current.signalingState == 'closed')
-                            return;
-                        try {
-                            var isMe = sender === userType;
-                            if (!isMe) {
-                                console.log('answer socket get', sdp, peerConnectionRef.current, candidates);
-                                var offerDescription = new RTCSessionDescription(sdp);
-                                peerConnectionRef.current.setRemoteDescription(offerDescription);
-                                if (candidates.length > 0) {
-                                    candidates.map(function (i) { return peerConnectionRef.current.addIceCandidate(i); });
-                                    candidates = [];
+                        return __awaiter(void 0, void 0, void 0, function () {
+                            var isMe, offerDescription, _i, candidates_2, candidate, e_5, e_6;
+                            return __generator(this, function (_b) {
+                                switch (_b.label) {
+                                    case 0:
+                                        console.log('webrtc socket get Answer, local, offer', peerConnectionRef.current, sdp, sender);
+                                        if (peerConnectionRef.current.signalingState == 'closed')
+                                            return [2 /*return*/];
+                                        _b.label = 1;
+                                    case 1:
+                                        _b.trys.push([1, 10, , 11]);
+                                        isMe = sender === userType;
+                                        if (!!isMe) return [3 /*break*/, 9];
+                                        console.log('answer socket get', sdp, peerConnectionRef.current, candidates);
+                                        offerDescription = new RTCSessionDescription(sdp);
+                                        return [4 /*yield*/, peerConnectionRef.current.setRemoteDescription(offerDescription)];
+                                    case 2:
+                                        _b.sent();
+                                        _i = 0, candidates_2 = candidates;
+                                        _b.label = 3;
+                                    case 3:
+                                        if (!(_i < candidates_2.length)) return [3 /*break*/, 8];
+                                        candidate = candidates_2[_i];
+                                        _b.label = 4;
+                                    case 4:
+                                        _b.trys.push([4, 6, , 7]);
+                                        return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(candidate)];
+                                    case 5:
+                                        _b.sent();
+                                        return [3 /*break*/, 7];
+                                    case 6:
+                                        e_5 = _b.sent();
+                                        console.error('Error adding ice candidate:', e_5);
+                                        return [3 /*break*/, 7];
+                                    case 7:
+                                        _i++;
+                                        return [3 /*break*/, 3];
+                                    case 8:
+                                        candidates = []; // 후보 처리 후 배열 비우기
+                                        _b.label = 9;
+                                    case 9: return [3 /*break*/, 11];
+                                    case 10:
+                                        e_6 = _b.sent();
+                                        console.error('sendAnswer ~ error ~', e_6);
+                                        return [3 /*break*/, 11];
+                                    case 11: return [2 /*return*/];
                                 }
-                            }
-                        }
-                        catch (e) {
-                            console.error('sendAnswer ~ error ~', e);
-                        }
+                            });
+                        });
                     });
                 }
                 webRtcSocketRef.current = socket;
@@ -1177,22 +1325,56 @@ var Rtc = function (_a) {
             handleRemoteCandidate(candidate);
         }
     };
-    var processCandidates = function () {
-        try {
-            if (remoteCandidates.length < 1) {
-                return;
+    // const processCandidates = () => {
+    //   try {
+    //     if (remoteCandidates.length < 1) {
+    //       return;
+    //     }
+    //     remoteCandidates.forEach((candidate) => {
+    //       if (candidate) {
+    //         peerConnectionRef.current.addIceCandidate(candidate);
+    //       }
+    //     });
+    //     setRemoteCandidates([]);
+    //   } catch (e) {}
+    // };
+    var processCandidates = function () { return __awaiter(void 0, void 0, void 0, function () {
+        var _i, remoteCandidates_1, candidate, e_7;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (remoteCandidates.length < 1) {
+                        return [2 /*return*/];
+                    }
+                    _i = 0, remoteCandidates_1 = remoteCandidates;
+                    _a.label = 1;
+                case 1:
+                    if (!(_i < remoteCandidates_1.length)) return [3 /*break*/, 7];
+                    candidate = remoteCandidates_1[_i];
+                    _a.label = 2;
+                case 2:
+                    _a.trys.push([2, 5, , 6]);
+                    if (!candidate) return [3 /*break*/, 4];
+                    return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(candidate)];
+                case 3:
+                    _a.sent();
+                    _a.label = 4;
+                case 4: return [3 /*break*/, 6];
+                case 5:
+                    e_7 = _a.sent();
+                    console.error('Error adding remote ice candidate:', e_7);
+                    return [3 /*break*/, 6];
+                case 6:
+                    _i++;
+                    return [3 /*break*/, 1];
+                case 7:
+                    setRemoteCandidates([]);
+                    return [2 /*return*/];
             }
-            remoteCandidates.forEach(function (candidate) {
-                if (candidate) {
-                    peerConnectionRef.current.addIceCandidate(candidate);
-                }
-            });
-            setRemoteCandidates([]);
-        }
-        catch (e) { }
-    };
+        });
+    }); };
     var setRemoteDescription = function (offer) { return __awaiter(void 0, void 0, void 0, function () {
-        var answerDescription, e_1;
+        var answerDescription, e_8;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -1204,8 +1386,8 @@ var Rtc = function (_a) {
                     processCandidates();
                     return [3 /*break*/, 3];
                 case 2:
-                    e_1 = _a.sent();
-                    console.error('setRemoteDescription ~ error ~', e_1);
+                    e_8 = _a.sent();
+                    console.error('setRemoteDescription ~ error ~', e_8);
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
@@ -1242,22 +1424,48 @@ var Rtc = function (_a) {
             return [2 /*return*/];
         });
     }); };
-    var handleRemoteCandidate = function (iceCandidate) {
+    // const handleRemoteCandidate = (iceCandidate) => {
+    //   try {
+    //     const newCandidate = new RTCIceCandidate(iceCandidate);
+    //     if (
+    //       peerConnectionRef.current === null ||
+    //       peerConnectionRef.current?.remoteDescription == null
+    //     ) {
+    //       remoteCandidates.push(newCandidate);
+    //     } else {
+    //       if (newCandidate) {
+    //         peerConnectionRef.current.addIceCandidate(newCandidate);
+    //       }
+    //     }
+    //   } catch (e) {}
+    // };
+    var handleRemoteCandidate = function (iceCandidate) { return __awaiter(void 0, void 0, void 0, function () {
+        var newCandidate, e_9;
         var _a;
-        try {
-            var newCandidate = new RTCIceCandidate(iceCandidate);
-            if (peerConnectionRef.current === null ||
-                ((_a = peerConnectionRef.current) === null || _a === void 0 ? void 0 : _a.remoteDescription) == null) {
-                remoteCandidates.push(newCandidate);
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    _b.trys.push([0, 4, , 5]);
+                    newCandidate = new RTCIceCandidate(iceCandidate);
+                    if (!(peerConnectionRef.current === null ||
+                        ((_a = peerConnectionRef.current) === null || _a === void 0 ? void 0 : _a.remoteDescription) == null)) return [3 /*break*/, 1];
+                    remoteCandidates.push(newCandidate);
+                    return [3 /*break*/, 3];
+                case 1:
+                    if (!newCandidate) return [3 /*break*/, 3];
+                    return [4 /*yield*/, peerConnectionRef.current.addIceCandidate(newCandidate)];
+                case 2:
+                    _b.sent();
+                    _b.label = 3;
+                case 3: return [3 /*break*/, 5];
+                case 4:
+                    e_9 = _b.sent();
+                    console.error('Error handling remote ice candidate:', e_9);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
             }
-            else {
-                if (newCandidate) {
-                    peerConnectionRef.current.addIceCandidate(newCandidate);
-                }
-            }
-        }
-        catch (e) { }
-    };
+        });
+    }); };
     var mediaStatus = (0, react_1.useMemo)(function () { return ({
         cameraOnYn: cameraOnYn,
         micOnYn: micOnYn,
